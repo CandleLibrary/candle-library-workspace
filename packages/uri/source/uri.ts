@@ -21,7 +21,9 @@ const STOCK_LOCATION = {
     pathname: ""
 };
 
-function getCORSModes(uri) {
+const fetch_not_found_error_message = `'fetch' function is not defined`;
+
+function getCORSModes(uri: URI) {
     const IS_CORS = (URI.GLOBAL.host !== uri.host && !!uri.host);
     return {
         IS_CORS,
@@ -30,9 +32,12 @@ function getCORSModes(uri) {
     };
 }
 
-function fetchLocalText(uri, m = "cors"): Promise<string> {
+function fetchLocalText(uri: URI, m = "cors"): Promise<string> {
 
     return new Promise((res, rej) => {
+
+        if (!fetch_reference) throw new Error(fetch_not_found_error_message);
+
         fetch_reference(uri + "", <RequestInit>Object.assign({
             method: "GET",
         }, getCORSModes(uri))).then(r => {
@@ -45,8 +50,11 @@ function fetchLocalText(uri, m = "cors"): Promise<string> {
     });
 }
 
-function fetchLocalJSON(uri, m = "cors"): Promise<object> {
+function fetchLocalJSON(uri: URI, m = "cors"): Promise<object> {
     return new Promise((res, rej) => {
+
+        if (!fetch_reference) throw new Error(fetch_not_found_error_message);
+
         fetch_reference(uri + "", <RequestInit>Object.assign({
             method: "GET"
         }, getCORSModes(uri))).then(r => {
@@ -58,8 +66,11 @@ function fetchLocalJSON(uri, m = "cors"): Promise<object> {
     });
 }
 
-function fetchLocalBuffer(uri, m = "cors"): Promise<ArrayBuffer> {
+function fetchLocalBuffer(uri: URI, m = "cors"): Promise<ArrayBuffer> {
     return new Promise((res, rej) => {
+
+        if (!fetch_reference) throw new Error(fetch_not_found_error_message);
+
         fetch_reference(uri + "", <RequestInit>Object.assign({
             method: "GET"
         }, getCORSModes(uri))).then(r => {
@@ -71,7 +82,7 @@ function fetchLocalBuffer(uri, m = "cors"): Promise<ArrayBuffer> {
     });
 }
 
-function submitForm(uri, form_data, m = "same-origin") {
+function submitForm(uri: URI, form_data: any, m = "same-origin") {
     return new Promise((res, rej) => {
         var form;
 
@@ -82,6 +93,8 @@ function submitForm(uri, form_data, m = "same-origin") {
             for (let name in form_data)
                 form.append(name, form_data[name] + "");
         }
+
+        if (!fetch_reference) throw new Error(fetch_not_found_error_message);
 
         fetch_reference(uri + "", <RequestInit>Object.assign({
             method: "POST",
@@ -95,9 +108,11 @@ function submitForm(uri, form_data, m = "same-origin") {
     });
 }
 
-function submitJSON(uri, json_data, m = "same-origin") {
+function submitJSON(uri: URI, json_data: any) {
     const data = JSON.stringify(json_data);
     return new Promise((res, rej) => {
+
+        if (!fetch_reference) throw new Error(fetch_not_found_error_message);
 
         fetch_reference(uri + "", <RequestInit>Object.assign({
             method: "POST",
@@ -153,13 +168,6 @@ class URI {
     static RC: Map<string, any>;
 
     /**
-     * ONLY AVAILABLE ON SERVER
-     * 
-     * Return `true` of resource or directory exists on the server.
-     */
-    DOES_THIS_EXIST: () => Promise<boolean>;
-
-    /**
      * URI protocol segment
      */
     protocol: string;
@@ -202,7 +210,7 @@ class URI {
     /**
      * Map of the query data
      */
-    map: Map<string, any>;
+    map: Map<string, any> | null;
 
     /** 
      * Allows simulated resources to be added as a key value pair, were the key is a URI string and the value is string data.
@@ -225,7 +233,7 @@ class URI {
                 ? URI.GLOBAL
                 : (typeof document != "undefined" && typeof document.location != "undefined")
                     ? document.location.toString()
-                    : null
+                    : ""
     ): URI | null {
         const
             URL_old = new URI(URL_or_url_original),
@@ -261,7 +269,7 @@ class URI {
      * https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch
      */
     async fetch(init?: RequestInit): Promise<Response> {
-        return fetch_reference(this + "", init);
+        return fetch_reference ? fetch_reference(this + "", init) : createResponse("", this + "");
     }
 
 
@@ -278,6 +286,16 @@ class URI {
      * @param {boolean} [USE_LOCATION=false] If the uri argument is blank or {undefined} then URI will pulled from the document's location.
      */
     constructor(uri: string | URI | Location = "", USE_LOCATION = false) {
+
+        this.protocol = "";
+        this.user = "";
+        this.pwd = "";
+        this.host = "";
+        this.port = 0;
+        this.path = "";
+        this.query = "";
+        this.hash = "";
+        this.map = null;
 
         let
             IS_STRING = true,
@@ -299,15 +317,7 @@ class URI {
                 return URI.GLOBAL;
         }
 
-        this.protocol = "";
-        this.user = "";
-        this.pwd = "";
-        this.host = "";
-        this.port = 0;
-        this.path = "";
-        this.query = "";
-        this.hash = "";
-        this.map = null;
+
         if (uri instanceof URI) {
             this.protocol = uri.protocol;
             this.user = uri.user;
@@ -322,7 +332,7 @@ class URI {
 
             //If the complete string is not matched than we are dealing with something other 
             //than a pure URI. Thus, no object is returned. 
-            if (part[0] !== uri) return null;
+            if (!part || part[0] !== uri) return new URI("localhost");
 
             this.protocol = part[1] || ((USE_LOCATION) ? location.protocol : "");
             this.user = part[2] || "";
@@ -383,6 +393,8 @@ class URI {
         history.replaceState({}, "replaced state", `${this}`);
     }
 
+    async DOES_THIS_EXIST() { return true; }
+
     toString() {
         let str = [];
 
@@ -422,7 +434,7 @@ class URI {
      * @return {any}  The data.
      */
     getData(): any {
-        const data = {};
+        const data: any = {};
         if (this.map)
             for (const [key, val] of this.map.entries()) {
                 if (!val)
@@ -488,12 +500,12 @@ class URI {
         return fetchLocalBuffer(this).then(res => (URI.RC.set(this.path, res), res));
     }
 
-    submitForm(form_data) {
+    submitForm(form_data: any) {
         return submitForm(this, form_data);
     }
 
-    submitJSON(json_data, mode) {
-        return submitJSON(this, json_data, mode);
+    submitJSON(json_data: any, mode: any) {
+        return submitJSON(this, json_data);
     }
 
     /**
@@ -512,7 +524,7 @@ class URI {
      * @readonly
      */
     get file() {
-        return this.path.split("/").pop();
+        return this.path.split("/").pop() ?? "";
     }
 
     /**
@@ -521,7 +533,7 @@ class URI {
      * @readonly
      */
     get filename(): string {
-        return this.file.split(".").shift();
+        return this.file.split(".").shift() ?? "";
     }
 
     /**
@@ -668,9 +680,12 @@ class URI {
 
         if (candidate_parent.IS_RELATIVE) return false;
 
-        const own_path = (this.IS_RELATIVE
-            ? URI.resolveRelative(this, candidate_parent)
-            : this).dir.split("/").slice(0, -1),
+        const own_path = (
+            this.IS_RELATIVE
+                ? URI.resolveRelative(this, candidate_parent) || new URI
+                : this
+        )
+            .dir.split("/").slice(0, -1),
             candidate_path = candidate_parent.dir.split("/").slice(0, -1);
 
         if (candidate_path.length >= own_path.length) return false;
@@ -692,7 +707,7 @@ URI.RC = new Map();
 URI.GLOBAL = (typeof location != "undefined") ? new URI(location) : new URI;
 
 
-let SIMDATA = null;
+let SIMDATA: any = null;
 
 /** Replaces the fetch actions with functions that simulate network fetches. Resources are added by the user to a Map object. */
 URI.simulate = function () {
@@ -721,139 +736,136 @@ URI.server = (
     typeof globalThis["process"] == "undefined" ?
         async () => { }
         :
-        async function (root_dir: string) {
-            let fsr = null,
-                fs = null,
-                path = null,
-                http = null;
+        async function (root_dir?: string) {
 
             root_dir = root_dir || process.cwd() + "/";
 
             try {
-                fsr = await import("fs"),
-                    fs = fsr.promises,
-                    path = (await import("path")),
-                    http = (await import("http"));
-            } catch (e) {
-                console.error("Unable to load URI.server. Is this package running on a browser?");
-                return;
-            }
+                const fsr = await import("fs");
+                const fs = fsr.promises;
+                const path = (await import("path"));
+                const http = (await import("http"));
 
-            if (typeof (global) !== "undefined" && !POLYFILLED) {
+                if (typeof (global) !== "undefined" && !POLYFILLED) {
 
-                POLYFILLED = true;
+                    POLYFILLED = true;
 
 
-                URI.GLOBAL = new URI(root_dir);
+                    URI.GLOBAL = new URI(root_dir);
 
-                const
-                    //@ts-ignore
-                    g: URLPolyfilledGlobal = <unknown>global;
+                    const
+                        //@ts-ignore
+                        g: URLPolyfilledGlobal = <unknown>global;
 
-                g.document = g.document || <URLPolyfilledGlobal>{};
-                g.document.location = URI.GLOBAL;
-                g.location = URI.GLOBAL;
+                    g.document = g.document || <URLPolyfilledGlobal>{};
+                    g.document.location = URI.GLOBAL;
+                    g.location = URI.GLOBAL;
 
-                const cached = URI.resolveRelative;
+                    const cached = URI.resolveRelative;
 
-                URI.resolveRelative = function (new_url, old_url = URI.GLOBAL) {
+                    URI.resolveRelative = function (new_url, old_url = URI.GLOBAL) {
 
-                    let
-                        URL_old = new URI(old_url),
-                        URL_new = new URI(new_url);
+                        let
+                            URL_old = new URI(old_url),
+                            URL_new = new URI(new_url);
 
-                    if (!URL_new.IS_RELATIVE && !URL_new.IS_ROOT) {
+                        if (!URL_new.IS_RELATIVE && !URL_new.IS_ROOT) {
 
-                        //Attempt to resolve the file from the node_modules directories.
+                            //Attempt to resolve the file from the node_modules directories.
 
-                        /**
-                         * This uses the classical node_modules lookup.
-                         * 
-                         * TODO handle resolution of modules with a more general method. 
-                         * See yarn Plug'n'Play: https://yarnpkg.com/features/pnp
-                         */
+                            /**
+                             * This uses the classical node_modules lookup.
+                             * 
+                             * TODO handle resolution of modules with a more general method. 
+                             * See yarn Plug'n'Play: https://yarnpkg.com/features/pnp
+                             */
 
-                        const
-                            base_path = URL_old.path.split("/").filter(s => s !== ".."),
-                            new_path = URL_new + "";
+                            const
+                                base_path = URL_old.path.split("/").filter(s => s !== ".."),
+                                new_path = URL_new + "";
 
-                        let i = base_path.length;
+                            let i = base_path.length;
 
-                        while (i-- >= 1) {
-                            try {
-                                let search_path = "";
+                            while (i-- >= 1) {
+                                try {
+                                    let search_path = "";
 
 
 
-                                if (base_path[i] == "node_modules")
-                                    search_path = [...base_path.slice(0, i + 1), new_path].join("/");
-                                else {
+                                    if (base_path[i] == "node_modules")
+                                        search_path = [...base_path.slice(0, i + 1), new_path].join("/");
+                                    else {
 
-                                    search_path = [...base_path.slice(0, i + 1), "node_modules", new_path].join("/");
+                                        search_path = [...base_path.slice(0, i + 1), "node_modules", new_path].join("/");
+                                    }
+
+                                    const stats = fsr.statSync(search_path);
+
+                                    if (stats)
+                                        return new URI(search_path);
+
+                                } catch (e) {
+                                    //Suppress errors - Don't really care if there is no file found. That can be handled by the consumer.
                                 }
-
-                                const stats = fsr.statSync(search_path);
-
-                                if (stats)
-                                    return new URI(search_path);
-
-                            } catch (e) {
-                                //Suppress errors - Don't really care if there is no file found. That can be handled by the consumer.
                             }
+
+                            return URL_new;
                         }
 
-                        return URL_new;
-                    }
+                        return cached(URL_new, URL_old);
+                    };
 
-                    return cached(URL_new, URL_old);
-                };
+                    /**
+                     * Global `fetch` polyfill - basic support
+                     */
+                    fetch_reference = g.fetch = <any>(
+                        async (uri: string, data: ResponseInit & { IS_CORS: boolean; }): Promise<Response> => {
 
-                /**
-                 * Global `fetch` polyfill - basic support
-                 */
-                fetch_reference = g.fetch = async (uri, data: ResponseInit & { IS_CORS: boolean; }): Promise<Response> => {
+                            if (data?.IS_CORS) { // HTTP Fetch
+                                return new Promise((res, rej) => {
+                                    try {
 
-                    if (data?.IS_CORS) { // HTTP Fetch
-                        return new Promise((res, rej) => {
-                            try {
+                                        http.get(uri, data, req => {
 
-                                http.get(uri, data, req => {
+                                            let body = "";
 
-                                    let body = "";
+                                            req.setEncoding('utf8');
 
-                                    req.setEncoding('utf8');
+                                            req.on("data", d => {
+                                                body += d;
+                                            });
 
-                                    req.on("data", d => {
-                                        body += d;
-                                    });
-
-                                    req.on("end", () => res(createResponse(body, uri + "")));
+                                            req.on("end", () => res(createResponse(body, uri + "")));
+                                        });
+                                    } catch (e) {
+                                        rej(e);
+                                    }
                                 });
-                            } catch (e) {
-                                rej(e);
+
+
+                            } else { //FileSystem Fetch
+                                try {
+                                    let
+                                        p = path.resolve(process.cwd(), "" + uri);
+
+                                    const body = await fs.readFile(p);
+
+                                    return createResponse(body, uri + "");
+                                } catch (err) {
+                                    throw err;
+                                }
                             }
                         });
 
-
-                    } else { //FileSystem Fetch
-                        try {
-                            let
-                                p = path.resolve(process.cwd(), "" + uri);
-
-                            const body = await fs.readFile(p);
-
-                            return createResponse(body, uri + "");
-                        } catch (err) {
-                            throw err;
-                        }
-                    }
-                };
-
-                URI.prototype.DOES_THIS_EXIST = async function () {
-                    if (!this.IS_RELATIVE)
-                        return !!(await fs.stat(this.toString()).catch(e => false));
-                    return false;
-                };
+                    URI.prototype.DOES_THIS_EXIST = async function () {
+                        if (!this.IS_RELATIVE)
+                            return !!(await fs.stat(this.toString()).catch(e => false));
+                        return false;
+                    };
+                }
+            } catch (e) {
+                console.error("Unable to load URI.server. Is this package running on a browser?");
+                return;
             }
         });
 
@@ -871,7 +883,7 @@ function createResponse(body: string | Buffer, url: string): Response {
         get redirected() { return false; },
         get status() { return 200; },
         get statusText() { return "200"; },
-        get headers() { return null; },
+        get headers() { return <any>null; },
         //@ts-ignore
         get body() { return Uint8Array.from(body); },
         get trailer() { return (async () => null)(); },
@@ -880,7 +892,7 @@ function createResponse(body: string | Buffer, url: string): Response {
 
         clone() { return createResponse(body, url); },
 
-        formData: () => null,
+        formData: () => <any>null,
 
         text: async () => body instanceof Buffer ? body.toString("utf8") : body,
 
