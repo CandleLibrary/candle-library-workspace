@@ -1,0 +1,157 @@
+#####################################################################################################
+# 
+#   CandleLib Wick Parser Grammar
+#
+#   2021 v4.0
+#   
+#   Copyright (c) MMXX Anthony C Weathersby
+#   
+#   Permission is hereby granted, free of charge, to any person obtaining a copy
+#   of this software and associated documentation files (the "Software"), to deal
+#   in the Software without restriction, including without limitation the rights
+#   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#   copies of the Software, and to permit persons to whom the Software is
+#   furnished to do so, subject to the following conditions:
+#   
+#   The above copyright notice and this permission notice shall be included in all
+#   copies or substantial portions of the Software.
+#   
+#   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#   SOFTWARE.
+# 
+#####################################################################################################
+
+@IGNORE g:sp g:nl 
+
+@IMPORT ./html.hcg as html
+
+@IMPORT ./md.hcg as md
+
+@IMPORT ../../../node_modules/@candlelib/js/source/grammar/javascript.hcg as js
+
+@IMPORT ../../../node_modules/@candlelib/css/source/grammar/css.hcg as css 
+ 
+@EXPORT WICK as wick
+
+@EXPORT js::expression as js_expression
+
+@EXPORT js::statement as js_statement
+
+@EXPORT html::TAG as html
+
+@EXPORT md::markdown as md
+
+@EXPORT css::STYLE_SHEET as css_stylesheet
+
+@EXPORT css::COMPLEX_SELECTOR as css_selector
+
+<> WICK > tk:shebang? COMPONENT
+
+<> shebang > \#! (g:sym | g:id | g:num | g:sp)(*) g:nl
+
+<> COMPONENT > 
+         html::HTML
+          
+     |    
+          js::javascript 
+
+# This allows JSX like html expressions within JS objects. 
++> js::primary_expression > html::TAG        
+
++> html::BODY > 
+
+          IMPORT_TAG_LIST html::GOAL_TAG                                                     
+                                            
+          f:r { ( $2.import_list = $1, $2 ) }
+
++> html::TAG > 
+
+          ( \<style | \<STYLE ) html::ATTRIBUTES? \>  css::CSS?  ( \</style> | \</STYLE> )                                  
+                                            
+          f:r { { type:env.typ.HTML_STYLE,  attributes:$$2 || [], nodes:[$$4], pos } }
+     |    
+          ( \<md | \<MD ) html::ATTRIBUTES? \>  md::markdown?   ( \</md> | \</MD> )                                   
+                                            
+          f:r { { type:env.typ.MARKDOWN,  attributes:$$2 || [], nodes:[$$4], pos } }
+    
++> html::TAG_BODY_ITEM > 
+
+          ( \<script | \<SCRIPT ) html::ATTRIBUTES? \> js::script? ( \</script> | \</SCRIPT> )    
+                                            
+          f:r { { type:env.typ.HTML_SCRIPT, attributes:$$2 || [], nodes:[$$4], pos } }
+
+<> IMPORT_TAG_LIST > IMPORT_TAG(+)
+
+
+<> IMPORT_TAG > 
+          
+     ! \<import html::ATTRIBUTES?  ( \> | \/> | \> \<\import> )                                 
+                                            
+          f:r { { type:env.typ.HTML_IMPORT, tag:"IMPORT", attributes:$$2 || [], nodes:[], VOID:true, pos } } 
+
++> html::VOID_NAME >  t:f
+
+
++> html::ATTRIBUTE > 
+
+
+          html::ATTRIBUTE_HEAD = ( " WICK_BINDING? " f:r {$$2} | WICK_BINDING )         
+                                            
+          f:r { {type:env.typ.HTMLAttribute, name:$1, value:$3 || "", IS_BINDING:true, pos } }
+
+     |    IMPORT_ATTRIBUTE                 
+                                             
+     |    EXPORT_ATTRIBUTE
+
+     |    \{ js::identifier_reference \}     
+
+          f:r { 
+                    {
+                         type:env.typ.HTMLAttribute, 
+                         name:$2.value, 
+                         value: { type:env.typ.WickBinding, primary_ast:$2, DEBUG:false, pos }, 
+                         IS_BINDING:true, 
+                         pos 
+                    } 
+               }
+                                             
+
++> html::TEXT_NODE > 
+
+          WICK_BINDING 
+
+     |    WICK_SELECTOR_BINDING
+
+
+
+<> IMPORT_ATTRIBUTE > t:import \= js::specifier_clause
+
+     f:r { {type:env.typ.HTMLImportAttribute, name:$1, value:$3, pos } }
+
+
+<> EXPORT_ATTRIBUTE > t:export \= js::specifier_clause
+
+     f:r { {type:env.typ.HTMLExportAttribute,name:$1, value:$3, pos } }
+
+
+<> WICK_BINDING > ( \{! | \{ ) js::expression  ( \; js::expression )? \}      
+                                            
+     f:r { {type:env.typ.WickBinding, primary_ast:$$2, secondary_ast:$$3, DEBUG: $$2.length == 2, pos } }
+
+<> WICK_SELECTOR_BINDING > \{ 
+     
+          WICK_IF_BINDING_EXPRESSION
+     
+     \}
+
+<> WICK_IF_BINDING_EXPRESSION >
+
+     t:if \( js::expression \) html::TAG ( t:else WICK_IF_BINDING_EXPRESSION )?
+
+
+     f:r { {type:env.typ.WickIfBinding, expresion:$3, node:$5, else: $$6, pos } }

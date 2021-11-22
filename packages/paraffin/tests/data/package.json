@@ -1,0 +1,16 @@
+{
+    "name": "@wax/test",
+    "type": "commonjs",
+    "author": {
+        "email": "a@b.c",
+        "name": "karazma",
+        "url": "b.c"
+    },
+    "bin": "non-existent-file.file.txt.taco",
+    "scripts": {
+        "install": "don't",
+        "test": "never",
+        "publish": "please don't"
+    },
+    "private": "true"
+}

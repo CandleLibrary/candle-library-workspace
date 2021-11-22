@@ -1,0 +1,20 @@
+import "@radiate";
+
+export default <div>
+
+    <radiate-element>
+
+        <h1 class=" header">Wick</h1>
+
+        <style>
+            .header{
+                font-size:150px;
+                text-align:center;
+                background:linear-gradient(10deg, blue 50%, red);
+                background-clip:text;
+                text-transform: uppercase
+            }
+        </style>
+
+    </radiate-element>
+</div>

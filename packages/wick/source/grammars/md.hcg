@@ -1,0 +1,109 @@
+# Copyright (C) 2021 Anthony Weathersby - Wick Markdown Parser
+# 
+
+@IMPORT ./html.hcg as html
+
+<> markdown > lines
+
+    f:r { {type:"markdown", data:$1, pos } }
+
+<> lines > g:nl? (line | code_block)
+
+    f:r { [$2] }
+    
+    | lines g:nl (line | code_block)?
+
+    f:r { ($1.push($3 || [{type:"p"}, null, pos]), $1) }
+
+<> line >
+
+    head? content
+
+     f:r { [$1 || {type:"p"}, $$2, pos] }
+
+<> code_block > ! \``` text? code_line(*) code_block_sentinel
+
+    f:r { [{type:"code", data:$2 }, $3, pos] }
+
+<> code_line >
+
+        g:nl ( g:sp | g:id | g:num | g:sym )(*)
+
+        f:r { { data: pos.slice().slice(1), pos } }
+
+<> code_block_sentinel >
+
+    \``` | g:rec
+
+<[ recover code_block_sentinel_1 ] 
+
+    consume nothing then set prod to code_block_sentinel
+>
+
+<> content > ( text | space |  code_symbol | format_symbol | link | tag )(+)
+
+<> link > ( \[ | \![ ) ( text | space |  code_symbol | format_symbol | link )(+) \]( ( text_symbol(+\" ) ) \) 
+    f:r { {type:"link", nodes:$2, href:$4, pos } }
+
+<> space > g:sp(+)
+    f:r { { type:"space", length: $1.length, pos } }
+
+<> text > text_symbol(+\" )
+    f:r { { type:"text", length: $1.length, pos } }
+
+<> tag > html::TAG 
+
+<[ recover tag ]
+
+    consume nothing then reduce f:r {
+        { type:"text", length:pos.slice().trim(), pos }
+    } then set prod to tag
+>
+
+<> text_symbol > 
+        g:sym
+    |   g:id
+    |   g:num
+    |   \![
+    |   \[
+    |   \]
+    |   \.
+
+<> head > header_symbols        
+
+<> header_symbols > 
+    
+    tk:header_token
+        f:r { { type:"header", length:pos.length, pos } }
+
+    | tk:ol_token
+        f:r { { type:"ol", offset:pos.length, pos } }
+
+    | tk:ul_token
+        f:r { { type:"ul", offset:pos.length, pos } }
+
+    | tk:quote_token
+        f:r { { type:"quote", offset:pos.length, pos } }
+
+<> header_token > \# (+)
+
+<> ol_token > 
+    
+    (g:sp)(*) g:num \.
+
+<> ul_token > 
+    
+    (g:sp)(*) ( \- | \+ )
+
+<> quote_token > 
+    
+    (g:sp)(*) ( \> )
+
+<> code_symbol > \`
+    f:r { { type:"inline_code", pos } }
+
+<> format_symbol > 
+    \* 
+    f:r { { type:"fmA", pos } }
+    | \_ 
+    f:r { { type:"fmB", pos } }

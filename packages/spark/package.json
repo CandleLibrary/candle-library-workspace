@@ -1,0 +1,42 @@
+{
+    "name": "@candlelib/spark",
+    "version": "0.3.4",
+    "description": "Simple Task Scheduler",
+    "main": "build/library/spark.js",
+    "types": "build/types/spark.d.ts",
+    "type": "module",
+    "scripts": {
+        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
+        "test": "tsc -p ./tsconfig.json"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/CandleLibrary/spark.git"
+    },
+    "files": [
+        "/build",
+        "/README.md",
+        "/CHANGELOG.md",
+        "/LICENSE"
+    ],
+    "keywords": [
+        "task",
+        "scheduler"
+    ],
+    "author": "Anthony Weathersby",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/CandleLibrary/spark/issues"
+    },
+    "directories": {
+        "test": "test"
+    },
+    "devDependencies": {
+        "@candlelib/cure": "*"
+    },
+    "jshintConfig": {
+        "esversion": 6,
+        "unused": true
+    },
+    "homepage": "https://github.com/CandleLibrary/spark#readme"
+}

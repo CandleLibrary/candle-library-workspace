@@ -1,0 +1,42 @@
+{
+    "name": "@candlelib/dev-tools",
+    "type": "module",
+    "version": "0.7.14",
+    "description": "Development Tools for Candle Library",
+    "main": "./build/index.js",
+    "license": "MIT",
+    "bin": {
+        "candle.dev": "./index.js"
+    },
+    "scripts": {
+        "test": "candle.cure ./tests/",
+        "install_dev_workspace": "./scripts/bash/install.sh"
+    },
+    "dependencies": {
+        "@candlelib/log": "*",
+        "@candlelib/paraffin": "*",
+        "@candlelib/uri": "*",
+        "@types/node": "*"
+    },
+    "candle-lib-modules": {
+        "@candlelib/uri": "*",
+        "@candlelib/paraffin": "*",
+        "@candlelib/wind": "*",
+        "@candlelib/wick": "*",
+        "@candlelib/spark": "*",
+        "@candlelib/glow": "*",
+        "@candlelib/conflagrate": "*",
+        "@candlelib/js": "*",
+        "@candlelib/css": "*",
+        "@candlelib/html": "*",
+        "@candlelib/lantern": "*",
+        "@candlelib/cure": "*",
+        "@candlelib/dev-tools": "*"
+    },
+    "candle-env": {
+        "repo-root": "ssh://git@github.com/CandleLibrary"
+    },
+    "dev_workspaces": [
+        "./packages/*"
+    ]
+}

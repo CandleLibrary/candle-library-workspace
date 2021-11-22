@@ -1,0 +1,59 @@
+@IGNORE g:ws g:nl
+
+<> start > v8_stack_trace
+
+<> v8_stack_trace > ( g:id | g:ws | g:num | g:sym )(*\" ) ( g:nl v8_stack_lines? )?
+
+<> v8_stack_lines > v8_stack_line(+g:nl)
+
+<> v8_stack_line > 
+        call_id? \at  call_arg                                            
+        
+        f:r { $$1 ? { type:"call", call_id:$1, sub_stack: [$3] } : $3 }
+
+    |    call_arg
+
+<> call_arg > 
+
+        call_id \( v8_stack_line(+\, ) \)                                       
+        
+         f:r { { type:"call", call_id:$1, sub_stack: $3 } }
+    |
+         location
+
+<> call_id > 
+            (RST g:sp)( (RST g:sp) g:id | (RST g:sp) g:num | \. | \_ | \$ )(+\" ) g:sp?        
+            
+            f:r { $1 }
+
+<> location > 
+            ( url | anonymous ) location_indices?                                    
+            
+            f:r { $1 == "anonymous" 
+                    ? { type:"location", url:$1, pos:$2 } 
+                    : { type:"location", url:new env.URL($1), pos:$2 } 
+                }
+
+<> anonymous > 
+            \<anonymous>                                                         
+            
+            f:r { "anonymous" }
+
+<> location_indices > 
+            \: g:num location_indices?                                    
+            
+            f:r { [ parseInt($2), ...$3 ] }
+
+<> url > 
+        (RST g:sp) protocol? domain? path                                            
+
+        f:r { $1 + $2 + $3 }
+
+<> domain > (RST g:sp) ( g:id | \. | g:num | \- )(+\" )
+
+<> path > (RST g:sp) ( \. | \/ | g:id | g:num )(+\" )
+
+<> protocol >
+            (RST g:sp)  g:id (RST g:sp) \: (RST g:sp) \//                            
+
+            f:r { $1 + $2 + $3 }

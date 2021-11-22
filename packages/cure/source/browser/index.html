@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head></head>
+
+<body></body>
+
+<script async type=module>
+        import URL from "/@cl/uri/";
+        import spark from "/@cl/spark/";
+        
+        let ACTIVE = false, SLOW_POOL = true, cache = [];
+
+        class TestRunner{
+
+           static async complete_test(results, test_id){
+                (await (new URL("/test_rigs/resolve/")).submitJSON({
+                    results,
+                    test_id
+                }))
+            }
+            
+            constructor(test, test_id){
+
+                if(cache.length > 0){
+                    const cached = cache.pop(); 
+                    cached.load(test, test_id);
+                    return cached;
+                }
+
+                this.COMPLETED = false
+
+                this.iframe = document.createElement("iframe");
+                
+                this.iframe.src = "/iframe.html";
+
+                this.loaded = new Promise(
+                    res=>{
+                        this.iframe
+                        .addEventListener("load", ()=>res())
+                    }
+                )
+                
+                document.body.appendChild(this.iframe);
+                
+                this.load(test, test_id);
+            }
+
+            clear(){
+                this.id  = -1;
+                this.test = null;
+                this.iframe.contentWindow.document.body.innerHTML = "";
+                cache.push(this)
+            }
+
+            async load(test, test_id){
+                
+                this.COMPLETED = false;
+                
+                await this.loaded;
+                
+                const pending_results = await this.iframe.contentWindow.runTest(
+                    Object.assign(test, {test_id})
+                );
+
+                await TestRunner.complete_test(
+                    pending_results, test_id
+                )
+
+                this.COMPLETED = true;
+
+            }
+        }
+
+        async function start(){
+
+            const globals = (await (new URL("/globals/acquire/")).fetchJSON());
+
+            let falloff = 2;
+
+            await spark.sleep(10);
+
+            let active_tests = [], pending_tests = [];
+
+            while(SLOW_POOL){
+
+                if(!ACTIVE){
+
+                    const {NO_TESTS_NEED_TO_WAIT, test_id, test} = (await (new URL("/test_rigs/acquire/")).fetchJSON());
+
+                    if(!NO_TESTS_NEED_TO_WAIT){
+                        pending_tests.push({test, test_id});
+                        ACTIVE = true;
+                    }
+                }
+
+                await spark.sleep(10)
+
+                while(pending_tests.length > 0 || active_tests.length > 0){   
+
+                    for(let i = 0; i < pending_tests.length;){
+                        
+                        if(active_tests.length >= 2)
+                            break;
+
+                        const {test, test_id} = pending_tests.pop();
+
+                        active_tests.push(new TestRunner(test, test_id));
+                    }
+
+                    for(let i = 0; i < active_tests.length; i++){
+                        
+                        const test_runner = active_tests[i];
+
+                        if(test_runner.COMPLETED){
+                            active_tests.splice(i, 1);
+                            i--;
+                            test_runner.clear();
+                        };
+                    }
+                    const {NO_TESTS_NEED_TO_WAIT, test_id, test} = (await (new URL("/test_rigs/acquire/")).fetchJSON());
+                    
+                    if(!NO_TESTS_NEED_TO_WAIT){
+                        pending_tests.push({test, test_id});
+                    }else if(
+                        active_tests.length > 0 || pending_tests.length > 0
+                    ) {
+                            await spark.sleep(10);
+                    } else {
+                        ACTIVE == false;
+                        break;
+                    }
+                }
+
+                await spark.sleep(30)
+            }
+        }
+
+        start();
+
+    </script>
+
+</html>

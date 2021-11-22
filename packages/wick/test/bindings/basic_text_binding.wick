@@ -1,0 +1,18 @@
+var binding = "test";
+
+export default <div>{binding}</div>;
+
+import test from "@test";
+
+test: {
+
+    const div = "@root";
+
+    assert("Component text node should be initialized with a [var] binding variable string value", 
+        div.innerHTML.trim() == "test" );
+
+    binding = "hello";
+
+    assert("Component text node should update when binding variable is modified",  
+        div.innerHTML.trim() == "hello");
+}

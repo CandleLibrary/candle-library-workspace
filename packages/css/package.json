@@ -1,0 +1,47 @@
+{
+    "name": "@candlelib/css",
+    "version": "0.3.18",
+    "type": "module",
+    "description": "CSS Parsing & Editing Tools",
+    "main": "./build/library/css.js",
+    "types": "./build/types/css.d.ts",
+    "scripts": {
+        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
+        "test": "candle.cure ./test/",
+        "test.watch": "candle.cure -w ./test/**",
+        "compile": "hydrocarbon compile --threads 5 --out_path ./source/typescript/parser/parser_new.ts --recognizer ts ./source/grammar/css.hcg"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/candlelibrary/css.git"
+    },
+    "keywords": [
+        "CSS",
+        "Parser"
+    ],
+    "files": [
+        "/build",
+        "/README.md",
+        "/CHANGELOG.md",
+        "/LICENSE"
+    ],
+    "author": "Anthony Weathersby",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/candlelibrary/css/issues"
+    },
+    "homepage": "https://github.com/candlelibrary/css#readme",
+    "dependencies": {
+        "@candlelib/conflagrate": "*",
+        "@candlelib/hydrocarbon": "*",
+        "@candlelib/uri": "*"
+    },
+    "devDependencies": {
+        "@candlelib/cure": "*",
+        "@types/node": "^16.4.13"
+    },
+    "jshintConfig": {
+        "esversion": 6,
+        "unused": true
+    }
+}

@@ -1,0 +1,51 @@
+{
+    "name": "@candlelib/lantern",
+    "version": "0.2.7",
+    "description": "Extensible Web Server",
+    "main": "./build/library/lantern.js",
+    "types": "./build/types/lantern.d.ts",
+    "type": "module",
+    "bin": {
+        "lantern": "index.js"
+    },
+    "scripts": {
+        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
+        "test": "candle.cure --headless ./test/",
+        "test.watch": "candle.cure -w ./test/**"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/CandleLibrary/lantern.git"
+    },
+    "files": [
+        "/build",
+        "/README.md",
+        "/CHANGELOG.md",
+        "/LICENSE",
+        "/brand",
+        "/index.js"
+    ],
+    "keywords": [
+        "CFW"
+    ],
+    "author": "Anthony Weathersby",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/CandleLibrary/lantern/issues"
+    },
+    "homepage": "https://github.com/CandleLibrary/lantern#readme",
+    "dependencies": {
+        "@candlelib/paraffin": "*",
+        "@candlelib/conflagrate": "*",
+        "@candlelib/css": "*",
+        "@candlelib/log": "*",
+        "@candlelib/glow": "*",
+        "@candlelib/hydrocarbon": "*",
+        "@candlelib/js": "*",
+        "@candlelib/spark": "*",
+        "@candlelib/uri": "*",
+        "@candlelib/wick": "*",
+        "@candlelib/wind": "*",
+        "node-watch": "^0.6.3"
+    }
+}

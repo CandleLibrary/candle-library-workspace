@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head></head>
+
+<body>
+    <script type=module>
+            import parser from "/utilities/parser.js";
+            import { createNameErrorMessage } from "/utilities/library_errors.js";
+            import { createHierarchalName } from "/utilities/name_hierarchy.js";
+            import { createTestHarnessEnvironmentInstance } from "/test_running/utilities/test_harness.js";
+            import { createTestFunctionFromTestSource } from "/test_running/utilities/create_test_function.js";
+            const TestError = function(d){ const {message, stack} = new Error(d); this.message = message, this.stack = stack};
+
+            //Load test runners 
+            async function loadImport(source, module_specifier) {
+                return await import(module_specifier[0] == "/" ? module_specifier : "/" + module_specifier );
+            }  
+
+            const logger = console.log
+            const ImportedModules= new Map();
+
+            export function createAddendum(sources, test) {
+            return "";
+        }
+                    
+            async function RunTest(test){
+                let results = [];
+                const {
+                    harness,
+                    harness_flushClipboard,
+                    harness_getResults,
+                    harness_overrideLog,
+                    harness_restoreLog,
+                    harness_init,
+                    harness_initSourceMapFromString,
+                    harness_initialSourceCodeString
+                } = createTestHarnessEnvironmentInstance(
+                    (a,b)=>a===b, {  inspect: JSON.stringify,  }, performance, ""
+                );
+
+                logger("STARTING")
+
+                 try {
+                    //@ts-ignore
+                    window.harness = harness;
+
+                    harness_init(
+                        test.source_location,
+                        test.working_directory
+                    );
+
+                    harness_overrideLog();
+
+                    //Test Initialization TestResult
+
+                    const fn = (await createTestFunctionFromTestSource(
+                        test,
+                        harness,
+                        ImportedModules,
+                        loadImport,
+                        createAddendum
+                    ));
+
+                    // Clear any existing TestInfo created by [createTestFunctionFromTestSource]
+                    harness_init(
+                        test.source_location,
+                        test.working_directory
+                    );
+
+                    harness_initialSourceCodeString(test.source);
+
+                    // Global TestResult 
+                    // - Catchall for any errors that lead to a hard crash of the test function
+                    harness.pushTestResult();
+
+                    harness_initSourceMapFromString(test.map);
+
+                    harness.setResultName(createHierarchalName(test.name, `Test failed with a critical error`));
+
+                    await fn();
+
+                    harness.popTestResult();
+
+                    harness_restoreLog();
+
+                    results = harness_getResults().slice(0, -1);
+
+                } catch (e) {
+
+                    harness_restoreLog();
+
+                    harness_flushClipboard();
+
+                    harness.addException(e);
+
+                    harness.popTestResult();
+
+                    results = harness_getResults().slice(-1); //Only return the worker test
+
+                }
+
+
+                if (results.length == 0) {results
+                    harness_init(
+                        test.source_location,
+                        test.working_directory
+                    );
+
+                    harness.pushTestResult();
+
+                    harness.setResultName("Critical Test Errors");
+
+                    harness.addException(new Error("No results generated from this test"));
+
+                    harness.popTestResult();
+
+                    results = harness_getResults();
+                }
+
+                for (let i = 0, result = null; (result = results[i], i++ < results.length);)
+                    if (result.name == "") {
+                        result.name = createNameErrorMessage(i);
+                        result.PASSED = false;
+                    }
+
+                return results;
+            }
+
+            window.runTest = RunTest;
+
+        </script>
+</body>
+
+</html>

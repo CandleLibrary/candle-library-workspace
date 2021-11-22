@@ -1,0 +1,18 @@
+const data = [{name:"A"},{name:"B"}];
+
+export default <div>
+    <container {data}>
+        <span>{name}</span>
+    </container>
+</div>;
+
+import test from "@test";
+
+test: {
+
+    const [span1, span2] = Array.from("@container".children);
+
+    assert("Container With Static Child 1", span1.innerHTML.trim() == "A" );
+
+    assert( "Container With Static Child 2",span2.innerHTML.trim() == "B" );
+}

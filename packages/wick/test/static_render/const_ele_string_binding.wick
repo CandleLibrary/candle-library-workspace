@@ -1,0 +1,10 @@
+const data = "@div";
+
+export default <div>{data.tagName}</div>;
+
+import test from "@test";
+
+test: {
+    assert("Constant element query strings resolve during runtime", data.tagName == "DIV" );
+    assert("Constant element query string properties resolve in runtime", "@div".innerText == "DIV");
+}

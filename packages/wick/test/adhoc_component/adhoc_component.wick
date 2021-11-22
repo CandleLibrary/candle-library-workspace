@@ -1,0 +1,34 @@
+#! candle.wick run
+
+/**
+ * This Component demonstrates the creation of a unnamed component outside
+ * of a container. These can be used to associate an element with a new 
+ * scope that can then be assigned a model independent of the host component.
+ */
+import { test, sub } from "@model";
+
+export default <div>
+
+    <div>{ test }</div>
+
+    <component model={ sub } element=div >
+        { test } ga
+    </componet>
+
+</div>;
+
+import testing from "@test";
+
+testing: {
+
+    const $model = { test: "radio goo goo", sub: { test:"radio ga" } };
+
+    const [d,divA, divB] = Array.from(document.querySelectorAll("div"));
+
+    assert( divA.innerText == "radio goo goo" );
+
+    await spark.sleep(10);
+
+    assert(divB.innerText == "radio ga ga" );
+
+}

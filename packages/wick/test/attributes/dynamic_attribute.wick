@@ -1,0 +1,29 @@
+import attributed from "./attribute_child.wick";
+
+var value = "testing";
+
+export default <div>
+    <attributed {value} />
+</div>;
+
+import test from "@test";
+
+test: {
+
+    const val = document.querySelectorAll("div")[1];
+
+    value = "hello world";
+
+    assert(
+        "Dynamic attribute binding should equal [hello world]"
+        , val.innerText == "hello world" 
+    );
+
+    value = "goodby for now";
+
+    assert(
+        "Dynamic attribute binding should equal [goodby for now]"
+        , val.innerText == "goodby for now" 
+    );
+
+}

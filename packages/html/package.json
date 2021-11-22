@@ -1,0 +1,40 @@
+{
+    "name": "@candlelib/html",
+    "version": "0.2.5",
+    "description": "HTML Parser and DOM Polyfill",
+    "main": "./build/library/html.js",
+    "types": "./build/types/html.d.ts",
+    "type": "module",
+    "scripts": {
+        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
+        "test": "candle.cure --reporter ci ./test/**",
+        "test.watch": "candle.cure -w ./test/**"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/candlelibrary/html.git"
+    },
+    "files": [
+        "/build",
+        "/README.md",
+        "/CHANGELOG.md",
+        "/LICENSE"
+    ],
+    "keywords": [
+        "HTML",
+        "Parser"
+    ],
+    "author": "Anthony Weathersby",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/candlelibrary/html/issues"
+    },
+    "homepage": "https://github.com/candlelibrary/html#readme",
+    "dependencies": {
+        "@candlelib/uri": "*",
+        "@candlelib/wind": "*"
+    },
+    "devDependencies": {
+        "@candlelib/cure": "*"
+    }
+}

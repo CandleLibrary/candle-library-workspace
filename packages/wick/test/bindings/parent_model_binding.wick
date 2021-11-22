@@ -1,0 +1,27 @@
+import { test } from "@model";
+
+var data = [{ name: "alpha"}]
+
+export default <div>
+
+    <container { data }>
+        <span>
+            { name }{ $host.test }
+        </span>
+    </container>
+    
+</div>;
+
+import t from "@test";
+
+t: {
+
+    const $model = {
+        test: "bet"
+    };
+
+    const span = document.querySelector("span");
+
+    assert("Child component defined within container has access to model defined in main scope.", 
+        span.innerText == "alphabet" );
+}

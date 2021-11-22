@@ -1,0 +1,58 @@
+{
+    "configurations": [
+        {
+            "name": "Launch Wick Compile",
+            "program": "${workspaceFolder}/index.js",
+            "cwd": "/home/work/projects/site_wick_testbed/site/",
+            "request": "launch",
+            "smartStep": true,
+            "showAsyncStacks": false,
+            "runtimeVersion": "16.7.0",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "stopOnEntry": false,
+            "type": "node",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "openOnSessionStart",
+            "args": [
+                "compile",
+                "--output",
+                "../www"
+            ],
+            "runtimeArgs": [
+                "--preserve-symlinks",
+                "--preserve-symlinks-main",
+                "--enable-source-maps"
+            ]
+        },
+        {
+            "name": "Launch Wick Test",
+            "program": "${workspaceFolder}/index.js",
+            "cwd": "${workspaceFolder}",
+            "request": "launch",
+            "smartStep": true,
+            "showAsyncStacks": false,
+            "runtimeVersion": "16.7.0",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "env": {
+                "NODE_OPTIONS": "--enable-source-maps"
+            },
+            "stopOnEntry": false,
+            "type": "node",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "openOnSessionStart",
+            "args": [
+                "test",
+                "./test/static_render/const_ele_string_binding.wick"
+            ],
+            "runtimeArgs": [
+                "--preserve-symlinks",
+                "--preserve-symlinks-main",
+                "--enable-source-maps"
+            ]
+        },
+    ]
+}

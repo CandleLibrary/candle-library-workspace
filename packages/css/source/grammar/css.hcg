@@ -1,0 +1,344 @@
+##############################################################################################
+##############################################################################################
+#### CSS ######
+##############################################################################################
+##############################################################################################
+
+@IGNORE g:nl g:sp tk:comment
+
+@IMPORT default-productions as def
+
+@EXPORT CSS as css
+@EXPORT declaration_list as properties
+@EXPORT declaration as property
+@EXPORT COMPLEX_SELECTOR as selector
+@EXPORT STYLE_RULE as rule
+
+
+<> CSS > STYLE_SHEET                                                            
+
+<> STYLE_SHEET >  ( STYLE_RULE | AT_RULE )(*)     
+
+                                                    f:r { { type:env.typ.Stylesheet, nodes:$$1, pos } }
+
+<> STYLE_RULE > COMPLEX_SELECTOR(+\, ) \{ declaration_list? \}   
+
+                                                    f:r { { type:env.typ.Rule, selectors:$$1, props: new Map(($$3||[]).map(s=>[s.name, s])), pos, precedence: 0, parent:null } }
+
+<> GROUP_RULE_BODY > STYLE_RULE(*)
+
+<> AT_RULE > media ;?           
+                                                    f:r { $1 }
+    | import ;?          
+                                                    f:r { $1 }
+    | keyframes ;?          
+                                                    f:r { $1 }
+    | supports ;?           
+                                                    f:r { $1 }
+    | charset ;?           
+                                                    f:r { $1 }
+    | fontface ;?           
+                                                    f:r { $1 }
+    | unknown_at_rule ;?           
+                                                    f:r { $1 }
+
+
+##############################################################################################
+##############################################################################################
+#### At Rules
+##############################################################################################
+##############################################################################################  
+
+# adapted from https://www.w3.org/TR/css-cascade-4/#at-import
+
+<> unknown_at_rule > 
+
+            \@ ( g:ws | g:num | g:nl | g:sym | g:id )(*) unknown_block
+
+            f:r { { type:env.typ.UnknownAtRule, nodes:[$$4], pos } }
+
+<> unknown_block > \{ ( g:ws | g:num | g:nl | g:sym | g:id | unknown_block )(*) \}
+
+<> fontface > 
+            \@ t:fontface { GROUP_RULE_BODY? } 
+
+            f:r { { type:env.typ.FontFace, nodes:[$$4], pos } }
+
+
+<> charset > 
+            \@ t:charset string
+
+            f:r { { type:env.typ.CharSet, nodes:[$$3], pos } }
+
+<> import >  
+            \@ t:import ( string f:r{ new env.functions.url($1) } | url ) ( t:supports \( ( supports_condition | import_declaration ) \) f:r{$3} )? media_query(*\, ) 
+                                                        
+            f:r { { type:env.typ.Import, nodes:[$$3, $$4, ...($$5||[])], pos } }
+
+<> import_declaration > declaration
+
+# adapted from https://developer.mozilla.org/en-US/docs/Web/CSS/@keyframes#Formal_syntax
+
+<> keyframes > \@ t:keyframes keyframes_name { keyframes_blocks(+) }         
+                                                                                f:r { { type:env.typ.Keyframes, name:$3, nodes:[$$5], pos, parent:null } }
+
+<> keyframes_name > custom_ident | string
+
+<> keyframes_blocks > keyframe_selector(+\, ) { declaration_list }             
+                                                                                f:r { { type:env.typ.KeyframeBlock, nodes:[
+                                                                                        {type:env.typ.KeyframeSelectors, nodes:$1, pos}, $$3
+                                                                                    ], pos } }
+
+<> keyframe_selector > t:from                                                   f:r { { type:env.typ.KeyframeSelector, val:$$1, pos } }
+    | t:to                                                                      f:r { { type:env.typ.KeyframeSelector, val:$$1, pos } }
+    | percentage                                                                f:r { { type:env.typ.KeyframeSelector, val:$$1, pos } }                      
+                                                                                
+
+# adapted from https://developer.mozilla.org/en-US/docs/Web/CSS/@supports#Formal_syntax
+
+<> supports > \@ t:supports ( 
+
+        supports_condition                                                      f:r { { type:env.typ.SupportConditions, nodes:$$1, pos } }
+    
+    ) { GROUP_RULE_BODY? }               
+                                                                                f:r { { type:env.typ.Supports, nodes:[$2, ...$$5], pos, parent:null } }
+
+<> supports_condition > t:not supports_in_parens                                 f:r { [{ type:env.typ.Not, nodes:[$2], pos }] }
+    | supports_in_parens ( 
+        t:and supports_in_parens                                                 
+                                                                                f:r { { type:env.typ.And, nodes:[$2], pos } }
+        | t:or supports_in_parens 
+                                                                                f:r { { type:env.typ.Or, nodes:[$2], pos } }
+    )(*) 
+                                                                                f:r { [$1, ...$2] }
+                                                                                
+
+<> supports_in_parens > \( supports_condition \)                                
+                                                                                f:r { { type:env.typ.Parenthesis, nodes:[$2], pos } }
+    | supports_feature
+
+    | general_enclosed
+
+<> supports_feature > supports_feature_fn 
+    | supports_decl 
+
+<> supports_decl > \( declaration \)
+                                                                                f:r { { type:env.typ.Parenthesis, nodes:[$2], pos } }
+<> supports_feature_fn >  g:selector \( COMPLEX_SELECTOR \)
+                                                                                f:r { { type:env.typ.Function, nodes:[$3], pos } }
+
+# adapted from https://developer.mozilla.org/en-US/docs/Web/CSS/@media#Formal_syntax
+
+<> media >  \@ t:media media_queries { GROUP_RULE_BODY? }       
+                                                                                f:r { { type:env.typ.Media, nodes:[$3, ...$5], pos } }
+<> media_queries > media_query(+\, )                                          
+                                                                                f:r { { queries:true, type:env.typ.MediaQueries, nodes:$$1, pos } }
+
+<> media_query > media_condition                                                
+                                                                                f:r { { type:env.typ.Query, nodes:[$1], pos } }                       
+    | (t:not | t:only )? media_type (
+                                    t:and media_condition_without_or 
+                                                                                f:r { { type:env.typ.And, nodes:[$2], pos } }
+                                    )?      
+                                                                                f:r { { type:env.typ.Query, condition:$1, nodes:[$2, $3], pos } }
+
+
+<> media_condition > media_condition_without_or
+    | media_or
+
+<> media_condition_without_or > media_not
+    | media_and 
+    | media_in_parenths
+
+<> media_not > t:not media_in_parenths                                           f:r { { type:env.typ.Not, nodes:[$2], pos } }
+
+<> media_and > media_in_parenths (
+                                    t:and media_in_parenths
+                                                                                f:r { { type:env.typ.And, nodes:[$2], pos } }
+                                )(+)
+                                                                                f:r { [$1, ...$2] }
+
+<> media_or > media_in_parenths (
+                                    t:or media_in_parenths 
+                                                                                f:r { { type:env.typ.And, nodes:[$2], pos } }
+                                )(+)
+                                                                                f:r { [$1, ...$2] }
+
+<> media_in_parenths > \( media_condition \)                                    f:r { { type:env.typ.Parenthesis, nodes:[$2], pos } }        
+    | media_feature
+    | general_enclosed
+
+<> media_feature > \( ( mf_plain | mf_boolean | mf_range ) \)                   
+                                                                                f:r { { type:env.typ.MediaFeature, nodes:[$2], pos } }
+<> general_enclosed > tk:ident_token \( ( g:sym | g:id  | g:sp )(*\" ) \)                            
+                                        
+                                                                                f:r { { type:env.typ.MediaFunction, nodes:[$3], pos } }
+
+<> mf_plain > mf_name \: mf_value                                              f:r { {type:env.typ.MediaValue, key:$1, val:$3, pos } }   
+
+<> mf_range > mf_name ( < | \<= | > | \>= | = ) mf_value                          
+                                                                                f:r { {type:env.typ.MediaEquality, sym:$2, left:$1, right:$3, pos } }  
+    | mf_value ( < | \<= | > | \>= | = ) mf_name                                  
+                                                                                f:r { {type:env.typ.MediaEquality, sym:$2, left:$1, right:$3, pos } }  
+    | mf_value ( > | \>= ) tk:ident_token ( > | \>= ) mf_value                        
+                                                                                f:r { {type:env.typ.MediaRangeDescending, sym:$2, max:$1, id:$3, min:$5, pos } } 
+    | mf_value ( < | \<= ) tk:ident_token ( < | \<= ) mf_value                        
+                                                                                f:r { {type:env.typ.MediaRangeAscending, sym:$2, min:$1, id:$3, max:$5, pos } } 
+
+<> mf_value > number 
+    | dimension 
+    | mf_name 
+    | ratio
+
+<> mf_boolean > t:true                                                           
+                                                                                f:r { { type:env.typ.Boolean, val:true, pos } }
+    | t:false                                                                    
+                                                                                f:r { { type:env.typ.Boolean, val:false, pos } }
+
+<> mf_name > tk:ident_token
+
+<> media_type > tk:ident_token                                                   f:r { { type:env.typ.MediaType, val:$1, pos } }                                                                                  
+
+<> ratio > number / number                                                         
+                                                                                f:r { {type:"ratio", num:$1, den:$3 } }
+
+<> percentage > number %                                                          
+                                                                                f:r { new env.functions.percentage($1+$2) }
+
+<> dimension > number g:id                                                         
+                                                                                f:r { new env.functions.length($1+$2) }
+
+<> url >  t:url \( string \)                                                     
+                                                                                f:r { new env.functions.url($3) }      
+<> number > tk:scientific_token
+
+<> float_token > g:num ( \. g:num )?
+
+<> scientific_token > float_token ( ( t:e | t:E ) \- ? g:num )?
+
+<> custom_ident > tk:ident_token 
+
+<> ident_token > ( g:id | \- | \_ ) ( g:id | \- | \_ | g:num | ( \\ g:sym ) )(*)
+
+<> escaped_hex > \\ [ hex_digit? hex_digit? hex_digit? hex_digit? hex_digit? hex_digit? ]
+
+<> hex_digit > \0 | \1 | \2 | \3 | \4 | \5 | \6 | \7 | \8 | \9 | \a | \b | \c | \d | \e | \f | \A | \B | \C | \D | \E | \F
+
+##############################################################################################
+#### Selectors
+#### Modified from https://drafts.csswg.org/selectors-4/#grammar
+##############################################################################################
+
+<> COMPLEX_SELECTOR >  COMPOUND_SELECTOR  ( (COMBINATOR f:r{ {type:env.typ.Combinator, val:$1} } )? COMPOUND_SELECTOR f:r { [$1, $2] } )(*)  
+                                                                                f:r { 
+                                                                                    ($$1 && $$2) ?
+                                                                                    {type:env.typ.ComplexSelector, nodes:[$1, ...( ($2).flat(2) )], pos } 
+                                                                                    : $1
+                                                                                } 
+
+<> COMPOUND_SELECTOR >  [
+        TYPE_SELECTOR? 
+        SUBCLASS_SELECTOR(*) 
+        ( PSEUDO_ELEMENT_SELECTOR ( (RST g:sp) PSEUDO_CLASS_SELECTOR )(*) f:r { {type:env.typ.PseudoSelector, nodes:[$1, ...$2], pos } } )(*) 
+    ] g:sp?
+                                                                                f:r { 
+                                                                                        ( $$1 && !($$2 || $$3 )) 
+                                                                                        ? $$1 
+                                                                                        : 
+                                                                                            ( $$2 && $$2.length == 1 && !($$1 || $$3 ))
+                                                                                            ? $$2[0]
+                                                                                            :  { type:env.typ.CompoundSelector, nodes:[$1, ...$2, ...$3], pos }
+                                                                                } 
+
+<> COMBINATOR > \>                         
+    | \+     
+    | \~                                 
+    | \||                                       
+
+<> SUBCLASS_SELECTOR > ID_SELECTOR 
+    | CLASS_SELECTOR 
+    | ATTRIBUTE_SELECTOR 
+    | PSEUDO_CLASS_SELECTOR
+
+<> ID_SELECTOR >\#  (RST g:sp)  tk:ident_token                                      f:r { {type:env.typ.IdSelector, val:$2, pos, precedence: env.typ.B_SPECIFIER } } 
+
+<> CLASS_SELECTOR > \. (RST g:sp)  tk:ident_token                                   f:r { {type:env.typ.ClassSelector, val:$2, pos,precedence: env.typ.C_SPECIFIER } } 
+
+<> PSEUDO_CLASS_SELECTOR >  \:  (RST g:sp) tk:ident_token ( \( psuedo_class_value \) f:r {$2} )?        
+                                                                                    f:r { {type:env.typ.PseudoClassSelector, id:$2, val:$3, pos, precedence: env.typ.C_SPECIFIER } }
+
+<> PSEUDO_ELEMENT_SELECTOR > \: (RST g:sp)  PSEUDO_CLASS_SELECTOR               
+                                                                                    f:r { $2.type = env.typ.PseudoElementSelector,  $2.precedence = env.typ.D_SPECIFIER , $2} 
+    
+<>  ATTRIBUTE_SELECTOR >  \[ WQ_NAME \]                                             f:r { {type:env.typ.AttributeSelector, nodes:[$2], pos, precedence: env.typ.C_SPECIFIER } } 
+    | \[ WQ_NAME ATTR_MATCHER ( tk:ident_token | string ) ATTR_MODIFIER? \] 
+                                    f:r { {type:env.typ.AttributeSelector, nodes:[$2], match_type:$3, match_val:$4, mod:$5, pos, precedence: env.typ.C_SPECIFIER } } 
+
+<> ATTR_MATCHER > \~=                                                
+    | \^=                                                                
+    | \$=                                                                
+    | \*=                                                                
+    | =                                                                 
+
+<> ATTR_MODIFIER >  t:i 
+    | t:s
+
+
+
+<> TYPE_SELECTOR >  WQ_NAME                                                         f:r { {type:env.typ.TypeSelector, nodes:[$1], pos,  precedence: env.typ.D_SPECIFIER  } }
+    | NS_PREFIX? \*                                                                 f:r { {type:env.typ.TypeSelector, nodes:[{type:env.typ.QualifiedName, ns:$1 || "", val:"*", pos, precedence: 0 }], pos } } 
+
+
+<> WQ_NAME >  NS_PREFIX? tk:ident_token                                            f:r { {type:env.typ.QualifiedName, ns:$1 || "", val:$2, pos } }
+
+<> NS_PREFIX >  ( tk:ident_token   | \* ) \|                                       f:r { $$1 }
+
+
+##############################################################################################
+#### Declarations
+##############################################################################################
+
+<> declaration_list >  ( declaration? )(+\; )                                   f:r { $1.filter(i=>i!=";") }       
+
+    
+<> declaration > tk:declaration_id \: tk:declaration_values_sentineled \!important ?    f:r ^parseDeclaration
+
+<[recover declaration]
+    scan until [ \} \; ] 
+    then reduce f:r { { name:"invalid", pos, val:sym, VALID:false } } 
+    then set prod to declaration
+>
+
+<> declaration_values_sentineled > declaration_values ( ?=\} | ?=\; | ?=\!important | ?=g:nl )
+
+<> declaration_values > declaration_value
+    | declaration_values \( declaration_values \)                               
+    | declaration_values declaration_value                                    
+
+<> declaration_value > g:id | g:sym | g:num  |g:sp 
+
+##############################################################################################
+#### Primitives
+##############################################################################################
+
+<> identifier > tk:ident_token                                                 
+
+<> declaration_id > tk:ident_token
+
+<> css_id_symbols > css_id_symbols (RST g:sp g:nl)  g:id                            
+    | css_id_symbols (RST g:sp g:nl)  \_                                           
+    | css_id_symbols (RST g:sp g:nl)  \-                                            
+    | css_id_symbols (RST g:sp g:nl)  g:num       
+    | g:id
+    | \-
+
+<>string > " ( g:id | g:sym | g:num | g:sp )(*\" ) " f:r { $2 }
+    | ' ( g:id | g:sym | g:num | g:sp )(*\" ) ' f:r { $2 }    
+
+<> psuedo_class_value >  ( g:id | g:sym | g:num | g:sp )(+\" ) 
+
+#############################################################################################
+#### Comments
+#############################################################################################
+
+<> comment > \/*  ( g:id | g:sym | g:num | g:sp )(*) \*/

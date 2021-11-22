@@ -1,0 +1,25 @@
+{
+    "name": "@candlelib/log",
+    "version": "0.3.0",
+    "description": "Lightweight Logging Library",
+    "main": "./build/library/logger.js",
+    "types": "./build/types/logger.d.ts",
+    "repository": "github.com/CandleLibrary/log",
+    "author": "Anthony Weathersby",
+    "license": "MIT",
+    "private": false,
+    "type": "module",
+    "scripts": {
+        "test": "candle.cure ./test/"
+    },
+    "files": [
+        "/build",
+        "/README.md",
+        "/CHANGELOG.md",
+        "/LICENSE"
+    ],
+    "devDependencies": {
+        "@types/node": "^16.10.1",
+        "@candlelib/cure": "*"
+    }
+}

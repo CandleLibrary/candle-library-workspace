@@ -1,0 +1,9 @@
+import { data } from "@parent";
+
+export default <div>
+    <container data={data}>
+        <div>
+            {header}
+        </div>
+    </container>
+</div>

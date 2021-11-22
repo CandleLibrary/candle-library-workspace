@@ -1,0 +1,44 @@
+@IGNORE θws θnl
+
+<> start > v8_stack_trace
+
+<> v8_stack_trace > ( g:id | \ws | g:num | g:sym )(*\" ) ( g:nl v8_stack_lines? )?
+
+<> v8_stack_lines > ( v8_stack_line )(+g:nl)
+
+<> v8_stack_line > call_id? \at call_arg											f:r { $$sym1 ? { type:"call", call_id:$sym1, sub_stack: [$sym3] } : $sym3 }
+	| call_arg
+    | \<anonymous>                                                                  f:r { { type:"location", url: "anonymous", pos:$sym2 } }
+
+<> call_arg > call_id  \( v8_stack_line(+\, ) \)                                    f:r { { type:"call", call_id:$sym1, sub_stack: $sym3 } }
+    | call_id location_indices 				                                        f:r { { type:"location", url: $sym1 == "<anonymous>" ? "anonymous" :  new env.URL($sym1), pos:$sym2 } }
+
+<> call_id > g:id? ( member | \<anonymous> )    		                            f:r { $sym2 }
+    | location
+
+<> location_indices > \: g:num location_indices?									f:r { [ parseInt($sym2), ...$sym3 ] }
+
+<> location > url 							            
+
+<> url > (RST g:sp) ( protocol domain? f:r { $sym1 + $sym2 } )? path				f:r { ($sym1 + $sym2) }
+
+<> domain > (RST g:sp) ( g:id | g:num | \. | \- )(+\" )
+
+<> path > (RST g:sp) \/ ( \. | \/ | g:id | g:num )(+\" )                            f:r { $sym1 + $sym2 }
+
+<> protocol > g:id (RST g:sp) \: (RST g:sp) \//							f:r { $sym1 + $sym2 + $sym3 }
+
+<> member > identifier \. member                                                    f:r { $sym1 + $sym2 + $sym3 }
+    | identifier \.[ member \]                                                    f:r { $sym1 + $sym2 + $sym3 + $sym4 + $sym5 }
+    | identifier
+
+<> identifier > identifier_symbols 
+
+<> identifier_symbols >  identifier_symbols g:id      f:r { $sym1 + $sym2 }
+    │ identifier_symbols \_                           f:r { $sym1 + $sym2 }
+    │ identifier_symbols \-                           f:r { $sym1 + $sym2 }
+    │ identifier_symbols \$                           f:r { $sym1 + $sym2 }
+    │ identifier_symbols g:num                        f:r { $sym1 + $sym2 }
+    │ \_ 
+    │ \$ 
+    │ g:id

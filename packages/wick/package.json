@@ -1,0 +1,74 @@
+{
+    "name": "@candlelib/wick",
+    "version": "0.16.1",
+    "description": "Web Component Compiler",
+    "main": "./build/library/entry/wick-server.js",
+    "types": "./build/types/entry/wick-server",
+    "type": "module",
+    "bin": {
+        "candle.wick": "./index.js"
+    },
+    "scripts": {
+        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
+        "compile": "./scripts/compile.sh",
+        "test": "candle.cure  --headless ./test/* && candle.wick test ./test/",
+        "test.watch": "candle.cure -w ./test/*",
+        "server": "lantern",
+        "buildsite": "npm install && candle.wick compile --output ./www ./site"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/CandleLibrary/wick.git"
+    },
+    "keywords": [
+        "Template Component Compiler",
+        "Web Component Parser",
+        "Component",
+        "Web app",
+        "PWA",
+        "Components",
+        "JavaScript",
+        "Forms",
+        "Website",
+        "REST",
+        "APP"
+    ],
+    "files": [
+        "/build",
+        "/README.md",
+        "/CHANGELOG.md",
+        "/LICENSE",
+        "/index.js"
+    ],
+    "directories": {
+        "lib": "source",
+        "test": "test"
+    },
+    "author": "Anthony Weathersby",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/CandleLibrary/wick/issues"
+    },
+    "homepage": "https://github.com/CandleLibrary/wick#readme",
+    "devDependencies": {
+        "@types/node": "^13.9.1"
+    },
+    "jshintConfig": {
+        "esversion": 6,
+        "unused": true
+    },
+    "dependencies": {
+        "@candlelib/cure": "*",
+        "@candlelib/conflagrate": "*",
+        "@candlelib/css": "*",
+        "@candlelib/glow": "*",
+        "@candlelib/html": "*",
+        "@candlelib/hydrocarbon": "*",
+        "@candlelib/js": "*",
+        "@candlelib/log": "*",
+        "@candlelib/paraffin": "*",
+        "@candlelib/spark": "*",
+        "@candlelib/uri": "*",
+        "@candlelib/wind": "*"
+    }
+}

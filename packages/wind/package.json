@@ -1,0 +1,81 @@
+{
+    "name": "@candlelib/wind",
+    "version": "0.5.4",
+    "description": "Tokenizer",
+    "main": "./build/library/wind.js",
+    "types": "./build/types/wind.d.ts",
+    "type": "module",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "test.watch": "candle.cure -w ./test/**",
+        "test": "candle.cure ./test/**",
+        "build.table": "node ./source/nodejs/build_unicode_tables.node.js",
+        "prepublishOnly": "rm -rf ./build && tsc & sleep 10"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://www.github.com/candlelibrary/wind"
+    },
+    "files": [
+        "/build",
+        "/README.md",
+        "/CHANGELOG.md",
+        "/LICENSE"
+    ],
+    "keywords": [
+        "lexer",
+        "string",
+        "tokenizer"
+    ],
+    "author": "Anthony Weathersby",
+    "license": "MIT",
+    "devDependencies": {
+        "@candlelib/cure": "*",
+        "@candlelib/uri": "*"
+    },
+    "eslintConfig": {
+        "parserOptions": {
+            "sourceType": "module",
+            "ecmaVersion": 2020
+        },
+        "env": {
+            "es6": true,
+            "browser": true,
+            "node": true
+        },
+        "extends": "eslint:recommended",
+        "rules": {
+            "no-fallthrough": [
+                "error",
+                {
+                    "commentPattern": "[iI]ntentional( - [\\w\\W]*){0,1}"
+                }
+            ],
+            "semi-style": [
+                "error",
+                "last"
+            ],
+            "semi": [
+                "warn",
+                "always",
+                {
+                    "omitLastInOneLineBlock": true
+                }
+            ],
+            "prefer-const": "warn",
+            "new-cap": [
+                "error"
+            ],
+            "padding-line-between-statements": [
+                "error",
+                {
+                    "blankLine": "always",
+                    "prev": "function",
+                    "next": "*"
+                }
+            ]
+        }
+    }
+}

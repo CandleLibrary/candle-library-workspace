@@ -1,0 +1,63 @@
+{
+	"folders": [
+		{
+			"name": "Repo",
+			"path": "../",
+			"uri": "git@github.com/CandleLibrary/workspace"
+		},
+		{
+			"name": "Packages",
+			"path": "../packages/",
+		},
+		{
+			"name": "Wick",
+			"path": "../packages/wick"
+		},
+		{
+			"name": "Lantern",
+			"path": "../packages/lantern"
+		},
+		{
+			"name": "JS",
+			"path": "../packages/js"
+		},
+		{
+			"name": "CSS",
+			"path": "../packages/css"
+		},
+		{
+			"name": "Conflagrate",
+			"path": "../packages/conflagrate"
+		},
+		{
+			"name": "Cure",
+			"path": "../packages/cure"
+		},
+		{
+			"name": "Paraffin",
+			"path": "../packages/paraffin"
+		},
+		{
+			"name": "Log",
+			"path": "../packages/log"
+		},
+
+		{
+			"name": "Glow",
+			"path": "../packages/glow"
+		},
+	],
+	"settings": {
+		"testing.autoRun.mode": "rerun",
+		"search.exclude": {
+			"**/node_modules": true,
+			"**/bower_components": true,
+			"**/*.code-search": true,
+			"**/build": true,
+			"**/target": true
+		},
+		"cSpell.words": [
+			"candlelib",
+		]
+	}
+}

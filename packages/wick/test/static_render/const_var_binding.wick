@@ -1,0 +1,25 @@
+const data = "This data should be here";
+const num = 2;
+const var_data = 2;
+
+export default <div>
+    <span>{ data }</span>
+    <span>{ num + 2 }</span>
+    <span>{ var_data }</span>
+</div>;
+
+import test from "@test";
+
+test: {
+
+    const [span1, span2, span3]  = "@span";
+
+    assert( span1.innerHTML.trim() == "This data should be here" );
+
+    assert( span2.innerHTML.trim() == "4" );
+    
+    //This should not effect the component
+    var_data += 3;
+
+    assert( span3.innerHTML.trim() == "2" );
+}

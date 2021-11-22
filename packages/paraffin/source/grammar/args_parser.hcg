@@ -1,0 +1,86 @@
+@IMPORT default-productions as def
+
+@IGNORE g:sp
+
+<> start > args
+
+<> args > ( 
+        
+        arg(*) 
+        
+        f:r{ $1.flat().map(({key,val, hyphens})=>[key, val, hyphens]) } 
+    )
+
+    f:r{ 
+        (
+            Object.assign( 
+                Object.fromEntries( $$1.map( ([key, val, hyphens], i)=>[key, { index:i, val: val, hyphens:hyphens}])), 
+                { __array__ : $1} 
+            ) 
+        ) 
+    }
+
+<> arg > 
+        arg_initials 
+
+    |   arg_key_val
+
+    |   naked_arg
+
+<> arg_initials > \- def::js_identifier ( \= ? val f:r{ {e:!!$$1, v:$2} } )?
+
+    f:r{
+        $2.split("").flatMap(
+            (v,i,r)=>{
+                if(i==r.length-1 && $$3)
+                    if(!!( typeof env.data[v] == "string" ? env.data[env.data[v]] :  env.data[v] ) || ($$3.e)){
+                        return { key:v, val:  $$3.v, hyphens:1 };
+                    } else return [{key:v, val:true, hyphens:1 }, {key:$$3.v, val:null, hyphens:0 }];
+                return { key:v, val:true,  hyphens:1 }
+            }   
+        )
+    }
+
+<> arg_key_val > 
+    
+    \-- key ( 
+        
+        \= ? val 
+        
+        f:r{ {e:!!$$1, v:$2} } 
+    )?    
+    
+    f:r{ ($$3) 
+            ? ( 
+                !!( typeof env.data[$$2] == "string" ? env.data[env.data[$$2]] :  env.data[$$2] ) 
+                || 
+                $$3.e
+            ) 
+                ? {key:$$2, val:$3.v, hyphens:2} 
+                : [{key:$$2, val:true, hyphens:2}, {key:$$3.v, val:null, hyphens:0}]
+            : {key:$2, hyphens:2}
+        }
+
+<> naked_arg > val                    
+    
+    f:r{ { key:$1, val:null, hyphens:0 } }
+
+<> key > def::js_identifier
+
+<> val > 
+        def::string
+    |   ( 
+                g:num 
+            |   g:id 
+            |   g:sym 
+        ) 
+        
+        ( 
+                g:num 
+            |   g:id 
+            |   g:sym 
+        )(*\" ) 
+         
+        ( g:sp | $eof )
+        
+        f:r{ $1 + $2 } 

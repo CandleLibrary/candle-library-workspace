@@ -1,0 +1,39 @@
+{
+    "name": "@candlelib/uri",
+    "version": "0.3.2",
+    "description": "URL/URI parser and basic request handler.",
+    "main": "./build/library/uri.js",
+    "types": "./build/types/uri.d.ts",
+    "type": "module",
+    "scripts": {
+        "test": "candle.cure ./test/",
+        "test.watch": "candle.cure -w ./test/**",
+        "build": "./bin/cfw_test.js ./load_test.spec.js",
+        "prepublishOnly": "rm -rf ./build && tsc & sleep 5"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/CandleLibrary/uri.git"
+    },
+    "files": [
+        "/build",
+        "/README.md",
+        "/CHANGELOG.md",
+        "/LICENSE"
+    ],
+    "keywords": [
+        "URL",
+        "URI",
+        "requests"
+    ],
+    "author": "Anthony Weathersby",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/CandleLibrary/uri/issues"
+    },
+    "homepage": "https://github.com/CandleLibrary/uri#readme",
+    "devDependencies": {
+        "@candlelib/cure": "*",
+        "@types/node": "16.11.7"
+    }
+}

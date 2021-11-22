@@ -1,0 +1,44 @@
+{
+    "name": "@candlelib/paraffin",
+    "version": "0.1.24",
+    "description": "Command Line Interface Library",
+    "type": "module",
+    "main": "./build/library/paraffin.js",
+    "types": "./build/types/paraffin.d.ts",
+    "engines": {
+        "node": ">=14"
+    },
+    "scripts": {
+        "build.watch": "tsc --watch",
+        "build": "tsc",
+        "test-wickurse": "node ./test/composite.practical.spec.js",
+        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
+        "build-colors": "./utils/build_colors.js",
+        "test": "candle.cure ./tests/",
+        "compile.terminfo.debug": "hydrocarbon compile --nom terminfo_parser --output_dir ./source/typescript/parser/ --annotations --debug  ./source/grammar/terminfo.hcg",
+        "compile.terminfo.release": "hydrocarbon compile --nom terminfo_parser --output_dir ./source/typescript/parser/ --recognizer_type wasm  ./source/grammar/terminfo.hcg",
+        "compile.debug": "hydrocarbon compile --type ts --output ./source/typescript/parser/args_parser ./source/grammar/args_parser.hcg",
+        "compile.release": "hydrocarbon compile --type ts --output ./source/typescript/parser/args_parser ./source/grammar/args_parser.hcg"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/candlelibrary/paraffin.git"
+    },
+    "files": [
+        "/build",
+        "/README.md",
+        "/CHANGELOG.md",
+        "/LICENSE"
+    ],
+    "author": "Anthony Weathersby",
+    "license": "MIT",
+    "dependencies": {
+        "@candlelib/hydrocarbon": "*",
+        "@candlelib/uri": "*",
+        "@candlelib/log": "*"
+    },
+    "devDependencies": {
+        "@candlelib/cure": "*",
+        "jimp": "^0.9.6"
+    }
+}

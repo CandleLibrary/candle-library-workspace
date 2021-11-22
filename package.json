@@ -1,0 +1,26 @@
+{
+	"name": "@candlelib/workspace",
+	"version":"1.0.0",
+	"workspaces": [
+		"packages/*"	
+	],
+	"devPackages": [
+		"@candlelib/conflagrate",
+		"@candlelib/css",
+		"@candlelib/cure",
+		"@candlelib/dev-tools",
+		"@candlelib/glow",
+		"@candlelib/html",
+		"@candlelib/hydrocarbon",
+		"@candlelib/js",
+		"@candlelib/lantern",
+		"@candlelib/log",
+		"@candlelib/paraffin",
+		"@candlelib/spark",
+		"@candlelib/uri",
+		"@candlelib/wick",
+		"@candlelib/wind"
+	],
+	"type":"module",
+	"private":true
+}

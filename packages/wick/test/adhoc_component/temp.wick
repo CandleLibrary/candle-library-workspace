@@ -1,0 +1,23 @@
+#! candle.wick run
+
+// ./my_component.wick
+
+import "./my_style.css";
+
+let likes = 1;
+
+export default <div> 
+    <div class=banner>
+        <h1> Hello World! </h1>
+        <h3> 👍: {likes > 9000 ? "Over 9000 !!!!!!" : likes} </h3>
+        <p><button onclick={likes++}> LIKE! </button></p>
+    </div>
+</div>;
+
+import test from "@test";
+
+test: {
+   likes += 9001;
+
+   assert( document.querySelector("h3").innerText == "👍: OVER 9000 !!!!!!" );
+}
