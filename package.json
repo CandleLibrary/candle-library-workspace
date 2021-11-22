@@ -1,8 +1,8 @@
 {
 	"name": "@candlelib/workspace",
-	"version":"1.0.0",
+	"version": "1.0.0",
 	"workspaces": [
-		"packages/*"	
+		"packages/*"
 	],
 	"devPackages": [
 		"@candlelib/conflagrate",
@@ -21,6 +21,6 @@
 		"@candlelib/wick",
 		"@candlelib/wind"
 	],
-	"type":"module",
-	"private":true
+	"type": "module",
+	"private": true
 }
