@@ -54,7 +54,8 @@ export interface HTMLHandler<T = HTMLNode, P = HTMLNode> {
     ):
         (T | P | (P | T)[])
         | void
-        | Promise<T | P | (T | P)[] | void>;
+        | null
+        | Promise<T | P | (T | P)[] | void | null>;
 }
 
 export interface TemplateHTMLNode {

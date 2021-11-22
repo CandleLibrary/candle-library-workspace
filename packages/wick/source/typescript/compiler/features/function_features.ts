@@ -57,7 +57,8 @@ registerFeature(
                             "ontrsout": "oTO",
                             "onarrange": "aRR",
                             "onload": "onload",
-                        }[name.toLocaleLowerCase()] ?? "";
+                            "onmount": "onload",
+                        }[name.toLocaleLowerCase().replace("on_", "on")] ?? "";
 
                         if (internal_method_name != "") {
                             // This should be an internally called method

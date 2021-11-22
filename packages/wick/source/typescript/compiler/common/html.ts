@@ -85,7 +85,12 @@ export function Is_Tag_From_HTML_Spec(tag_name: string): boolean { return html_t
 export function Is_Tag_Void_Element(tag_name: string): boolean { return html_void_tags.has(tag_name.toLowerCase()); }
 
 
-export function getElementAtIndex<T = HTMLNode>(comp: ComponentData, index: number, node: HTMLNode = comp.HTML, counter = { i: 0 }): T {
+export function getElementAtIndex<T = HTMLNode>(
+    comp: ComponentData,
+    index: number,
+    node: HTMLNode = comp.HTML,
+    counter = { i: 0 }
+): T | null {
 
     if (index == node.id)
         return <T><any>node;
@@ -93,7 +98,7 @@ export function getElementAtIndex<T = HTMLNode>(comp: ComponentData, index: numb
     if (node.nodes)
         for (const child of node.nodes) {
             let out = null;
-            if ((out = getElementAtIndex(comp, index, child, counter)))
+            if ((out = getElementAtIndex<T>(comp, index, child, counter)))
                 return out;
         }
 

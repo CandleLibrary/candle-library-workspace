@@ -1,5 +1,4 @@
-//@ts-ignore This will be provided by the server
-
+//@ts-ignore
 import glow from '@candlelib/glow';
 import URI from '@candlelib/uri';
 import Wick, { gatherWickElements } from '../entry/wick-runtime.js';
@@ -11,7 +10,7 @@ type GlowAnimation = typeof glow;
 
 const async_function = (async function () { }).constructor;
 
-const URL_HOST = { wurl: <URI>null };
+const URL_HOST = { wurl: <URI | null>null };
 
 export {
     PageView,
@@ -61,19 +60,23 @@ export class Router {
     models_constructors: any;
     current_url: any;
     current_query: any;
-    current_view: PageView;
+    current_view: PageView | null;
     finalizing_pages: any;
     prev: any;
     IGNORE_NAVIGATION: boolean;
     glow: GlowAnimation;
     wick: typeof Wick;
     modal_stack: PageView[];
-    prev_url: URI;
+    prev_url: URI | null;
 
     /**
      * Constructs the object.
      */
-    constructor(wick: typeof Wick, glow: GlowAnimation) {
+    constructor(wick: typeof Wick) {
+
+        //Initialize CSS + Conflagrate Parsers
+
+        console.log(glow);
 
         this.pages = {};
 
@@ -89,21 +92,23 @@ export class Router {
 
         this.current_view = null;
 
+        this.IGNORE_NAVIGATION = false;
+
         this.finalizing_pages = [];
 
         this.prev = null;
 
+        this.prev_url = null;
+
         this.glow = glow;
 
         this.wick = wick;
-        wick.rt.context.processLink = (temp, source) => {
-            if (!temp.onclick) temp.onclick = (e) => {
+        wick.rt.context.processLink = (temp: HTMLElement, source) => {
+            if (!temp.onclick) temp.onclick = (e: MouseEvent) => {
 
-                let link = e.currentTarget;
+                let link: HTMLAnchorElement = <any>e.currentTarget;
 
                 if (link.origin !== location.origin) return;
-
-                //source.bubbleLink();
 
                 e.preventDefault();
 
@@ -111,7 +116,8 @@ export class Router {
 
                 history.pushState({}, "ignored title", link.href);
 
-                window.onpopstate(e);
+                if (window)
+                    window.onpopstate?.(<any>e);
             };
         };
 
@@ -130,8 +136,6 @@ export class Router {
             } else {
                 this.parseURL(document.location.toString());
             }
-
-
         };
     }
 
@@ -164,7 +168,12 @@ export class Router {
         if (next_modal)
             return this.loadPage(next_modal);
 
-        return this.parseURL(this.prev_url.toString(), this.prev_url);
+
+        if (this.prev_url)
+
+            return this.parseURL(this.prev_url.toString(), this.prev_url);
+
+        return new URI(this.current_url);
     }
 
     /*
@@ -277,7 +286,7 @@ export class Router {
 
         let transition_elements = {};
 
-        let finalizing_pages = [];
+        let finalizing_pages: PageView[] = [];
 
         let current_view = this.current_view;
 
@@ -287,8 +296,11 @@ export class Router {
 
             // Replace the URL with the previous calling URL to prevent subsequent 
             // attempts of navigation to the modal resource.
-            let u = new URL(this.prev_url.toString());
+
+            let u = new URL(this.prev_url?.toString() ?? this.current_url.toString());
+
             u.hash = `modal://${wurl + ""}`;
+
             history.replaceState({
                 modal_state: true,
                 modal_url: wurl.toString()
@@ -413,7 +425,7 @@ export class Router {
 
         if (app_source && dom_app) {
 
-            var page: PageView = null;
+            var page: PageView | null = null;
 
             gatherWickElements(<HTMLElement><any>DOM);
 

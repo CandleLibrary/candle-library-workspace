@@ -37,7 +37,7 @@ export interface JSHandler<T = JSNode> {
         frame: FunctionFrame
     ):
         (T | JSNode | void)
-        | Promise<T | JSNode | void>;
+        | Promise<T | JSNode | void | null>;
 
 }
 

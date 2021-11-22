@@ -282,7 +282,7 @@ export async function processWickHTML_AST(
 
         if (html_node.type & HTMLNodeClass.HTML_ELEMENT) {
             component.ele_hash += <any>html_node.tag;
-            for (const attrib of (<HTMLElementNode>html_node).attributes)
+            for (const attrib of (<HTMLElementNode>html_node)?.attributes ?? [])
                 if (!attrib.IS_BINDING)
                     component.ele_hash += attrib.name + attrib.value;
                 else

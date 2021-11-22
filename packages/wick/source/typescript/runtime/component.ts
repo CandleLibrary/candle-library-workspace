@@ -8,7 +8,7 @@ import {
 } from "./html.js";
 
 
-type BindingUpdateFunction = () => void;
+type BindingUpdateFunction = (...rest: any[]) => void;
 
 export type ComponentElement = HTMLElement & { wick_component: WickRTComponent; };
 
@@ -16,8 +16,6 @@ const enum DATA_DIRECTION {
     DOWN = 1,
     UP = 2
 }
-
-const empty_array = [];
 
 const enum ComponentFlag {
     CONNECTED = 1 << 0,
@@ -28,7 +26,7 @@ const enum ComponentFlag {
 
 export class WickRTComponent implements Sparky, ObservableWatcher {
 
-    ele: HTMLElement;
+    ele: HTMLElement | null;
 
     elu: (HTMLElement | Text)[][];
 
@@ -37,8 +35,11 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     ALLOW_UPDATE: boolean;
 
     context: Context;
-    nlu: object;
 
+    //@ts-ignore
+    nlu: { [key: string]: number; };
+
+    //@ts-ignore
     lookup_function_table: BindingUpdateFunction[];
 
     /**
@@ -49,13 +50,14 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     /**
      * Parent component
      */
+    //@ts-ignore
     par: WickRTComponent;
 
     ctr: WickContainer[];
     /**
      * Identifier of interval watcher for non-dynamic models.
      */
-    polling_id?: number;
+    polling_id: number;
 
     model: any;
 
@@ -103,9 +105,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     ) {
         this.name = this.constructor.name;
 
-        this.nlu = undefined;
-        this.lookup_function_table = undefined;
 
+        this.ele = null;
+        this.ci = 0;
         this.ch = [];
         this.elu = [];
         this.ctr = [];
@@ -327,7 +329,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         }
     }
 
-    appendToDOM(parent_element: HTMLElement, other_element: HTMLElement = null, INSERT_AFTER = false) {
+    appendToDOM(parent_element: HTMLElement, other_element: HTMLElement | null = null, INSERT_AFTER = false) {
 
         //Lifecycle Events: Connecting <======================================================================
         this.connecting();
@@ -381,9 +383,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      */
 
 
-    oTI(row, col, DESCENDING, trs) { }
-    oTO(row, col, DESCENDING, trs) { }
-    aRR(row, col, trs) { }
+    oTI(row: number, col: number, DESCENDING: boolean, trs) { }
+    oTO(row: number, col: number, DESCENDING: boolean, trs) { }
+    aRR(row: number, col: number, trs) { }
 
 
     onTransitionOutEnd() {
@@ -466,7 +468,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      * @param col The new column number in which the component lies
      * @param trs A transition object that can be used to animate the position change
      */
-    arrange(row, col, trs) { this.aRR(row, col, trs.in); }
+    arrange(row: number, col: number, trs) { this.aRR(row, col, trs.in); }
 
     /**
      * Call when the object should transition from an out of view state to 
@@ -477,7 +479,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      * a lower positional index
      * @param trs A transition object that can be used to animate the position change
      */
-    transitionIn(row, col, DESCENDING, trs) {
+    transitionIn(row: number, col: number, DESCENDING: boolean, trs) {
 
         for (const ch of this.ch)
             ch.transitionIn(row, col, DESCENDING, trs);
@@ -579,7 +581,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      *  ██████  ██      ██████  ██   ██    ██    ███████ 
      */
 
-    update(data: object, flags: number = 1, IMMEDIATE: boolean = false) {
+    update(data: any, flags: number = 1, IMMEDIATE: boolean = false) {
 
         if (!this.ALLOW_UPDATE) return;
 
@@ -614,11 +616,13 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      */
     ua(attribute_index: number, attribute_value: any, RETURN_PREVIOUS_VAL = false) {
 
-        const prev_val = this[attribute_index];
+        const comp: { [key: string]: any; } = <any>this;
+
+        const prev_val = comp[attribute_index];
 
         if (attribute_value !== prev_val) {
 
-            this[attribute_index] = attribute_value;
+            comp[attribute_index] = attribute_value;
             if (
                 !this.call_set.has(attribute_index)
                 &&
@@ -635,12 +639,14 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             }
         }
 
-        return RETURN_PREVIOUS_VAL ? prev_val : this[attribute_index];
+        return RETURN_PREVIOUS_VAL ? prev_val : comp[attribute_index];
     }
 
     fua(attribute_index: number, attribute_value: any, RETURN_PREVIOUS_VAL = false) {
 
-        const prev_val = this[attribute_index];
+        const comp: { [key: string]: any; } = <any>this;
+
+        const prev_val = comp[attribute_index];
 
         if (
             !this.call_set.has(attribute_index)
@@ -649,13 +655,13 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         )
             this.call_set.set(attribute_index, [this.active_flags, this.call_depth]);
 
-        this[attribute_index] = attribute_value;
+        comp[attribute_index] = attribute_value;
 
         //Forcefully update 
         spark.queueUpdate(this, 0, 0, true);
 
 
-        return RETURN_PREVIOUS_VAL ? prev_val : this[attribute_index];
+        return RETURN_PREVIOUS_VAL ? prev_val : comp[attribute_index];
     }
     u(flags: DATA_DIRECTION, call_depth: number = this.call_depth) {
 
@@ -672,26 +678,29 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     }
 
     /**
-     * Check to see of the index locations are not undefined
+     * Check to see of the index locations are defined
      * @param ids 
      */
-    check(...ids) {
+    check(...ids: string[]) {
+
+        const comp: { [key: string]: any; } = <any>this;
 
         for (const id of ids)
-            if (typeof this[id] == "undefined")
+            if (typeof comp[id] == "undefined")
                 return false;
 
         return true;
     }
 
-    syncParentMethod(this_index, parent_method_index, child_index) {
+    syncParentMethod(this_index: number, parent_method_index: number, child_index: number) {
 
         this.ci = child_index;
 
+        //@ts-ignore
         this.pui[this_index] = this.par["u" + parent_method_index];
     }
 
-    updateFromParent(local_index, attribute_value, flags) {
+    updateFromParent(local_index: number, attribute_value: any, flags: number) {
 
         if (flags >> 24 == this.ci + 1)
             return;
@@ -701,13 +710,13 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.ua(local_index, attribute_value);
     }
 
-    updateParent(data) {
+    updateParent(data: any) {
         if (this.par)
             this.updateFromChild.call(this.par, data);
     }
 
 
-    updateFromChild(data) {
+    updateFromChild(data: any) {
 
         for (const key in data) {
 
@@ -727,7 +736,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         }
     };
 
-    scheduledUpdate(step_ratio, diff) {
+    scheduledUpdate(step_ratio: number, diff: number) {
 
         this.call_depth = 1;
 
@@ -752,7 +761,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     clearActiveBindingCalls() {
 
-        if (this.binding_call_set.length == 0) return empty_array;
+        if (this.binding_call_set.length == 0) return [];
 
         const data = this.binding_call_set.slice();
 
@@ -763,7 +772,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     clearActiveCalls() {
 
-        if (this.call_set.size == 0) return empty_array;
+        if (this.call_set.size == 0) return [];
 
         const data = [...this.call_set.entries()];
 
@@ -829,7 +838,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
 
             if (ele.hasAttribute("w:own"))
-                if (+ele.getAttribute("w:own") != this.affinity)
+                if (+(ele.getAttribute("w:own") || -1) != this.affinity)
                     return 0;
 
             // Binding Text Node
@@ -840,7 +849,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 this.integrateElement(child, component_chain);
 
                 if (ele.hasAttribute("w:u"))
-                    this.se(parseInt(ele.getAttribute("w:u")), child);
+                    this.se(parseInt((ele.getAttribute("w:u") || "0")), child);
 
 
                 ele.replaceWith(child);
@@ -855,7 +864,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 ele.replaceWith(text);
 
                 if (ele.hasAttribute("w:u"))
-                    this.se(parseInt(ele.getAttribute("w:u")), text);
+                    this.se(parseInt((ele.getAttribute("w:u") || "0")), text);
 
 
                 //@ts-ignore
@@ -887,7 +896,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 } else if (ele.hasAttribute("w:r")) {
 
                     const
-                        index = +ele.getAttribute("w:r"),
+                        index = +(ele.getAttribute("w:r") || -1),
                         lu_index = index % 50,
                         comp_index = (index / 50) | 0;
 
@@ -913,7 +922,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         }
 
         if (ele.hasAttribute("w:u"))
-            this.se(parseInt(ele.getAttribute("w:u")), ele);
+            this.se(parseInt((ele.getAttribute("w:u") || "0")), ele);
 
 
         if (PROCESS_CHILDREN)
@@ -1007,7 +1016,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         return <HTMLElement>temp_ele.firstElementChild;
     }
 
-    createElement(context, parent_chain) {
+    createElement(context: Context, parent_chain: WickRTComponent[]) {
 
         const ele = this.ce();
 
@@ -1037,15 +1046,15 @@ function process_container(
 ) {
 
     const
-        null_count = parseInt(ele.getAttribute("null")) || 0,
-        null_elements = [];
+        null_count = parseInt((ele.getAttribute("null") || "0")) || 0,
+        null_elements: HTMLElement[] = [];
 
     if (null_count > 0) {
 
-        let prev = ele;
+        let prev: HTMLElement | null = ele;
 
         for (let i = 0; i < null_count; i++) {
-            null_elements.push(prev.nextElementSibling);
+            null_elements.push(prev.nextElementSibling as HTMLElement);
             prev = null_elements[i];
         }
     }

@@ -46,4 +46,4 @@ addCLIConfig("root", {
     help_brief: HELP_MESSAGE
 });
 
-processCLIConfig();
+processCLIConfig("candle.wick");

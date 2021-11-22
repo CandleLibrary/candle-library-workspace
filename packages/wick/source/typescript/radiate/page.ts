@@ -18,7 +18,6 @@ export class PageView {
 
     url: URI;
     eles: Element[];
-    finalizing_view;
     type: PageType;
     component: WickRTComponent;
     ele: ComponentElement;
@@ -36,7 +35,6 @@ export class PageView {
         this.page_component_name = app_page.classList[0];
         this.url = URL;
         this.eles = [];
-        this.finalizing_view = null;
         this.type = PageType.STANDARD;
         this.ele = app_page;
         this.component = null;

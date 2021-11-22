@@ -33,9 +33,9 @@ import { AsyncFunction } from './AsyncFunction.js';
 export interface StaticDataPack {
     root_element?: HTMLElementNode;
     self: ComponentData;
-    model?: object;
+    model: object | null;
     context: Context;
-    prev?: StaticDataPack;
+    prev: StaticDataPack | null;
 
 }
 
@@ -62,7 +62,7 @@ export async function getStaticValue(
     static_data_pack: StaticDataPack,
     ASSUME_RUNTIME: boolean = false,
     ref: any = null
-): Promise<{ html: any, value: null; }> {
+): Promise<{ html: any, value: any; }> {
 
     const input_args = new Map;
 

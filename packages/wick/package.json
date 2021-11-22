@@ -58,9 +58,9 @@
         "unused": true
     },
     "dependencies": {
-        "@candlelib/cure": "*",
         "@candlelib/conflagrate": "*",
         "@candlelib/css": "*",
+        "@candlelib/cure": "*",
         "@candlelib/glow": "*",
         "@candlelib/html": "*",
         "@candlelib/hydrocarbon": "*",
@@ -69,6 +69,7 @@
         "@candlelib/paraffin": "*",
         "@candlelib/spark": "*",
         "@candlelib/uri": "*",
-        "@candlelib/wind": "*"
+        "@candlelib/wind": "*",
+        "esbuild": "^0.13.15"
     }
 }

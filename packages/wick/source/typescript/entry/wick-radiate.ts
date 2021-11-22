@@ -22,7 +22,7 @@ export default function radiate() {
 
                     await wick.init_module_promise;
 
-                const router = new Router(wick, await wick.rt.loadGlow());
+                const router = new Router(wick);
 
                 //@ts-ignore
                 wick.rt.router = router;

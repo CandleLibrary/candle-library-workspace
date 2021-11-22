@@ -160,7 +160,7 @@ export class Context {
     /**
      * Store for ComponentData
      */
-    components?: Map<string, ComponentData>;
+    components: Map<string, ComponentData>;
 
     css_cache?: Map<string, { css_ele: HTMLStyleElement, count: number; }>;
 
@@ -351,7 +351,7 @@ export class Context {
                 //@ts-ignore
                 obj[a] = Object.assign({}, this[a]);
             //@ts-ignore
-            else if (typeof (this[a]) == "array")
+            else if (Array.is(this[a]))
                 //@ts-ignore
                 obj[a] = this[a].slice();
             else

@@ -5,7 +5,7 @@ import { rt } from "./global.js";
 //
 // https://www.w3.org/TR/2011/WD-html5-20110525/namespaces.html
 //
-const namespaces = [
+const namespaces: string[] = [
     "www.w3.org/1999/xhtml",            // Default HTML - 0
     "http://www.w3.org/2000/svg",              // SVG - 1
     "www.w3.org/1998/Math/MathML",      // MATHML - 2
@@ -16,15 +16,15 @@ const namespaces = [
 
 
 
-function createText(data) {
+function createText(data: string) {
     return document.createTextNode(data);
 }
 
-function createElement(tag_name) {
+function createElement(tag_name: string) {
     return document.createElement(tag_name);
 }
 
-export function getNameSpace(name_space_lookup) {
+export function getNameSpace(name_space_lookup: number) {
     return namespaces[name_space_lookup] || "";
 }
 
@@ -34,7 +34,11 @@ export function getNameSpace(name_space_lookup) {
  * @param name_space 
  * 
  */
-export function createNamespacedElement(tag_name, name_space, data = ""): HTMLElement | Text {
+export function createNamespacedElement(
+    tag_name: string,
+    name_space: string,
+    data = ""
+): HTMLElement | Text {
 
     let ele: any = null;
 
@@ -107,13 +111,17 @@ export function hydrateComponentElements(pending_component_elements: HTMLElement
 }
 
 
-export function hydrateComponentElement(hydrate_candidate: HTMLElement, parent_chain: WickRTComponent[] = [], existing_comp = null) {
+export function hydrateComponentElement(
+    hydrate_candidate: HTMLElement,
+    parent_chain: WickRTComponent[] = [],
+    existing_comp?: WickRTComponent
+) {
 
     let names = getComponentNames(hydrate_candidate), affinity = 0;
 
     const u = undefined;
 
-    let first_comp: WickRTComponent = null;
+    let first_comp: WickRTComponent | null = null;
 
     for (const component_name of names) {
 

@@ -42,7 +42,7 @@ registerFeature(
                             return null;
                         }
 
-                        if (host_node.attributes.some(
+                        if (host_node.attributes?.some(
                             val => [
                                 "text", "number", "month", "email", "time", "url", "week", "tel", "date", "color"
                             ].includes((<string>val.value).toLocaleLowerCase()))
@@ -62,7 +62,7 @@ registerFeature(
                             return null;
                         }
 
-                        if (host_node.attributes.some(val => val.value == "checkbox")) {
+                        if (host_node.attributes?.some(val => val.value == "checkbox")) {
 
 
                             // Process the primary expression for Binding Refs and static
@@ -92,14 +92,15 @@ registerFeature(
             verify: () => true,
 
             buildJS: (node, sdp, element_index, addOnBindingUpdate, addInitBindingInit) => {
+
                 const { expr, stmt } = build_system.js;
 
                 const
                     expression = node.value[0],
                     root_type = expression.type,
                     READONLY = getElementAtIndex<HTMLElementNode>(sdp.self, element_index)
-                        .attributes
-                        .some(({ value: v }) => v.toString().toLowerCase() == "readonly");
+                        ?.attributes
+                        ?.some(({ value: v }) => v.toString().toLowerCase() == "readonly") ?? false;
                 // Determine whether the expression is trivial, simple, or complex.
                 // Trivial expressions are built in types. Number, Boolean, and String (and templates without bindings).
                 // Simple expression are single identifiers

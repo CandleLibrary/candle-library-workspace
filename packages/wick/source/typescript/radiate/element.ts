@@ -28,7 +28,7 @@ export class Element {
      *
      * @param      {HTMLElement}  element  The HTMLElement that this Element will be bound to. 
      */
-    constructor(element: ComponentElement, page: PageView = null) {
+    constructor(element: ComponentElement, page: PageView | null = null) {
 
         this.id = element.id || element.classList[0];
 

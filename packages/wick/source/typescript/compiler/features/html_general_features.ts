@@ -4,7 +4,7 @@ import {
     BINDING_VARIABLE_TYPE,
     HTMLAttribute, HTMLElementNode, HTMLNode, HTMLNodeType
 } from "../../types/all.js";
-import { getAttributeValue } from '../common/html.js';
+import { getAttributeValue, hasAttribute } from '../common/html.js';
 import { registerFeature } from './../build_system.js';
 import { ComponentHash } from './../common/hash_name.js';
 
@@ -185,48 +185,6 @@ registerFeature(
         );
 
         /** ##########################################################
-         * Imported Components 
-         */
-        build_system.registerHTMLParserHandler(
-            {
-                priority: -99999,
-
-                async prepareHTMLNode(node, host_node, host_element, index, skip, component, context) {
-
-                    if (component.local_component_names.has(node.tag)) {
-
-                        const
-                            name = component.local_component_names.get(node.tag),
-                            comp = context.components.get(name);
-
-                        node.child_id = component.children.push(1) - 1;
-
-                        node.component = comp;
-
-                        if (comp) {
-
-                            node.component_name = node.component.name;
-
-                            node.child_component_index = node.child_id;
-
-                            //@ts-ignore
-                            node.attributes.push({
-                                type: HTMLNodeType.HTMLAttribute,
-                                name: "expat",
-                                value: ComponentHash(index + comp.name + name)
-                            });
-
-                        }
-                        node.tag = "div";
-                    }
-
-                    return node;
-                }
-
-            }, HTMLNodeType.HTML_Element
-        );
-
-        /** ##########################################################
          *  Add-HOC Component
          */
         build_system.registerHTMLParserHandler(
@@ -243,7 +201,7 @@ registerFeature(
                     context
                 ) {
                     if (
-                        node.tag.toLocaleLowerCase() == "component"
+                        node.tag?.toLocaleLowerCase() == "component"
                     ) {
 
                         node.tag = "div";
@@ -275,6 +233,8 @@ registerFeature(
 
                             let new_node = Object.assign({}, node);
 
+
+
                             new_node.attributes = old_attribs;
 
                             new_node.nodes = [];
@@ -293,6 +253,10 @@ registerFeature(
                                 name: "expat",
                                 value: ComponentHash(index + comp.name)
                             });
+                            console.log("AASDADSAsd");
+                            if (hasAttribute("radiate_element", node)) {
+                                console.log("AASDADSAsd");
+                            }
                             /*
                             */
 
@@ -308,68 +272,68 @@ registerFeature(
 
 
 
+        /*  /** ##########################################################
+          *  Radiate Element
+          * /
+         build_system.registerHTMLParserHandler<HTMLElementNode, HTMLElementNode>(
+             {
+                 priority: -998,
+ 
+                 async prepareHTMLNode(node, host_node, host_element, index, skip, component, context) {
+ 
+ 
+                     if (node.tag?.toLocaleLowerCase().replace(/_/g, "-") == "radiate-element") {
+ 
+                         node.tag = "div";
+ 
+                         const { comp } = await build_system.parseComponentAST(
+                             Object.assign({}, node, {
+                                 attribute: node.attributes?.slice(),
+ 
+                             }),
+                             node.pos.slice(),
+                             component.location,
+                             context,
+                             component
+                         );
+ 
+                         if (comp) {
+ 
+                             if (!node.attributes)
+                                 node.attributes = [];
+ 
+                             node.nodes = [];
+ 
+                             node.child_id = component.children.push(1) - 1;
+ 
+                             node.component = comp;
+ 
+                             node.component_name = node.component.name;
+ 
+                             node.attributes.push({
+                                 type: HTMLNodeType.HTMLAttribute,
+                                 name: "radiate",
+                                 value: component.name,
+                             }, {
+                                 type: HTMLNodeType.HTMLAttribute,
+                                 name: "expat",
+                                 value: ComponentHash(index + comp.name)
+                             });
+ 
+                             component.local_component_names.set(comp?.name, comp?.name);
+ 
+                             skip();
+                         }
+ 
+                         return node;
+                     }
+                 }
+ 
+             }, HTMLNodeType.HTML_Element
+         ); */
+
         /** ##########################################################
-         *  Radiate Element
-         */
-        build_system.registerHTMLParserHandler<HTMLElementNode, HTMLElementNode>(
-            {
-                priority: -998,
-
-                async prepareHTMLNode(node, host_node, host_element, index, skip, component, context) {
-
-
-                    if (node.tag.toLocaleLowerCase() == "radiate-element") {
-
-                        node.tag = "div";
-
-                        const { comp } = await build_system.parseComponentAST(
-                            Object.assign({}, node),
-                            node.pos.slice(),
-                            component.location,
-                            context,
-                            component
-                        );
-
-                        if (comp) {
-
-                            node.nodes.length = 0;
-
-                            node.child_id = component.children.push(1) - 1;
-
-                            node.component = comp;
-
-                            node.attributes.push({
-                                name: "radiate",
-                                value: component.name,
-                                type: HTMLNodeType.HTMLAttribute
-                            });
-
-                            component.local_component_names.set(comp?.name, comp?.name);
-
-                            skip();
-
-                            node.component_name = comp.name;
-
-                            //@ts-ignore
-                            node.attributes.push({
-                                type: HTMLNodeType.HTMLAttribute,
-                                name: "expat",
-                                value: ComponentHash(index + comp.name)
-                            });
-                            /*
-                            */
-                        }
-
-                        return node;
-                    }
-                }
-
-            }, HTMLNodeType.HTML_Element
-        );
-
-
-        /** ##########################################################
-         *  Foreign Elements
+         * Imported Components 
          */
         build_system.registerHTMLParserHandler(
             {
@@ -377,11 +341,10 @@ registerFeature(
 
                 async prepareHTMLNode(node, host_node, host_element, index, skip, component, context) {
 
-
-                    if (component.local_component_names.has(node.tag)) {
+                    if (component.local_component_names.has(node.tag ?? "")) {
 
                         const
-                            name = component.local_component_names.get(node.tag),
+                            name = component.local_component_names.get(node.tag ?? "") ?? "",
                             comp = context.components.get(name);
 
                         node.child_id = component.children.push(1) - 1;
@@ -390,7 +353,9 @@ registerFeature(
 
                         if (comp) {
 
-                            node.component_name = node.component.name;
+                            node.component_name = node.component?.name;
+
+                            node.child_component_index = node.child_id;
 
                             //@ts-ignore
                             node.attributes.push({
@@ -399,7 +364,17 @@ registerFeature(
                                 value: ComponentHash(index + comp.name + name)
                             });
 
+
+                            if (hasAttribute("radiate_element", node)) {
+                                node.attributes.push({
+                                    type: HTMLNodeType.HTMLAttribute,
+                                    name: "radiate",
+                                    value: component.name,
+                                });
+                            }
+
                         }
+
                         node.tag = "div";
 
                         return node;

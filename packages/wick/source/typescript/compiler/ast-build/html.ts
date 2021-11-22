@@ -119,7 +119,7 @@ export async function __componentDataToCompiledHTML__(
         }: HTMLNode = html,
             children = c.map(i => ({ USED: false, child: i, id: comp_data.length - 1 }));
 
-        if (html.id !== undefined)
+        if (html.id !== undefined && node.attributes)
             node.attributes.set("w:u", html.id + "");
 
         if (namespace_id)
@@ -135,7 +135,7 @@ export async function __componentDataToCompiledHTML__(
                 node
             );
 
-        else if (component_name && context.components.has(component_name)) {
+        else if (component_name && context.components?.has(component_name)) {
 
 
             ({ node, state } =
@@ -154,7 +154,7 @@ export async function __componentDataToCompiledHTML__(
 
         } else if (tag_name) {
 
-            if (tag_name == "SLOT" && extern_children.length > 0) {
+            if (tag_name == "SLOT" && extern_children.length > 0 && slot_name) {
 
                 let r_ = await processSlot(
                     static_data_pack,
@@ -188,6 +188,8 @@ export async function __componentDataToCompiledHTML__(
                 extern_children,
                 comp_data
             );
+            if (!node.children)
+                node.children = [];
 
             node.children.push(...html);
         }
@@ -223,8 +225,13 @@ async function processElement(
 
     const HAVE_CLASS = processAttributes(html.attributes, state, comp_data, node, static_data_pack.self.HTML == html);
 
+    if (!node.attributes)
+        node.attributes = new Map;
+
     if (COMPONENT_IS_ROOT_ELEMENT) {
+
         node.attributes.set("w:c", "");
+
         if (!HAVE_CLASS) {
             const class_names = (COMPONENT_IS_ROOT_ELEMENT
                 ? ((state & htmlState.IS_INTERLEAVED) > 0)
@@ -241,6 +248,10 @@ async function processElement(
 }
 
 function setScopeAssignment(state: htmlState, node: TemplateHTMLNode, html: HTMLElementNode) {
+
+    if (!node.attributes)
+        node.attributes = new Map;
+
     if (state & htmlState.IS_SLOT_REPLACEMENT)
         node.attributes.set("w:r", (html.host_component_index * 50 + html.id) + "");
 }
@@ -304,6 +315,10 @@ function processAttributes(
         return false;
 
     let HAVE_CLASS: boolean = false;
+
+    if (!node.attributes)
+        node.attributes = new Map;
+
 
     for (const { name: key, value: val } of attributes ?? [])
 
@@ -616,14 +631,27 @@ async function resolveHTMLBinding(
     comp_data: string[],
 ): Promise<TemplateHTMLNode> {
     //*
+
+    let value: any = null, child_html: any = null, type: any = null;
     const
-        hook = getHookFromElement(html, static_data_pack.self)[0],
-        type = getExpressionStaticResolutionType(hook.value[0], static_data_pack),
-        { value, html: child_html } = hook
+        hook = getHookFromElement(html, static_data_pack.self)[0];
+
+    if (hook) {
+
+        type = getExpressionStaticResolutionType(hook.value[0], static_data_pack);
+
+        ({ value, html: child_html } = hook
             ? await getStaticValue(<any>hook.value[0], static_data_pack)
-            : null;
+            : { value: null, html: null });
+    }
 
     node.tagName = "w-b";
+
+    if (!node.children)
+        node.children = [];
+
+    if (!node.attributes)
+        node.attributes = new Map;
 
     if (child_html) {
         node.tagName = "w-e";
@@ -640,16 +668,16 @@ async function resolveHTMLBinding(
                 data: value + "",
                 children: [],
                 strings: [],
-                attributes: null,
-                tagName: null,
+                attributes: new Map,
+                tagName: "",
             };
         } else {
             node.children.push({
                 data: value + "",
                 children: [],
                 strings: [],
-                attributes: null,
-                tagName: null,
+                attributes: new Map,
+                tagName: "",
             });
         }
     } else if (html.data) {
@@ -657,7 +685,7 @@ async function resolveHTMLBinding(
     }
 
     if ((state & htmlState.IS_INTERLEAVED) > 0)
-        node.attributes.set("w:own", "" + comp_data.indexOf(static_data_pack.self.name));
+        node.attributes?.set("w:own", "" + comp_data.indexOf(static_data_pack.self.name));
 
     return node;
 }

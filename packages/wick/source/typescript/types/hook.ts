@@ -65,7 +65,7 @@ interface buildJSFunction<T, U = T> {
          * @param ast
          */
         addOnDestroy: (ast: T | U) => void
-    ): (U | T) | Promise<(U | T)>;
+    ): (U | T) | Promise<(U | T)> | null;
 }
 
 interface buildHTMLFunction<T = IndirectHook<JSNode>> {
@@ -75,7 +75,7 @@ interface buildHTMLFunction<T = IndirectHook<JSNode>> {
          * Static component data including the context object
          */
         static_data_pack: StaticDataPack,
-    ): (HookTemplatePackage | Promise<HookTemplatePackage>);
+    ): (HookTemplatePackage | Promise<HookTemplatePackage> | null);
 }
 
 export interface HookHandlerPackage<T = DefaultJSHandlerNodeType, U = DefaultJSHandlerNodeType> {

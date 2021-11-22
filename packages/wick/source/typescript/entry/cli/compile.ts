@@ -53,7 +53,7 @@ Wick will automatically handle the compilation & packaging of components and wil
 static site that can be optionally hydrated with associated support scripts.`
     }
 ).callback = (
-        async (args) => {
+        async (arg, args) => {
             const input_path = URI.resolveRelative(args.trailing_arguments.pop() ?? "./");
             const root_directory = URI.resolveRelative(input_path);
             const output_directory = output_arg.value;
@@ -157,48 +157,44 @@ static site that can be optionally hydrated with associated support scripts.`
 
             if (USE_RADIATE_RUNTIME) {
                 USE_GLOW = true;
-                compile_module(
+                await compile_module(
                     URI.resolveRelative(
-                        "./build/entry/wick-radiate.js",
+                        "./source/typescript/entry/wick-radiate.js",
                         package_dir
                     ) + "",
-                    output_directory + "radiate.js",
-                    package_dir
+                    output_directory + "radiate.js"
                 );
                 compile_logger.log(`Built wick.radiate module at [ /radiate.js ]`);
             }
 
             if (USE_WICK_RUNTIME) {
-                compile_module(
+                await compile_module(
                     URI.resolveRelative(
                         "./build/entry/wick-runtime.js",
                         package_dir
                     ) + "",
-                    output_directory + "wick.js",
-                    package_dir
+                    output_directory + "wick.js"
                 );
                 compile_logger.log(`Built wick.runtime module at [ /wick.js ]`);
             }
-            /*
-            if(USE_GLOW)
-                compile_module(
-                    URI.resolveRelative("./build/entry/wick-glow.js",
-                        package_dir
-                    ) + "",
-                    output_directory + "glow.js",
-                    package_dir
+
+            /* EsBuild will bundle this for us.
+            if (USE_GLOW)
+                await compile_module(
+                    URI.resolveRelative("@candlelib/glow/build/glow.js", URI.getEXEURL(import.meta)) + "",
+                    output_directory + "glow.js"
                 );
             //*/
             compile_logger.log(`🎆 Site successfully built! 🎆`);
 
-            if (lantern_arg.value) {
+            if (false && lantern_arg.value) {
                 const port = 8092;
 
                 compile_logger.parent.get("lantern").log(`Launching Lantern at port [ ${port} ]`);
 
                 const cp = await import("child_process");
 
-                cp.spawn(`lantern`, [`--port`, `${port}`], {
+                cp.spawn("npx", [`lantern`, `--port`, `${port}`], {
                     cwd: "" + output_directory,
 
                     stdio: ['inherit', 'inherit', 'inherit'],

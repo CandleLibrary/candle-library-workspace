@@ -48,66 +48,84 @@ Host a single component on a local server.
             const root_path = URI.resolveRelative(input_path);
             const config = config_arg.value;
 
-            run_logger
-                .debug(`Input root path:\n[ ${input_path + ""} ]`);
+            if (root_path) {
 
-            //Find all components
-            //Build wick and radiate files 
-            //Compile a list of entry components
-            const context = new Context();
+                run_logger
+                    .debug(`Input root path:\n[ ${input_path + ""} ]`);
 
-            context.assignGlobals(config?.globals ?? {});
+                //Find all components
+                //Build wick and radiate files 
+                //Compile a list of entry components
+                const context = new Context();
 
-            run_logger
-                .log(`Loading resources from:\n[ ${root_path + ""} ]`);
+                context.assignGlobals(config?.globals ?? {});
 
-            if (root_path.ext == "wick" || root_path.ext == "md" || root_path.ext == "html") {
+                run_logger
+                    .log(`Loading resources from:\n[ ${root_path + ""} ]`);
 
-                await createComponent(root_path, context);
+                if (root_path.ext == "wick" || root_path.ext == "md" || root_path.ext == "html") {
+                    //Initialize component
+                    const comp = await createComponent(root_path, context);
 
+                    const server = await lantern({
+                        port: port_arg.value,
+                        cwd: root_path.dir
+                    });
 
+                    server.addDispatch(
+                        <Dispatcher>{
+                            name: "Wick Hosted Component",
+                            MIME: "text/html",
+                            keys: [{ ext: ext_map.none, dir: "/" }],
+                            async respond(tools) {
+                                const context = new Context();
+                                context.assignGlobals(config?.globals ?? {});
+                                const component = await createComponent(root_path, context);
 
-                const server = await lantern({
-                    port: port_arg.value,
-                    cwd: root_path.dir
-                });
+                                if (component.errors.length > 0) {
+                                    for (const err of component.errors)
+                                        run_logger.error(err);
 
-                server.addDispatch(
-                    <Dispatcher>{
-                        name: "Wick Hosted Component",
-                        MIME: "text/html",
-                        keys: [{ ext: ext_map.none, dir: "/" }],
-                        async respond(tools) {
-                            const context = new Context();
-                            context.assignGlobals(config?.globals ?? {});
-                            const component = await createComponent(root_path, context);
-                            const {
-                                page
-                            } = await RenderPage(component, context);
-                            return tools.sendUTF8String(page);
-                        }
-                    },
-                    candle_favicon_dispatch,
-                    candle_library_dispatch,
-                    $404_dispatch,
-                    filesystem_dispatch
-                );
+                                    return false;
+                                }
 
-                run_logger.log(`Component running at: [ http://localhost:${port_arg.value}/ ]`);
+                                try {
 
-                const { spawn } = await import("child_process");
+                                    const {
+                                        page
+                                    } = await RenderPage(component, context);
 
-                ({
-                    chrome: (spawn, site) => spawn("google-chrome", [site]),
-                    firefox: (spawn, site) => spawn("firefox", [site]),
-                    edge: (spawn, site) => spawn("msedge", [site]),
-                    opera: (spawn, site) => spawn("opera", [site]),
+                                    return tools.sendUTF8String(page);
+                                } catch (e) {
+                                    run_logger.error(e);
+                                    return false;
+                                }
+                            }
+                        },
+                        candle_favicon_dispatch,
+                        candle_library_dispatch,
+                        $404_dispatch,
+                        filesystem_dispatch
+                    );
 
-                })?.[browser_arg.value]?.(spawn, `http://localhost:${port_arg.value}/`); 
+                    run_logger.log(`Component running at: [ http://localhost:${port_arg.value}/ ]`);
 
+                    const { spawn } = await import("child_process");
+
+                    ({
+                        chrome: (spawn, site) => spawn("google-chrome", [site]),
+                        firefox: (spawn, site) => spawn("firefox", [site]),
+                        edge: (spawn, site) => spawn("msedge", [site]),
+                        opera: (spawn, site) => spawn("opera", [site]),
+
+                    })?.[browser_arg.value]?.(spawn, `http://localhost:${port_arg.value}/`);
+
+                } else {
+
+                    run_logger.warn(`Unable to resolve a component from : [ ${root_path} ]`);
+                }
             } else {
-
-                run_logger.warn(`Unable to resolve a component from : [ ${root_path} ]`);
+                throw new Error("Unable to locate a component at " + input_path);
             }
         }
     );
