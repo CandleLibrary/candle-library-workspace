@@ -1,0 +1,195 @@
+image: node:latest
+
+stages:
+  - fetch
+  - build
+  - test
+  - deploy
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "gitlab-ci"
+      when: always
+    - if: $CI_COMMIT_REF_NAME == "release"
+      when: always
+    - when: never
+
+fetch_dependencies:
+  stage: fetch
+  script:
+    - npm config set registry http://$NPM_REGISTRY
+    - npm install --no-audit
+
+  rules:
+    - if: $CI_COMMIT_REF_NAME != "gitlab-ci"
+      when: never
+    - when: always
+
+  artifacts:
+    expire_in: 15 min
+    paths:
+      - node_modules/
+
+# BUILD ----------------------------------------------------------------------
+
+build_typescript_packages:
+  stage: build
+
+  rules:
+    - if: $CI_COMMIT_REF_NAME != "gitlab-ci"
+      when: never
+    - when: always
+
+  script:
+    - npm install typescript
+    - npx tsc -p ./packages/css/tsconfig.json || true
+    - npx tsc -p ./packages/cure/tsconfig.json || true
+    - npx tsc -p ./packages/dev-tools/tsconfig.json || true
+    - npx tsc -p ./packages/glow/tsconfig.json || true
+    - npx tsc -p ./packages/html/tsconfig.json || true
+    - npx tsc -p ./packages/js/tsconfig.json || true
+    - npx tsc -p ./packages/lantern/tsconfig.json || true
+    - npx tsc -p ./packages/log/tsconfig.json || true
+    - npx tsc -p ./packages/paraffin/tsconfig.json || true
+    - npx tsc -p ./packages/spark/tsconfig.json || true
+    - npx tsc -p ./packages/uri/tsconfig.json || true
+    - npx tsc -p ./packages/wick/tsconfig.json || true
+    - npx tsc -p ./packages/wind/tsconfig.json || true
+
+  artifacts:
+    expire_in: 2 hours
+    paths:
+      - /packages/css/build/
+      - /packages/cure/build/
+      - /packages/dev-tools/build/
+      - /packages/glow/build/
+      - /packages/html/build/
+      - /packages/js/build/
+      - /packages/lantern/build/
+      - /packages/log/build/
+      - /packages/paraffin/build/
+      - /packages/spark/build/
+      - /packages/uri/build/
+      - /packages/wick/build/
+      - /packages/wind/build/
+
+  dependencies:
+    - fetch_dependencies
+
+# TEST & VERSION -----------------------------------------------------------
+
+version_ts_modules:
+  stage: test
+
+  variables:
+    GIT_STRATEGY: clone
+
+  rules:
+    - if: $CI_COMMIT_REF_NAME != "gitlab-ci"
+      when: never
+    - when: always
+
+  before_script:
+    - TOKENED_REPO=http://git:$GITLAB_ACCESS_TOKEN@$GITLAB_HOST:$GITLAB_HTTP_PORT/$GITLAB_REPO_PATH
+    - git remote add gitlab $TOKENED_REPO || git remote set-url gitlab $TOKENED_REPO
+    - git config --global user.email "hydrocarbon-authors@null.io"
+    - git config --global user.name "Gitlab Runner"
+    - git fetch --all
+    - npm config set registry http://$NPM_REGISTRY
+
+  script:
+    - npm run version_ts_packages
+
+  after_script:
+    - git checkout $STAGED_VERSION_BRANCH
+    - git branch -u gitlab/$STAGED_VERSION_BRANCH
+    - git push
+
+  artifacts:
+    paths:
+      - "./*.bounty"
+      - packages/**/*.bounty
+      - packages/**/*.temp.json
+
+  dependencies:
+    - fetch_dependencies
+    - build_typescript_packages
+
+# DEPLOY ------------------------------------------------------------------
+
+publish_ts_packages:
+  stage: deploy
+
+  before_script:
+    - echo '//${NPM_REGISTRY}/:_authToken=${NPM_TOKEN}'> ~/.npmrc
+
+  rules:
+    - if: $CI_COMMIT_REF_NAME != "gitlab-ci"
+      when: never
+    - when: always
+
+  script:
+    - npm config set registry http://$NPM_REGISTRY
+    - ./root.publish.bounty
+
+  dependencies:
+    - version_ts_modules
+    - fetch_dependencies
+    - build_typescript_packages
+
+deploy_to_gitlab_branch:
+  stage: deploy
+
+  rules:
+    - if: $CI_COMMIT_REF_NAME != "gitlab-ci"
+      when: never
+    - when: always
+
+  variables:
+    GIT_STRATEGY: clone
+
+  before_script:
+    - TOKENED_REPO=http://git:$GITLAB_ACCESS_TOKEN@$GITLAB_HOST:$GITLAB_HTTP_PORT/$GITLAB_REPO_PATH
+    - git remote add gitlab $TOKENED_REPO || git remote set-url gitlab $TOKENED_REPO
+    - git config --global user.email "hydrocarbon-authors@null.io"
+    - git config --global user.name "Gitlab Runner"
+    - git fetch --all
+    - git checkout --track  gitlab/$STAGED_VERSION_BRANCH
+
+  script:
+    - ./root.commit.bounty
+    - git push -f gitlab HEAD:$STAGED_VERSION_BRANCH
+
+  dependencies:
+    - version_ts_modules
+    - fetch_dependencies
+    - build_typescript_packages
+
+publish_ts_packages_npm:
+  stage: deploy
+
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "release"
+      when: always
+    - when: never
+
+  before_script:
+    - echo '//${PUBLIC_NPM_REGISTRY}/:_authToken=${PUBLIC_NPM_TOKEN}'> ~/.npmrc
+
+  script:
+    - npm publish --access public ./packages/conflagrate || true
+    - npm publish --access public ./packages/css || true
+    - npm publish --access public ./packages/cure || true
+    - npm publish --access public ./packages/dev-tools || true
+    - npm publish --access public ./packages/glow || true
+    - npm publish --access public ./packages/html || true
+    - npm publish --access public ./packages/js || true
+    - npm publish --access public ./packages/lantern || true
+    - npm publish --access public ./packages/log || true
+    - npm publish --access public ./packages/paraffin || true
+    - npm publish --access public ./packages/spark || true
+    - npm publish --access public ./packages/uri || true
+    - npm publish --access public ./packages/wick || true
+    - npm publish --access public ./packages/wind || true
+# reference https://docs.gitlab.com/ee/ci/yaml/
+
