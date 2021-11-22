@@ -748,6 +748,8 @@ URI.server = (
 
                 if (typeof (global) !== "undefined" && !POLYFILLED) {
 
+
+
                     POLYFILLED = true;
 
 
@@ -788,21 +790,20 @@ URI.server = (
 
                             while (i-- >= 1) {
                                 try {
-                                    let search_path = "";
-
+                                    var search_path;
 
 
                                     if (base_path[i] == "node_modules")
-                                        search_path = [...base_path.slice(0, i + 1), new_path].join("/");
+                                        search_path = new URI([...base_path.slice(0, i + 1), new_path].join("/"));
                                     else {
 
-                                        search_path = [...base_path.slice(0, i + 1), "node_modules", new_path].join("/");
+                                        search_path = new URI([...base_path.slice(0, i + 1), "node_modules", new_path].join("/"));
                                     }
 
-                                    const stats = fsr.statSync(search_path);
+                                    const stats = fsr.statSync(search_path + "");
 
                                     if (stats)
-                                        return new URI(search_path);
+                                        return new URI(search_path + "");
 
                                 } catch (e) {
                                     //Suppress errors - Don't really care if there is no file found. That can be handled by the consumer.
