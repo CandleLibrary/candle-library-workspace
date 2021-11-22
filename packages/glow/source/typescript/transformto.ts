@@ -1,8 +1,10 @@
-import * as css from "@candlelib/css";
+import { CSSProperty } from "@candlelib/css/build/properties/property.js";
+import { parseProperty } from "@candlelib/css/build/properties/parse_property_value.js";
+import { types } from "@candlelib/css/build/properties/property_and_type_definitions.js";
 
 import { Animation } from "./animation.js";
 
-const CSS_Transform2D = css.CSS_Transform2D;
+const CSS_Transform2D = types.transform2D;
 
 function setToWithTransform(box_a, box_b, seq) {
     const start_width_as_percentage = box_a.width / box_b.width;

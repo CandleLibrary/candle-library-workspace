@@ -1,15 +1,12 @@
-import * as css from "@candlelib/css";
+import { CSSProperty } from "@candlelib/css/build/properties/property.js";
+import { parseProperty } from "@candlelib/css/build/properties/parse_property_value.js";
+import { types } from "@candlelib/css/build/properties/property_and_type_definitions.js";
 
 import common_methods from "./common_methods.js";
 import { GlowAnimation, AnimationInterpolation } from "./types.js";
 import { AnimateObject, AnimationProp, AnimationProps } from "./AnimateObject";
 
-
-const CSS_Property = css.property;
-
-CSS_Property.prototype.interpolate = function (old_prop, t, new_prop): typeof CSS_Property {
-
-
+CSSProperty.prototype.interpolate = function (old_prop, t, new_prop): typeof CSSProperty {
 
     return null;
 };
@@ -21,13 +18,14 @@ function CSS_ClassType(name, value) {
 const
     html_element = typeof (HTMLElement) !== "undefined" ? HTMLElement : class { },
     SVG__ = (typeof (SVGElement) !== "undefined") ? SVGElement : function () { },
-    CSS_Length = css.CSS_Length,
-    CSS_Percentage = css.CSS_Percentage,
-    CSS_Color = css.CSS_Color,
-    CSS_Transform2D = css.CSS_Transform2D,
-    CSS_Path = css.CSS_Path,
-    CSS_Bezier = css.CSS_Bezier,
-    CSS_String = css.CSS_String,
+    CSS_Length = types.length_,
+    CSS_Percentage = types.percentage_,
+    CSS_Color = types.color,
+    CSS_Transform2D = types.transform2D,
+    CSS_Transform3D = types.transform3D,
+    CSS_Path = types.path,
+    CSS_Bezier = types.cubic_bezier,
+    CSS_String = types.string,
 
 
 
@@ -162,7 +160,7 @@ const
                         return lerpNumber;
 
                     case "string":
-                        const type = css.parseProperty(name, value, false)?.val?.[0]?.constructor;
+                        const type = parseProperty(name, value, false)?.val?.[0]?.constructor;
 
                         if (!type) {
                             if (CSS_Length._verify_(value))
