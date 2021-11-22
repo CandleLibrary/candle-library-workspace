@@ -135,7 +135,7 @@ Available libraries: (@cl can be freely replaced with @candlelib)
                 "flame",
                 "log",
             ].includes(pkg)
-                ? path.join(CFW_DIR, pkg, "build/library", file_path || (source_name + ".js"))
+                ? path.join(CFW_DIR, pkg, "build", file_path || (source_name + ".js"))
                 : "");
 
         if ((!file_path || file_path == "/") && source_name) {
