@@ -2,8 +2,8 @@
     "name": "@candlelib/lantern",
     "version": "0.2.7",
     "description": "Extensible Web Server",
-    "main": "./build/library/lantern.js",
-    "types": "./build/types/lantern.d.ts",
+    "main": "./build/lantern.js",
+    "types": "./build/lantern.d.ts",
     "type": "module",
     "bin": {
         "lantern": "index.js"

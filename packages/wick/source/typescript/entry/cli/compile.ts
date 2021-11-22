@@ -159,7 +159,7 @@ static site that can be optionally hydrated with associated support scripts.`
                 USE_GLOW = true;
                 compile_module(
                     URI.resolveRelative(
-                        "./build/library/entry/wick-radiate.js",
+                        "./build/entry/wick-radiate.js",
                         package_dir
                     ) + "",
                     output_directory + "radiate.js",
@@ -171,7 +171,7 @@ static site that can be optionally hydrated with associated support scripts.`
             if (USE_WICK_RUNTIME) {
                 compile_module(
                     URI.resolveRelative(
-                        "./build/library/entry/wick-runtime.js",
+                        "./build/entry/wick-runtime.js",
                         package_dir
                     ) + "",
                     output_directory + "wick.js",
@@ -182,7 +182,7 @@ static site that can be optionally hydrated with associated support scripts.`
             /*
             if(USE_GLOW)
                 compile_module(
-                    URI.resolveRelative("./build/library/entry/wick-glow.js",
+                    URI.resolveRelative("./build/entry/wick-glow.js",
                         package_dir
                     ) + "",
                     output_directory + "glow.js",

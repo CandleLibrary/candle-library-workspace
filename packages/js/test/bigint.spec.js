@@ -2,7 +2,7 @@
  * Parses bigint
  */
 
-import { parser, renderCompressed } from "../build/library/javascript.js";
+import { parser, renderCompressed } from "../build/javascript.js";
 
 let { ast } = parser("1n;");
 

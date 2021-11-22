@@ -1,4 +1,4 @@
-import { parser, renderCompressed, extendAll } from "../build/library/javascript.js";
+import { parser, renderCompressed, extendAll } from "../build/javascript.js";
 
 const
     strA = `({ get: function(){ return hello; } })`,

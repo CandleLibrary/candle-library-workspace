@@ -1,6 +1,6 @@
 import { skribble_mappings } from "../../hydrocarbon/build/library/skribble/mappings.js";
 import { sk } from "../../hydrocarbon/build/library/skribble/skribble.js";
-import { constructRenderers, render } from "../build/library/render/render_experimental.js";
+import { constructRenderers, render } from "../build/render/render_experimental.js";
 
 //const renderers = constructRenderers(skribble_mappings);
 //const node = (sk`fn tickle:u32(){loop (true) 2 + 3}`);

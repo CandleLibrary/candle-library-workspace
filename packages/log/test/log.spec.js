@@ -1,4 +1,4 @@
-import { Logger } from "../build/library/logger.js";
+import { Logger } from "../build/logger.js";
 import { assert } from "console";
 
 assert_group(sequence, () => {

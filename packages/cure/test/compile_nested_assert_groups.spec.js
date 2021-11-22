@@ -6,7 +6,7 @@
  */
 
 import { parser } from "@candlelib/js";
-import { compileTestsFromSourceAST } from "../build/library/compile/compile_statements.js";
+import { compileTestsFromSourceAST } from "../build/compile/compile_statements.js";
 import URL from "@candlelib/uri";
 import { createGlobalsObject } from "./tools.js";
 

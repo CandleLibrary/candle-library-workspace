@@ -1,4 +1,4 @@
-import { parse } from "../build/library/css.js";
+import { parse } from "../build/css.js";
 
 
 "@candlelib/css test spec";

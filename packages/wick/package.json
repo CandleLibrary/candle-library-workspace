@@ -2,8 +2,8 @@
     "name": "@candlelib/wick",
     "version": "0.16.1",
     "description": "Web Component Compiler",
-    "main": "./build/library/entry/wick-server.js",
-    "types": "./build/types/entry/wick-server",
+    "main": "./build/entry/wick-server.js",
+    "types": "./build/entry/wick-server",
     "type": "module",
     "bin": {
         "candle.wick": "./index.js"

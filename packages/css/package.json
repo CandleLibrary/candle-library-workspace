@@ -3,8 +3,8 @@
     "version": "0.3.18",
     "type": "module",
     "description": "CSS Parsing & Editing Tools",
-    "main": "./build/library/css.js",
-    "types": "./build/types/css.d.ts",
+    "main": "./build/css.js",
+    "types": "./build/css.d.ts",
     "scripts": {
         "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
         "test": "candle.cure ./test/",

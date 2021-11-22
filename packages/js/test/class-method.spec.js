@@ -1,4 +1,4 @@
-import { parser, renderCompressed } from "../build/library/javascript.js";
+import { parser, renderCompressed } from "../build/javascript.js";
 
 const
     strA = `class A{js(){}}`,

@@ -2,8 +2,8 @@
     "name": "@candlelib/js",
     "version": "0.5.24",
     "description": "Javascript Parser",
-    "main": "./build/library/javascript.js",
-    "types": "./build/types/javascript.d.ts",
+    "main": "./build/javascript.js",
+    "types": "./build/javascript.d.ts",
     "type": "module",
     "scripts": {
         "prepublishOnly": "rm -rf ./build && tsc & sleep 10",

@@ -1,7 +1,7 @@
 
 import chai from "chai";
 
-import { NullReporter } from "../../build/library/cure.js";
+import { NullReporter } from "../../build/cure.js";
 
 assert("0 Basic built in assertion should pass", 2 + 2 == 4);
 

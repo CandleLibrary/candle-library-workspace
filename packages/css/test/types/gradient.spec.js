@@ -1,5 +1,5 @@
 
-import { CSS_Gradient } from "../../build/library/types/gradient.js";
+import { CSS_Gradient } from "../../build/gradient.js";
 import { test } from "../test_tools.js";
 
 const gradient = CSS_Gradient.parse("linear-gradient(red 20%, blue)");

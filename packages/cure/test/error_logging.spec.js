@@ -4,8 +4,8 @@
  * Formating may also have a similar effect, and for consistency the formatting applied to this document 
  * should not create or remove lines of code, and should use 4 space tab stops.
  */
-import { createTransferableTestErrorFromException, seekSourceFile } from "../build/library/utilities/test_error.js";
-import { testThrow } from "../build/library/utilities/testThrow.js";
+import { createTransferableTestErrorFromException, seekSourceFile } from "../build/utilities/test_error.js";
+import { testThrow } from "../build/utilities/testThrow.js";
 import { ExternalThrowB } from "./data/external_throw.js";
 
 assert_group(skip, "Error Thrown From The Spec File", sequence, () => {

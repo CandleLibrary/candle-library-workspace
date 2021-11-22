@@ -4,7 +4,7 @@ import {
     bidirectionalTraverse,
     traverse,
     breadthTraverse
-} from "../build/library/conflagrate.js";
+} from "../build/conflagrate.js";
 
 
 assert_group("Standard traverse with replace and extract", sequence, () => {

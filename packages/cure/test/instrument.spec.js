@@ -2,7 +2,7 @@ import URL from "@candlelib/uri";
 import { getPackageJsonObject as getPackageJSON } from "@candlelib/paraffin";
 import fs from "fs";
 import path from "path";
-import { instrument, processPackageData } from "../build/library/utilities/instrument.js";
+import { instrument, processPackageData } from "../build/utilities/instrument.js";
 
 URL.toString();
 
@@ -38,7 +38,7 @@ assert_group(skip, "Create Spec File", sequence, () => {
     const
         fsp = fs.promises,
         dir = "./__temp__/",
-        build_dir = "./build/library/";
+        build_dir = "./build/";
 
     //Copy data to new location.
     try {

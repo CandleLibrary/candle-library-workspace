@@ -1,29 +1,11 @@
 {
-    "compileOnSave": true,
+    "extends": "../tsconfig.json",
     "include": [
-        "./source/typescript/**/*",
+        "./source/typescript/**/*"
     ],
-    "exclude": [],
     "compilerOptions": {
-        "types": [
-            "@types/node"
-        ],
-        "allowJs": false,
-        "baseUrl": "./",
-        "rootDir": "./source/typescript/",
-        "alwaysStrict": true,
         "target": "ES2020",
-        "lib": [
-            "ES2020",
-            "DOM"
-        ],
-        "module": "ESNEXT",
-        "outDir": "./build/library",
-        "declarationDir": "./build/types",
-        "declaration": true,
-        "skipLibCheck": true,
-        "moduleResolution": "Node",
-        "removeComments": false,
-        "sourceMap": true,
+        "rootDir": "./source/typescript/",
+        "outDir": "./build/",
     }
 }

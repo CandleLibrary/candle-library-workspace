@@ -2,8 +2,8 @@
     "name": "@candlelib/html",
     "version": "0.2.5",
     "description": "HTML Parser and DOM Polyfill",
-    "main": "./build/library/html.js",
-    "types": "./build/types/html.d.ts",
+    "main": "./build/html.js",
+    "types": "./build/html.d.ts",
     "type": "module",
     "scripts": {
         "prepublishOnly": "rm -rf ./build && tsc & sleep 10",

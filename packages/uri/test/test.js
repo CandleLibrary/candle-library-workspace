@@ -1,4 +1,4 @@
-import URL from "../build/library/url.js";
+import URL from "../build/url.js";
 
 import chai from "chai";
 

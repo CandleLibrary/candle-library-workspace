@@ -1,13 +1,13 @@
 import html from "@candlelib/html";
 import spark from "@candlelib/spark";
 
-import { htmlTemplateToString } from "../../build/library/compiler/ast-render/html.js";
-import { componentDataToCompiledHTML } from "../../build/library/compiler/ast-build/html.js";
-import { hydrateComponentElements } from "../../build/library/runtime/html.js";
-import { Context } from "../../build/library/compiler/common/context.js";
-import { parseSource } from "../../build/library/compiler/ast-parse/source.js";
-import { createCompiledComponentClass } from "../../build/library/compiler/ast-build/build.js";
-import { createClassStringObject, componentDataToJS } from "../../build/library/compiler/ast-render/js.js";
+import { htmlTemplateToString } from "../../build/compiler/ast-render/html.js";
+import { componentDataToCompiledHTML } from "../../build/compiler/ast-build/html.js";
+import { hydrateComponentElements } from "../../build/runtime/html.js";
+import { Context } from "../../build/compiler/common/context.js";
+import { parseSource } from "../../build/compiler/ast-parse/source.js";
+import { createCompiledComponentClass } from "../../build/compiler/ast-build/build.js";
+import { createClassStringObject, componentDataToJS } from "../../build/compiler/ast-render/js.js";
 
 export async function getInstanceHTML(comp, context) {
     return (await componentDataToCompiledHTML(comp, context)).html[0];

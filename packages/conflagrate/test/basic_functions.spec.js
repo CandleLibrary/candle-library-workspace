@@ -2,7 +2,7 @@
 
 import {
     traverse,
-} from "../build/library/conflagrate.js";
+} from "../build/conflagrate.js";
 
 import {
     createTestTree

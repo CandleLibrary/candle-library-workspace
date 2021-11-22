@@ -1,4 +1,4 @@
-import glow from "../build/library/glow.js";
+import glow from "../build/glow.js";
 
 assert_group("Basic single object sequence.", sequence, () => {
     const obj = { test: 2 };

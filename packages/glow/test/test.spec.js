@@ -1,4 +1,4 @@
-import glow from "../build/library/glow.js";
+import glow from "../build/glow.js";
 import spark from "@candlelib/spark";
 
 global.HTMLElement = function () { };

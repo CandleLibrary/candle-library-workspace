@@ -1,6 +1,6 @@
 import { parser, renderWithFormatting } from "@candlelib/js";
 import { assert } from "console";
-import { compileTests } from "../build/library/compile/compile.js";
+import { compileTests } from "../build/compile/compile.js";
 import { createGlobalsObject } from "./tools.js";
 
 

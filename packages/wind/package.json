@@ -2,8 +2,8 @@
     "name": "@candlelib/wind",
     "version": "0.5.4",
     "description": "Tokenizer",
-    "main": "./build/library/wind.js",
-    "types": "./build/types/wind.d.ts",
+    "main": "./build/wind.js",
+    "types": "./build/wind.d.ts",
     "type": "module",
     "directories": {
         "test": "test"

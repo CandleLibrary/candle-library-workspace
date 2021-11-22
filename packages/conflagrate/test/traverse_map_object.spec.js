@@ -1,4 +1,4 @@
-import { traverse } from "../build/library/conflagrate.js";
+import { traverse } from "../build/conflagrate.js";
 import { createMappedTestTree } from "./tools.js";
 
 

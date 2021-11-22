@@ -1,8 +1,8 @@
 import util from "util";
 import equal from "deep-equal";
 import { performance } from "perf_hooks";
-import { createTestHarnessEnvironmentInstance } from "../build/library/test_running/utilities/test_harness.js";
-import { rst } from "../build/library/reporting/utilities/colors.js";
+import { createTestHarnessEnvironmentInstance } from "../build/test_running/utilities/test_harness.js";
+import { rst } from "../build/reporting/utilities/colors.js";
 
 const {
     harness,

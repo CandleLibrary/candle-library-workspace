@@ -3,9 +3,9 @@ import {
     rule,
     parse,
     selector,
-} from "../build/library/parser/parse.js";
-import { renderCompressed } from "../build/library/render/render.js";
-import { isSelectorEqual, doesRuleHaveMatchingSelector } from "../build/library/selector/utilities.js";
+} from "../build/parser/parse.js";
+import { renderCompressed } from "../build/render/render.js";
+import { isSelectorEqual, doesRuleHaveMatchingSelector } from "../build/selector/utilities.js";
 
 await spark.sleep(100);
 

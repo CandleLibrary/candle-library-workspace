@@ -3,8 +3,8 @@
     "version": "0.1.24",
     "description": "Command Line Interface Library",
     "type": "module",
-    "main": "./build/library/paraffin.js",
-    "types": "./build/types/paraffin.d.ts",
+    "main": "./build/paraffin.js",
+    "types": "./build/paraffin.d.ts",
     "engines": {
         "node": ">=14"
     },

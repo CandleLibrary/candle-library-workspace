@@ -1,7 +1,7 @@
 import { experimentalRender } from "@candlelib/conflagrate";
 import { assert } from "console";
-import { ext, parser, exp } from "../build/library/javascript.js";
-import { javascript_mappings, renderers } from "../build/library/render/mappings.js";
+import { ext, parser, exp } from "../build/javascript.js";
+import { javascript_mappings, renderers } from "../build/render/mappings.js";
 function parseAndRender(str) {
 
     return experimentalRender(parser(str).ast, javascript_mappings, renderers).string;

@@ -1,4 +1,4 @@
-import URL from "../build/library/uri.js";
+import URL from "../build/uri.js";
 
 function assert(val){
     if(!val)

@@ -6,7 +6,7 @@
  * package_dir set to `""`.
  */
 
-import { getPackageJsonObject } from "../build/library/paraffin.js";
+import { getPackageJsonObject } from "../build/paraffin.js";
 import URL from "@candlelib/uri";
 import assert from "assert";
 

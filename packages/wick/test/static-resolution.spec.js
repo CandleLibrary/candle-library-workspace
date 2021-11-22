@@ -1,10 +1,10 @@
 import HTML from "@candlelib/html";
 import { assert } from "console";
-import { componentDataToCompiledHTML } from "../build/library/compiler/ast-build/html.js";
-import { htmlTemplateToString } from "../build/library/compiler/ast-render/html.js";
-import { enableBuildFeatures } from "../build/library/compiler/build_system.js";
-import { Context } from "../build/library/compiler/common/context.js";
-import wick_server from "../build/library/entry/wick-server.js";
+import { componentDataToCompiledHTML } from "../build/compiler/ast-build/html.js";
+import { htmlTemplateToString } from "../build/compiler/ast-render/html.js";
+import { enableBuildFeatures } from "../build/compiler/build_system.js";
+import { Context } from "../build/compiler/common/context.js";
+import wick_server from "../build/entry/wick-server.js";
 import { assertTree } from "./test-tools/tools.js";
 
 await HTML.server();

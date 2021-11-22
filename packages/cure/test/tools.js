@@ -6,10 +6,10 @@ import { DesktopRunner } from "@candlelib/cure/build/library/test_running/runner
 import { runTests } from "@candlelib/cure/build/library/test_running/run_tests.js";
 import { initializeReporterColors } from "@candlelib/cure/build/library/utilities/create_test_frame.js";
 import URL from "@candlelib/uri";
-import default_expression_handlers from "../build/library/compile/expression_handler/expression_handlers.js";
-import { loadExpressionHandler } from "../build/library/compile/expression_handler/expression_handler_functions.js";
-import { createGlobals } from "../build/library/utilities/create_globals.js";
-import { createTestSuite } from "../build/library/utilities/create_test_suite.js";
+import default_expression_handlers from "../build/compile/expression_handler/expression_handlers.js";
+import { loadExpressionHandler } from "../build/compile/expression_handler/expression_handler_functions.js";
+import { createGlobals } from "../build/utilities/create_globals.js";
+import { createTestSuite } from "../build/utilities/create_test_suite.js";
 
 await URL.server();
 

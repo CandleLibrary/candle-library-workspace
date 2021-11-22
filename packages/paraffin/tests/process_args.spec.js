@@ -20,7 +20,7 @@ import {
     getProcessArgs,
     addCLIConfig,
     processCLIConfig
-} from "../build/library/paraffin.js";
+} from "../build/paraffin.js";
 import assert from "assert";
 
 

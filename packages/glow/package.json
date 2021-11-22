@@ -2,8 +2,8 @@
     "name": "@candlelib/glow",
     "version": "0.4.17",
     "description": "Animation Library",
-    "main": "./build/library/glow.js",
-    "types": "./build/types/glow.d.ts",
+    "main": "./build/glow.js",
+    "types": "./build/glow.d.ts",
     "type": "module",
     "scripts": {
         "test": "candle.cure ./test/",

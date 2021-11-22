@@ -1,4 +1,4 @@
-import { rule, tools } from "../build/library/css.js";
+import { rule, tools } from "../build/css.js";
 
 const {
     rules: {

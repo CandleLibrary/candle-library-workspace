@@ -1,7 +1,7 @@
 import resolve from 'rollup-plugin-node-resolve';
 
 export default {
-    input: "./build/library/glow.js",
+    input: "./build/glow.js",
     treeshake: { unknownGlobalSideEffects: true },
     output: [{
         name: "glow",

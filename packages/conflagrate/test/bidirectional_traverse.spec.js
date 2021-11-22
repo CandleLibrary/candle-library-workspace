@@ -8,7 +8,7 @@
  * 
  * - these conditions hold tree with a randomly generated tree. 
  */
-import { bidirectionalTraverse } from "../build/library/conflagrate.js";
+import { bidirectionalTraverse } from "../build/conflagrate.js";
 
 const control_tree = {
     id: "A",

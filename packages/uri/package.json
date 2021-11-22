@@ -2,8 +2,8 @@
     "name": "@candlelib/uri",
     "version": "0.3.2",
     "description": "URL/URI parser and basic request handler.",
-    "main": "./build/library/uri.js",
-    "types": "./build/types/uri.d.ts",
+    "main": "./build/uri.js",
+    "types": "./build/uri.d.ts",
     "type": "module",
     "scripts": {
         "test": "candle.cure ./test/",

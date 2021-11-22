@@ -4,7 +4,7 @@ import {
     getPackageDependencies,
     getWorkspaceEnvironmentVar,
     testPackage
-} from "../build/library/utils/version-sys.js";
+} from "../build/utils/version-sys.js";
 
 
 assert_group("Basic utility functions", sequence, () => {

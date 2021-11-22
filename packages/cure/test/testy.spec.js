@@ -1,4 +1,4 @@
-import { compileTestyScript } from "../build/library/compile/expression_handler/testy_compiler.js";
+import { compileTestyScript } from "../build/compile/expression_handler/testy_compiler.js";
 import { createGlobalsObject } from "./tools.js";
 
 const globals = createGlobalsObject();

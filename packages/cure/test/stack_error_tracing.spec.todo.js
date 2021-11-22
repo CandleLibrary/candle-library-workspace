@@ -1,5 +1,5 @@
 import url from "@candlelib/uri";
-import parser from "../build/library/utilities/parser.js";
+import parser from "../build/utilities/parser.js";
 
 const v8_error_stack_string = `dfsf
     at Object.eval (eval at createTest (/test/build/library/test_running/utilities/create_test_function.js:21:72), <anonymous>:10:49)

@@ -3,20 +3,20 @@
     "version": "0.7.1",
     "description": "Testing Framework",
     "type": "module",
-    "types": "./build/types/cure.d.ts",
-    "main": "./build/library/cure.js",
+    "types": "./build/cure.d.ts",
+    "main": "./build/cure.js",
     "bin": {
         "candle.cure": "./index.js"
     },
     "scripts": {
         "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
-        "test": "node ./build/library/bin/cli.js --headless --threads=2 --reporter=ci ./test/",
+        "test": "node ./build/bin/cli.js --headless --threads=2 --reporter=ci ./test/",
         "test.watch": "candle.cure -w --threads=2 ./test/",
         "build.watch": "tsc --watch",
         "build": "tsc -p ./tsconfig.json",
-        "compile.testy_parser.debug": "hydrocarbon compile --nom testy_parser --workers 10 --output_dir ./build/library/utilities/ --annotations --debug  ./source/grammar/testy.hcg",
+        "compile.testy_parser.debug": "hydrocarbon compile --nom testy_parser --workers 10 --output_dir ./build/utilities/ --annotations --debug  ./source/grammar/testy.hcg",
         "compile.testy_parser.release": "hydrocarbon compile --nom testy_parser --workers 10 --output_dir ./source/typescript/utilities/ --recognizer_type wasm  ./source/grammar/testy.hcg",
-        "compile.st_parser.debug": "hydrocarbon compile --workers 10 --output_dir ./build/library/utilities/ --annotations --debug  ./source/grammar/stack_trace_parser.hcg",
+        "compile.st_parser.debug": "hydrocarbon compile --workers 10 --output_dir ./build/utilities/ --annotations --debug  ./source/grammar/stack_trace_parser.hcg",
         "compile.st_parser.release": "hydrocarbon compile --workers 10 --output_dir ./source/typescript/utilities/ --recognizer_type wasm  ./source/grammar/stack_trace_parser.hcg"
     },
     "repository": {

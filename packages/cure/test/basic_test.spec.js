@@ -1,5 +1,5 @@
 
-import { createTestFrame, NullReporter } from "../build/library/cure.js";
+import { createTestFrame, NullReporter } from "../build/cure.js";
 
 assert("The function createTestFrame should not throw", createTestFrame());
 

@@ -1,4 +1,4 @@
-import wick from "../build/library/entry/wick-full.js";
+import wick from "../build/entry/wick-full.js";
 
 assert_group("Compiles trivial input (HTML syntax)", sequence, () => {
     const input = `<div> hello world </div>`;

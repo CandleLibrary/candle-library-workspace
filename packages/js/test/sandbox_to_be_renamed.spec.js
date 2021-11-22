@@ -1,5 +1,5 @@
-import { renderCompressed, parser as javascript_parser_new } from "../build/library/javascript.js";
-//import { javascript_parser_new } from "../build/library/parser/parse.js";
+import { renderCompressed, parser as javascript_parser_new } from "../build/javascript.js";
+//import { javascript_parser_new } from "../build/parser/parse.js";
 
 assert_group("Identifiers and Members", () => {
 

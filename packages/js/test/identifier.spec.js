@@ -2,7 +2,7 @@
  * Parses and renders identifiers
  */
 
-import { parser, renderCompressed, exp, JSNodeTypeLU } from "../build/library/javascript.js";
+import { parser, renderCompressed, exp, JSNodeTypeLU } from "../build/javascript.js";
 
 const expr = exp("$identifier");
 

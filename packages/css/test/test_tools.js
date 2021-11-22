@@ -1,4 +1,4 @@
-import * as css from "../build/library/css.js";
+import * as css from "../build/css.js";
 import spark from "@candlelib/spark";
 
 //Allow time for the WASM CSS parser to load

@@ -9,4 +9,4 @@ hydrocarbon compile\
 
 cp \
     ./source/typescript/compiler/source-code-parse/*.wasm\
-    ./build/library/compiler/source-code-parse/
+    ./build/compiler/source-code-parse/
