@@ -7,6 +7,7 @@
 
 declare -A ts_packages
 
+ts_packages[conflagrate]=/packages/conflagrate
 ts_packages[css]=/packages/css
 ts_packages[cure]=/packages/cure
 ts_packages[dev-tools]=/packages/dev-tools
@@ -25,10 +26,10 @@ LOC=$(dirname "$(realpath $0)")/../
 
 echo $LOC
 
-tmux new-session -t HC_ROOT_BUILD -d 
-tmux select-layout -t HC_ROOT_BUILD tiled
-tmux set -t HC_ROOT_BUILD -g mouse on
+tmux new-session -t CL_ROOT_BUILD -d 
+tmux select-layout -t CL_ROOT_BUILD tiled
+tmux set -t CL_ROOT_BUILD -g mouse on
 
 for key in "${!ts_packages[@]}"; do
-  tmux new-window -t HC_ROOT_BUILD -n $key "tsc --watch  -p $LOC/${ts_packages[$key]}/tsconfig.json"
+  tmux new-window -t CL_ROOT_BUILD -n $key "tsc --watch  -p $LOC/${ts_packages[$key]}/tsconfig.json"
 done
