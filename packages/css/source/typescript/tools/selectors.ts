@@ -1,6 +1,7 @@
 import { CSSNodeType, CSSNodeFlags } from "../types/node_type.js";
 import { CSSNode, CSSRuleNode, CSSSelectorNode } from "../types/node.js";
-import { PrecedenceFlags } from "../css.js";
+import { PrecedenceFlags } from '../types/precedence_flags.js';
+
 import { traverse } from "@candlelib/conflagrate";
 
 export interface SelectionHelpers<Element> {
