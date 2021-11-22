@@ -19,7 +19,7 @@ import URL from "@candlelib/uri";
 import { getPackageJsonObject, getProcessArgs } from "@candlelib/paraffin";
 import $404_dispatch from "./build/dispatchers/404_dispatch.js";
 import candle_library_dispatch from "./build/dispatchers/candle_library_dispatch.js";
-import cfw_favicon_dispatch from "./build/dispatchers/cfw_favicon_dispatch.js";
+import cfw_favicon_dispatch from "./build/dispatchers/candle_library_favicon_dispatch.js";
 import filesystem_dispatch from "./build/dispatchers/filesystem_dispatch.js";
 import poller_dispatch from "./build/dispatchers/poller_dispatch.js";
 import lantern from "./build/lantern.js";

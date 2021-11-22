@@ -7,7 +7,7 @@ import fs from "fs";
 
 addKey("ico", ext_map);
 
-const favicon_path = path.join((new URL(import.meta.url)).path, "../../../../brand/candle.ico");
+const favicon_path = path.join((new URL(import.meta.url)).path, "../../../brand/candle.ico");
 
 export default <Dispatcher>{
     name: "CandleLib Default favicon",
