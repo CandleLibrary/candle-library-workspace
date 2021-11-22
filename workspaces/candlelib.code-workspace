@@ -41,7 +41,6 @@
 			"name": "Log",
 			"path": "../packages/log"
 		},
-
 		{
 			"name": "Glow",
 			"path": "../packages/glow"
@@ -58,6 +57,16 @@
 		},
 		"cSpell.words": [
 			"candlelib",
-		]
+		],
+		"files.exclude": {
+			"**/build": true,
+			"**/node_modules": true,
+			"**/.git": true,
+			"**/.svn": true,
+			"**/.hg": true,
+			"**/CVS": true,
+			"**/.DS_Store": true,
+			"**/Thumbs.db": true
+		}
 	}
 }
