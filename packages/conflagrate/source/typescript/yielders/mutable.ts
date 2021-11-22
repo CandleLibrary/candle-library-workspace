@@ -11,7 +11,7 @@ export class MutableYielder<T, K extends keyof T> extends ReplaceableYielder<T, 
         this.node_stack = node_stack;
         this.val_length_stack = val_length_stack;
     }
-    mutate(replacement_node: T, PROCESS_NEW_NODE: boolean = false) { this.replace(replacement_node, PROCESS_NEW_NODE); }
+    mutate(replacement_node: T | null, PROCESS_NEW_NODE: boolean = false) { this.replace(replacement_node, PROCESS_NEW_NODE); }
 
 
     protected replaceNodes(
