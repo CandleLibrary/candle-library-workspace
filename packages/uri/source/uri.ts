@@ -6,7 +6,9 @@ const relative_regex = /^(\.+\/)|^w/;
 const double_forward_regex = /\/\//g;
 
 const isPOSIX = (() => {
-    return process.platform !== "win32";
+    if ("process" in globalThis)
+        return process.platform !== "win32";
+    return true;
 })();
 
 const STOCK_LOCATION = {
