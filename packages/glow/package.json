@@ -32,7 +32,7 @@
         "test": "test"
     },
     "devDependencies": {
-        "@candlelib/cure": "0.5.0"
+        "@candlelib/cure": "*"
     },
     "jshintConfig": {
         "esversion": 6,
