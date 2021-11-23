@@ -7,7 +7,7 @@
     "type": "module",
     "scripts": {
         "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
-        "test": "tsc -p ./tsconfig.json"
+        "test": "true"
     },
     "repository": {
         "type": "git",
