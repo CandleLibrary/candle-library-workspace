@@ -49,6 +49,7 @@ build_typescript_packages:
     - npx tsc -p ./packages/html/tsconfig.json || true
     - npx tsc -p ./packages/js/tsconfig.json || true
     - npx tsc -p ./packages/lantern/tsconfig.json || true
+    - npx tsc -p ./packages/hydrocarbon/tsconfig.json || true
     - npx tsc -p ./packages/log/tsconfig.json || true
     - npx tsc -p ./packages/paraffin/tsconfig.json || true
     - npx tsc -p ./packages/spark/tsconfig.json || true
@@ -66,6 +67,7 @@ build_typescript_packages:
       - packages/html/build/
       - packages/js/build/
       - packages/lantern/build/
+      - packages/hydrocarbon/build/
       - packages/log/build/
       - packages/paraffin/build/
       - packages/spark/build/
