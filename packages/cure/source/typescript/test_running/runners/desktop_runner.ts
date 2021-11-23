@@ -189,7 +189,6 @@ export class DesktopRunner implements TestRunner {
         if (wkr.target) {
             wkr.target.send({ type: "close" });
             wkr.target.disconnect();
-            // wkr.target.kill();
             wkr.target = null;
         }
     }
@@ -250,9 +249,11 @@ export class DesktopRunner implements TestRunner {
     private loadWorkers(RELOAD_DEPENDS: boolean, workers: DesktopWorkerHandle[], url?: string) {
         for (const wkr of workers) {
 
+            if (RELOAD_DEPENDS) { wkr.READY = false; }
+
             wkr.test = null;
 
-            if (!wkr.READY && wkr.test) {
+            if (!wkr.READY && RELOAD_DEPENDS) {
 
                 this.deleteWorkerProcess(wkr);
 
