@@ -64,7 +64,7 @@ export function testPackage(pkg: DevPkg): Promise<boolean> {
         const p = exec(test, { cwd: CWD, env: process.env }, (err, out, stderr) => {
             if (err) {
                 dev_logger.get(`testing [${pkg.name}]`).error("Package failed testing");
-                //dev_logger.get(`testing [${pkg.name}]`).error(out + stderr);
+                dev_logger.get(`testing [${pkg.name}]`).error(out + "\n" + stderr);
                 res(false);
             } else
                 res(true);
