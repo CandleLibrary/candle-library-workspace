@@ -9,7 +9,7 @@
         "candle.cure": "./index.js"
     },
     "scripts": {
-        "test": "node ./build/bin/cli.js --reporter=ci ./test/",
+        "test": "candle.cure ./test/",
         "test.watch": "candle.cure -w --threads=2 ./test/"
     },
     "repository": {
