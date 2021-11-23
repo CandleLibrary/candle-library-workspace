@@ -154,9 +154,11 @@ export class DesktopRunner implements TestRunner {
             return;
 
         const worker = fork(module_url, {
-            env: {
+            env: Object.assign({
+                "NODE_OPTIONS": "--enable-source-maps"
                 //  "NODE_V8_COVERAGE": "/tmp/tests/"
-            }
+            }, process.env),
+            execArgv: ["--enable-source-maps"]
         });
 
         //const worker = new Worker(module_url);
