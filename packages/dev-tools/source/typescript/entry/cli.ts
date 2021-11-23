@@ -1,15 +1,14 @@
 #! /bin/node
 
+import { Logger } from "@candlelib/log";
 import {
     addCLIConfig, getPackageJsonObject, processCLIConfig
 } from "@candlelib/paraffin";
 import URI from "@candlelib/uri";
-import { Logger } from "@candlelib/log";
-import { createDepend, getPackageData, validateEligibility, validateEligibilityPackages, getCandleLibraryDependNames } from "../utils/version-sys.js";
 import fs from "fs";
+import { gitCheckout, gitClone } from "../utils/git.js";
+import { getPackageData, validateEligibilityPackages } from "../utils/version-sys.js";
 const dev_logger = Logger.get("dev-tools").activate();
-
-import { gitClone, gitCheckout } from "../utils/git.js";
 
 
 const fsp = fs.promises;

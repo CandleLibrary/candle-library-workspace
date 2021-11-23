@@ -4,13 +4,13 @@ import URI from '@candlelib/uri';
 import child_process, { exec, execSync } from "child_process";
 import fs from "fs";
 import path from "path";
-import { stdout } from 'process';
 import { CommitLog, Dependencies, Dependency, DevPkg, TestStatus, Version } from "../types/types";
 import { gitLog, gitStatus } from "./git.js";
 const dev_logger = Logger.get("dev-tools").activate();
 
 const fsp = fs.promises;
 
+await URI.server();
 
 const channel_hierarchy = {
     "": 100000,
@@ -26,29 +26,31 @@ const channel_hierarchy = {
  * repo folder. An alternate root workspace directory can specified with `ws_dir` 
  * argument. 
  * 
- * @param candle_lib_name - Name of the package to retrieve. e.g `@candlelib/hydrocarbon`.
+ * @param package_name - Name of the package to retrieve. e.g `@candlelib/hydrocarbon`.
  *                          The `@candlelib/` can be omitted if desired
  * 
  * @param ws_dir - Optional: The directory in which to search for the Candle Library repo.
  * 
  * @returns package.json object or null if repo cannot be located
  */
-export async function getPackageData(candle_lib_name: string):
-    Promise<DevPkg> {
+export async function getPackageData(package_name: string):
+    Promise<DevPkg | null> {
 
-    const resolved_path = URI.resolveRelative(candle_lib_name);
+    const resolved_path = URI.resolveRelative(package_name, URI.getEXEURL(import.meta));
 
     const { realpath } = await import("fs/promises");
+    try {
 
-    const path = await realpath(resolved_path + "");
+        const path = await realpath(resolved_path + "");
 
-    const { package: pkg, FOUND } = await getPackageJsonObject(path + "/");
+        const { package: pkg, FOUND } = await getPackageJsonObject(path + "/");
 
-    if (FOUND && pkg && pkg.name == candle_lib_name) {
-        pkg._workspace_location = path;
-        return <any>pkg;
-    }
+        if (FOUND && pkg && pkg.name == package_name) {
+            pkg._workspace_location = path;
+            return <any>pkg;
+        }
 
+    } catch (e) { }
     return null;
 }
 
@@ -74,7 +76,7 @@ export function testPackage(pkg: DevPkg): Promise<boolean> {
 
 
 /**
- * Retrieves a list of direct and indirect candlelib dependencies of the specified module
+ * Iterates through a list of direct and indirect dependencies of the specified package
  * @param package_name 
  * @param dependencies 
  * @returns 
@@ -82,52 +84,67 @@ export function testPackage(pkg: DevPkg): Promise<boolean> {
 export async function* getPackageDependenciesGen(
     prev_tracked_commit: string,
     dep: Dependency,
-    getDependencyNames: (DevPkg) => string[],
+    getDependencyNames: (d: DevPkg) => Iterable<string>,
     dependencies: Dependencies = new Map([[dep.name, dep]])
 ): AsyncGenerator<{ dep: Dependency, dependencies: Dependencies; }, Dependencies> {
 
     if (!dep)
         throw new Error("pkg argument is undefined");
 
-    if (dep.package?.dependencies) {
+    const cl_depends = getDependencyNames(dep.package);
 
-        const cl_depends = getDependencyNames(dep.package);
+    for (const dependent_name of cl_depends) {
 
-        for (const dependent_name of cl_depends) {
+        if (!dependencies.has(dependent_name)) {
 
-            if (!dependencies.has(dependent_name)) {
+            const dep_pkg = await getPackageData(dependent_name);
 
-                const dep_pkg = await getPackageData(dependent_name);
+            if (dep_pkg) {
 
-                if (dep_pkg) {
+                dev_logger.log(`Get dependency ${dependent_name}`);
 
-                    dev_logger.log(`Get dependency ${dependent_name}`);
+                const dep = await createDepend(dep_pkg, prev_tracked_commit);
 
-                    const dep = await createDepend(dep_pkg, prev_tracked_commit);
+                dependencies.set(dependent_name, dep);
 
-                    dependencies.set(dependent_name, dep);
+                (<Dependency>dependencies.get(dependent_name)).reference_count++;
 
-                    dependencies.get(dependent_name).reference_count++;
-
-                    yield* (await getPackageDependenciesGen(prev_tracked_commit, dep, getDependencyNames, dependencies));
+                yield* (await getPackageDependenciesGen(prev_tracked_commit, dep, getDependencyNames, dependencies));
 
 
-                } else {
-                    throw new Error(`Cannot locate package ${dependent_name} required by ${dep.name}`);
-                }
             } else {
-                dependencies.get(dependent_name).reference_count++;
+                throw new Error(`Cannot locate package ${dependent_name} required by ${dep.name}`);
             }
+        } else {
+            (<Dependency>dependencies.get(dependent_name)).reference_count++;
         }
     }
-
 
     yield { dep, dependencies };
 
     return dependencies;
 }
 
-export async function createDepend(dep_pkg: string | DevPkg, prev_commit: string = ""): Promise<Dependency> {
+/**
+ * Retrieves a map of direct and indirect candlelib dependencies of the specified module
+ * @param package_name 
+ * @param dependencies 
+ * @returns 
+ */
+export async function getPackageDependencies(
+    prev_tracked_commit: string,
+    dep: Dependency,
+    getDependencyNames: (d: DevPkg) => Iterable<string>,
+    dependencies: Dependencies = new Map([[dep.name, dep]])
+) {
+
+    for await (const _ of getPackageDependenciesGen(prev_tracked_commit, dep, getDependencyNames, dependencies)) { };
+
+
+    return dependencies;
+}
+
+export async function createDepend(dep_pkg: string | DevPkg | null, prev_commit: string = ""): Promise<Dependency> {
 
     if (typeof dep_pkg == "string")
         dep_pkg = await getPackageData(dep_pkg);
@@ -185,9 +202,22 @@ export function getNewVersionNumber(dep: Dependency, release_channel = "", RELEA
     return new Promise((res, reject) => {
 
         const pkg_version = parseVersion(dep.package.version);
-        exec(`npm show ${dep.name} version`, (error, stdout) => {
+        exec(`npm show ${dep.name} version`, {
+            env: process.env,
+            shell: "/bin/bash"
+        }, (error, stdout: string) => {
 
-            let npm_version_string = stdout.toString().match(/^.*(\d+\.\d+\.\d+\w*)/)[1].trim();
+            if (!stdout || error) {
+                reject(new Error(`Unable to resolve the package version of ${dep.package.name} ${stdout}:\n\n ${error}`));
+                return;
+            }
+
+            let npm_version_string = stdout.toString().match(/^.*(\d+\.\d+\.\d+\w*)/)?.[1]?.trim() ?? "";
+
+            if (!npm_version_string) {
+                reject(new Error(`Unable to resolve the package version of ${dep.package.name} ${stdout}`));
+                return;
+            }
 
             let BREAKING = false, FEATURE = false, commit_drift = 0;
 
@@ -644,7 +674,7 @@ export async function validateEligibility(
      */
     getDependencyNames: (arg: DevPkg) => string[],
     DRY_RUN: boolean = false,
-    global_packages: Dependencies = new Map([[primary_repo.name, primary_repo]])
+    global_packages: Dependencies = new Map([[primary_repo?.name ?? "undefined", primary_repo]])
 ) {
 
     if (primary_repo.PROCESSED)
