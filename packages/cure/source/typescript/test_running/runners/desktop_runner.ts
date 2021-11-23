@@ -45,7 +45,7 @@ export class DesktopRunner implements TestRunner {
     close() {
 
         for (const wkr of this.workers)
-            this.deleteWorkerProcess(wkr);
+            this.killWorkerProcess(wkr);
     }
 
     Can_Accept_Test(test: Test) { return !test.BROWSER; }
