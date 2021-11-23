@@ -61,7 +61,7 @@ export function testPackage(pkg: DevPkg): Promise<boolean> {
         const CWD = pkg._workspace_location;
 
         const test = pkg.scripts.test;
-        const p = exec(test, { cwd: CWD }, (err, out, stderr) => {
+        const p = exec(test, { cwd: CWD, env: process.env }, (err, out, stderr) => {
             if (err) {
                 dev_logger.get(`testing [${pkg.name}]`).error("Package failed testing");
                 //dev_logger.get(`testing [${pkg.name}]`).error(out + stderr);
@@ -72,6 +72,10 @@ export function testPackage(pkg: DevPkg): Promise<boolean> {
 
         p.on("error", (err) => {
             dev_logger.get(`testing [${pkg.name}]`).error(err);
+        });
+
+        p.on("message", (msg) => {
+            dev_logger.get(`testing [${pkg.name}]`).log(msg);
         });
     });
 }
