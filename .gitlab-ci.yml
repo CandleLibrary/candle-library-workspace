@@ -59,19 +59,19 @@ build_typescript_packages:
   artifacts:
     expire_in: 2 hours
     paths:
-      - /packages/css/build/
-      - /packages/cure/build/
-      - /packages/dev-tools/build/
-      - /packages/glow/build/
-      - /packages/html/build/
-      - /packages/js/build/
-      - /packages/lantern/build/
-      - /packages/log/build/
-      - /packages/paraffin/build/
-      - /packages/spark/build/
-      - /packages/uri/build/
-      - /packages/wick/build/
-      - /packages/wind/build/
+      - packages/css/build/
+      - packages/cure/build/
+      - packages/dev-tools/build/
+      - packages/glow/build/
+      - packages/html/build/
+      - packages/js/build/
+      - packages/lantern/build/
+      - packages/log/build/
+      - packages/paraffin/build/
+      - packages/spark/build/
+      - packages/uri/build/
+      - packages/wick/build/
+      - packages/wind/build/
 
   dependencies:
     - fetch_dependencies
