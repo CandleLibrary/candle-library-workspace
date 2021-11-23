@@ -157,13 +157,11 @@ process.on("message", async (m: { type: "close"; } | { type: "test"; test: Test;
 
 process.on("SIGTERM", () => {
     POLLING = false;
-    console.log("Terminating");
     process.exit();
 });
 
 process.on("disconnect", () => {
     POLLING = false;
-    console.log("Disconnecting");
     process.exit();
 });
 
