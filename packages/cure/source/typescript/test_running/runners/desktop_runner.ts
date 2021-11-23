@@ -1,8 +1,8 @@
+import { Logger, LogLevel } from '@candlelib/log';
 import spark from "@candlelib/spark";
 import URL from "@candlelib/uri";
+import { ChildProcess, fork } from 'child_process';
 import { performance } from "perf_hooks";
-import { fork } from 'child_process';
-import { Logger, LogLevel } from '@candlelib/log';
 import { DesktopWorkerHandle } from "../../types/desktop_worker_handle";
 import { Globals } from "../../types/globals";
 import { Test } from "../../types/test.js";
@@ -10,8 +10,6 @@ import { TestInfo } from "../../types/test_info";
 import { TestRunner, TestRunnerRequest, TestRunnerResponse } from "../../types/test_runner";
 import { createHierarchalName } from "../../utilities/name_hierarchy.js";
 import { createTestErrorFromString } from "../../utilities/test_error.js";
-import { SIGKILL } from 'constants';
-import URI from '@candlelib/uri';
 
 export class DesktopRunner implements TestRunner {
     workers: DesktopWorkerHandle[];
@@ -19,6 +17,8 @@ export class DesktopRunner implements TestRunner {
     STOP_ALL_ACTIVITY: boolean;
     request: TestRunnerRequest;
     respond: TestRunnerResponse;
+
+    handles: ChildProcess[];
 
     constructor(max_workers: number = 1) {
 
@@ -32,6 +32,8 @@ export class DesktopRunner implements TestRunner {
         this.respond = _ => _;
         this.request = async _ => <any>_;
 
+        this.handles = [];
+
         this.module_url = module_url.replace("desktop_runner.js", "desktop_worker.js");
 
         this.workers = <DesktopWorkerHandle[]>(new Array(max_workers))
@@ -42,10 +44,16 @@ export class DesktopRunner implements TestRunner {
             this.createWorkerProcess(wkr);
     }
 
-    close() {
+    async close() {
 
         for (const wkr of this.workers)
-            this.killWorkerProcess(wkr);
+            await this.killWorkerProcess(wkr);
+
+        for (const worker of this.handles)
+            if (!worker.exitCode)
+                Logger.get("cure").get("desktop-worker").activate().error("FAILED TO CLOSE WORKER");
+
+        this.handles.length = 0;
     }
 
     Can_Accept_Test(test: Test) { return !test.BROWSER; }
@@ -56,7 +64,7 @@ export class DesktopRunner implements TestRunner {
 
         const RELOAD_DEPENDENCIES = false;
 
-        this.loadWorkers(RELOAD_DEPENDENCIES, this.workers);
+        //this.loadWorkers(RELOAD_DEPENDENCIES, this.workers);
     }
 
     async init(
@@ -68,8 +76,11 @@ export class DesktopRunner implements TestRunner {
 
         this.STOP_ALL_ACTIVITY = true;
 
+        if (RELOAD_DEPENDENCIES)
+            await this.close();
+
         //Reset any running workers
-        this.loadWorkers(RELOAD_DEPENDENCIES, this.workers);
+        await this.loadWorkers(RELOAD_DEPENDENCIES, this.workers);
 
         this.request = request;
 
@@ -105,7 +116,8 @@ export class DesktopRunner implements TestRunner {
                             Logger.get("TEST_RUNNER").activate()
                                 .log("TEST_TIMED_OUT " + wkr.test.name + " " + wkr.test.timeout_limit + " " + wkr.test.retries);
 
-                            this.killWorkerProcess(wkr);
+                            await this.killWorkerProcess(wkr);
+
                             this.createWorkerProcess(wkr);
 
                             if (wkr.test.retries > 0) {
@@ -179,16 +191,27 @@ export class DesktopRunner implements TestRunner {
     }
 
     killWorkerProcess(wkr: DesktopWorkerHandle) {
-        if (wkr.target) {
-            wkr.target.kill(SIGKILL);
-            wkr.target = null;
-        }
+        return new Promise((res) => {
+
+            if (wkr.target) {
+                wkr.target.kill("SIGTERM");
+
+                wkr.target.addListener("close", () => {
+                    res(true);
+                });
+
+                wkr.target = null;
+            } else {
+                res(true);
+            }
+        });
     }
 
     deleteWorkerProcess(wkr: DesktopWorkerHandle) {
         if (wkr.target) {
+
             wkr.target.send({ type: "close" });
-            wkr.target.disconnect();
+
             wkr.target = null;
         }
     }
@@ -199,6 +222,8 @@ export class DesktopRunner implements TestRunner {
             return;
 
         const worker = fork(module_url, {
+            detached: false,
+
             env: Object.assign({
                 "NODE_OPTIONS": "--enable-source-maps"
                 //  "NODE_V8_COVERAGE": "/tmp/tests/"
@@ -206,8 +231,7 @@ export class DesktopRunner implements TestRunner {
             execArgv: ["--enable-source-maps"]
         });
 
-        //const worker = new Worker(module_url);
-
+        this.handles.push(worker);
 
         worker.on("error", e => {
             Logger.get("cure").get("server-runner").activate(LogLevel.ERROR).error(e.toString());
@@ -246,7 +270,7 @@ export class DesktopRunner implements TestRunner {
         }
         ```
     */
-    private loadWorkers(RELOAD_DEPENDS: boolean, workers: DesktopWorkerHandle[], url?: string) {
+    private async loadWorkers(RELOAD_DEPENDS: boolean, workers: DesktopWorkerHandle[], url?: string) {
         for (const wkr of workers) {
 
             if (RELOAD_DEPENDS) { wkr.READY = false; }
@@ -255,7 +279,7 @@ export class DesktopRunner implements TestRunner {
 
             if (!wkr.READY && RELOAD_DEPENDS) {
 
-                this.deleteWorkerProcess(wkr);
+                await this.killWorkerProcess(wkr);
 
                 this.createWorkerProcess(wkr, url);
 

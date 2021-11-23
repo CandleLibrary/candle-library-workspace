@@ -59,6 +59,8 @@ export async function getSuiteTestOutcomeFromSource(source, global_modifications
 
     await runTests(suites.flatMap(suite => suite.tests), globals);
 
+    await globals.runners[0].close();
+
     return globals.outcome;
 }
 

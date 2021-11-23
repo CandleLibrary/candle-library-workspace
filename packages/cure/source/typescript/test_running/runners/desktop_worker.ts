@@ -152,13 +152,30 @@ process.on("message", async (m: { type: "close"; } | { type: "test"; test: Test;
     }
 });
 
-async function poll() {
 
-    while (POLLING) { await spark.sleep(1); }
 
+
+process.on("SIGTERM", () => {
+    POLLING = false;
+    console.log("Terminating");
+    process.exit();
+});
+
+process.on("disconnect", () => {
+    POLLING = false;
+    console.log("Disconnecting");
+    process.exit();
+});
+
+if (process.send) {
+
+    process.send({ ready: true });
+
+    async function poll() {
+        while (POLLING) { await spark.sleep(50); }
+        process.exit();
+    }
+
+    await poll();
 }
-
-process.send({ ready: true });
-
-await poll();
 
