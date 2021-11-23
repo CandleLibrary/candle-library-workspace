@@ -49,67 +49,54 @@ Only report what would be changed, do not make any permanent changes.`
 });
 
 
-addCLIConfig("version", {
+addCLIConfig<string>("version", {
     key: "version",
+    help_arg_name: "Workspace Package Name",
+    accepted_values: [String],
     help_brief: ` 
 
-usage: version [candle-lib-package-names]*
+Test and versions all packages listed in the workspace package.json 
+devPackages array property. 
 
-Increments the version of the Candle Library package based on the 
+Increments the versions of packages based on the 
 the changes made in the package's git repo since the last version
-and on changes made in any of the dependencies that are also 
-Candle Library packages. If any changes have been made in the 
+and on changes made in any of the dependencies that are also listed 
+in devPackages. If any changes have been made in the 
 dependency packages, then their package version will be incremented
 as well, and the dependency specification in the package.json will
 be updated to reflect the dependency's new version. 
 
-This command will not work if any of the affected Candle Library
-packages have uncommitted changes, or if any of the affected packages
-have failing tests. 
-
-This command must be run in the root directory of a Candle Library
-package, additionally, this command will only work with Candle Library 
-packages.`,
+This command will not work if any of the affected packages have 
+uncommitted changes, or if any of the affected packages
+have failing tests.`,
 }).callback = (async (arg, args) => {
 
-    const DRY_RUN = !!dry_run.value;
 
-    const names = args.trailing_arguments;
+    const DRY_RUN = !!dry_run.value;
 
     if (DRY_RUN)
         dev_logger.log("\nDry Run: No changes will be recorded.\n");
 
+    const { package: wksp_pkg, FOUND } = await getPackageJsonObject(URI.getCWDURL());
 
-    if (names.length > 0) {
-        const packages = await Promise.all(names.map(name => createDepend("@candlelib/" + name)));
+    if (FOUND && wksp_pkg.name == arg) {
+        if ((wksp_pkg.devPackages as string[]).every(d => d !== null)) {
+            try {
 
-        await validateEligibilityPackages(packages.filter(p => !!p), getCandleLibraryDependNames, DRY_RUN);
-        /*  for (const name of names) {
- 
- 
-             try {
- 
-                 const dep = await ;
- 
-                 await validateEligibility(dep, getCandleLibraryDependNames, DRY_RUN);
-             } catch (e) {
-                 dev_logger.log(`Could not version package with name ${name}. Is this a Candle Library package?`);
-             }
-         } */
-    } else {
-
-        const { FOUND, package: pkg, package_dir } = await getPackageJsonObject();
-
-        if (FOUND && package_dir == process.cwd() + "/") {
-            // Attempt to version the package that is located 
-            // at CWD
-
-            const pk = await getPackageData(pkg.name.replace("@candlelib/", process.cwd() + "/../"));
-
-            const dep = await createDepend(pk);
-
-            await validateEligibility(dep, DRY_RUN);
+                if (!await validateEligibilityPackages(wksp_pkg.devPackages, (pkg) => {
+                    return Object.getOwnPropertyNames(pkg?.dependencies ?? {}).filter(n => wksp_pkg.devPackages.includes(n));
+                }, false)) {
+                    dev_logger.log("Unable to version packages");
+                };
+            } catch (E) {
+                dev_logger.log("Unable to version packages");
+                process.exit(-1);
+            }
+        } else {
+            throw new Error("Unable to resolve required packages");
         }
+    } else {
+        throw new Error("Unable to locate workspace package.json. Is this running at the root of your workspace?");
     }
 });
 
