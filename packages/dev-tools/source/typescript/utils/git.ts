@@ -1,38 +1,41 @@
-import child_process from "child_process";
+import { execSync } from "child_process";
 
 export function gitStatus(CWD: string, pkg_path: string = "") {
     try {
-        return child_process.execSync(`git status -s --column ${pkg_path}`,
+        return execSync(`git status -s --column ${pkg_path}`,
             { cwd: CWD }
         ).toString();
     } catch (e) {
-        console.error(e.toString());
+        if (e instanceof Error)
+            console.error(e.toString());
         return "";
     }
 }
 
 
-export function gitLog(CWD: string, pkg_path: string = "", prev_commit) {
+export function gitLog(CWD: string, pkg_path: string = "", prev_commit: string): string {
     try {
-        return child_process.execSync(
+        return execSync(
             `git log --no-decorate ${prev_commit ? `${prev_commit}..HEAD ` : ""}${pkg_path} || git log --no-decorate ${pkg_path}`,
             { cwd: CWD }
         ).toString();
     } catch (e) {
-        console.error(e.toString());
+        if (e instanceof Error)
+            console.error(e.toString());
         return "";
     }
 }
 
 export function gitAdd(CWD: string, paths: string = "."): boolean {
     try {
-        child_process.execSync(
+        execSync(
             `git add ${paths}`,
             { cwd: CWD }
         );
         return true;
     } catch (e) {
-        console.log(e.toString());
+        if (e instanceof Error)
+            console.log(e.toString());
         return false; e;
     }
 }
@@ -43,13 +46,14 @@ export function gitCommit(CWD: string, commit_message: string = ""): boolean {
         return false;
 
     try {
-        child_process.execSync(
+        execSync(
             `git commit -m "${commit_message}"`,
             { cwd: CWD }
         );
         return true;
     } catch (e) {
-        console.error(e.toString());
+        if (e instanceof Error)
+            console.error(e.toString());
         return false;
     }
 }
@@ -59,13 +63,14 @@ export function gitTag(CWD: string, tag_name: string = "", tag_message: string =
         return false;
 
     try {
-        child_process.execSync(
+        execSync(
             `git tag ${tag_message ? `-m "${tag_message}" ` : ""}${tag_name}`,
             { cwd: CWD }
         );
         return true;
     } catch (e) {
-        console.error(e.toString());
+        if (e instanceof Error)
+            console.error(e.toString());
         return false;
     }
 }
@@ -76,13 +81,14 @@ export function gitCheckout(CWD: string, branch = ""): boolean {
 
     try {
 
-        child_process.execSync(
+        execSync(
             `git checkout "${branch}"`,
             { cwd: CWD }
         );
         return true;
     } catch (e) {
-        console.error(e.toString());
+        if (e instanceof Error)
+            console.error(e.toString());
         return false;
     }
 }
@@ -93,13 +99,14 @@ export function gitClone(remote_repo_url: string, CWD: string): boolean {
 
     try {
 
-        child_process.execSync(
+        execSync(
             `git clone "${remote_repo_url}"`,
             { cwd: CWD || "" }
         );
         return true;
     } catch (e) {
-        console.error(e.toString());
+        if (e instanceof Error)
+            console.error(e.toString());
         return false;
     }
 }
@@ -110,13 +117,14 @@ export function gitPull(remote_repo_url: string, CWD: string): boolean {
 
     try {
 
-        child_process.execSync(
+        execSync(
             `git pull "${remote_repo_url}"`,
             { cwd: CWD || "" }
         );
         return true;
     } catch (e) {
-        console.error(e.toString());
+        if (e instanceof Error)
+            console.error(e.toString());
         return false;
     }
 }
@@ -127,13 +135,14 @@ export function gitFetch(remote_repo_url: string, CWD: string): boolean {
 
     try {
 
-        child_process.execSync(
+        execSync(
             `git pull "${remote_repo_url}"`,
             { cwd: CWD || "" }
         );
         return true;
     } catch (e) {
-        console.error(e.toString());
+        if (e instanceof Error)
+            console.error(e.toString());
         return false;
     }
 }

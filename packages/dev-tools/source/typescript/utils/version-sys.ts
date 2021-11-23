@@ -159,7 +159,7 @@ export async function createDepend(dep_pkg: string | DevPkg | null, prev_commit:
 
         const commits: CommitLog[] = <any>commit_string
             .split(/^\s*commit\s*/mg)
-            .map(str => str.match(/^(?<hash>.*)$\s*author\s*\:(?<author>.*)$\s*date\s*\:(?<date>.*)$(?<message>(.|\.|[\n\s\r])+)/mi)?.groups)
+            .map((str: string) => str.match(/^(?<hash>.*)$\s*author\s*\:(?<author>.*)$\s*date\s*\:(?<date>.*)$(?<message>(.|\.|[\n\s\r])+)/mi)?.groups)
             //.map(g => { if (g) { const [head, body] = g.message.split(/\n/g); g.head = head + ""; g.body = body + ""; } return g; })
             .map(g => { if (g) for (const name in g) g[name] = g[name].trim(); return g; })
             .filter(m => !!m);
