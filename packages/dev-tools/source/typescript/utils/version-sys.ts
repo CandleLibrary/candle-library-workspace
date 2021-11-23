@@ -1,14 +1,12 @@
 import { Logger } from "@candlelib/log";
 import { col_css, getPackageJsonObject, xtColor, xtF, xtReset } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
-import child_process, { exec, execSync } from "child_process";
-import fs from "fs";
-import path from "path";
+import { exec, execSync } from "child_process";
+import { writeFile } from 'fs/promises';
+import { resolve } from 'path';
 import { CommitLog, Dependencies, Dependency, DevPkg, TestStatus, Version } from "../types/types";
 import { gitLog, gitStatus } from "./git.js";
 const dev_logger = Logger.get("dev-tools").activate();
-
-const fsp = fs.promises;
 
 await URI.server();
 
@@ -63,13 +61,17 @@ export function testPackage(pkg: DevPkg): Promise<boolean> {
         const CWD = pkg._workspace_location;
 
         const test = pkg.scripts.test;
-        child_process.exec(test, { cwd: CWD, }, (err, out, stderr) => {
+        const p = exec(test, { cwd: CWD }, (err, out, stderr) => {
             if (err) {
                 dev_logger.get(`testing [${pkg.name}]`).error("Package failed testing");
                 //dev_logger.get(`testing [${pkg.name}]`).error(out + stderr);
                 res(false);
             } else
                 res(true);
+        });
+
+        p.on("error", (err) => {
+            dev_logger.get(`testing [${pkg.name}]`).error(err);
         });
     });
 }
@@ -395,7 +397,7 @@ export async function validateDepend(dep: Dependency) {
 
 async function createPublishBounty(pkg: DevPkg, dep: Dependency) {
 
-    await fsp.writeFile(path.resolve(pkg._workspace_location, "publish.bounty"),
+    await writeFile(resolve(pkg._workspace_location, "publish.bounty"),
         `#! /bin/bash  
 
 cd $(dirname "$0")
@@ -427,7 +429,7 @@ async function createCommitBounty(pkg: DevPkg, dep: Dependency) {
         const
             change_log_entry = `## [v${dep.version_data.new_version}] - ${createISODateString()} \n\n` + logs.join("\n\n");
 
-        await fsp.writeFile(path.resolve(pkg._workspace_location, "change_log_addition.md"), change_log_entry + "\n\n");
+        await writeFile(resolve(pkg._workspace_location, "change_log_addition.md"), change_log_entry + "\n\n");
     }
 
     const version = dep.version_data.new_version;
@@ -435,7 +437,7 @@ async function createCommitBounty(pkg: DevPkg, dep: Dependency) {
     const change_log = getChangeLog(dep);
     const cl_data = change_log.join("\n");
 
-    await fsp.writeFile(path.resolve(pkg._workspace_location, "commit.bounty"),
+    await writeFile(resolve(pkg._workspace_location, "commit.bounty"),
         `#! /bin/bash 
 
 cd $(dirname "$0")
@@ -469,7 +471,7 @@ function getCurrCommit() {
 async function createPublishVersionBountyHunter(
     ...bounty_paths: Dependency[]
 ) {
-    await fsp.writeFile(URI.resolveRelative("./root.publish.bounty") + "",
+    await writeFile(URI.resolveRelative("./root.publish.bounty") + "",
         `#! /bin/bash
 ${bounty_paths.map((p, i) => `bounty_paths[${i}]="${p.package._workspace_location}/publish.bounty"`).join("\n")}
 
@@ -486,7 +488,7 @@ async function createCommitVersionBountyHunter(
     prev_commit: string,
     ...bounty_paths: Dependency[]
 ) {
-    await fsp.writeFile(URI.resolveRelative("./root.commit.bounty") + "",
+    await writeFile(URI.resolveRelative("./root.commit.bounty") + "",
         `#! /bin/bash
 
 CURR_COMMIT="${curr_commit}"
@@ -643,7 +645,7 @@ export async function validateEligibilityPackages(
                 const json = JSON.stringify(Object.assign({}, pkg, { _workspace_location: undefined }), null, 4);
 
                 logger.log(`Updating package.json to v${dep.version_data.new_version}`);
-                if (!DRY_RUN) await fsp.writeFile(path.resolve(pkg._workspace_location, "package.temp.json"), json);
+                if (!DRY_RUN) await writeFile(resolve(pkg._workspace_location, "package.temp.json"), json);
 
                 logger.log(`Creating A commit.bounty for ${dep.name}@${dep.version_data.new_version}`);
                 if (!DRY_RUN) await createPublishBounty(pkg, dep);;
