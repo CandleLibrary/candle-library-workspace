@@ -109,5 +109,5 @@ assert_group("Bi-direction traverse with replacement of root and extract", seque
         }
     }
 
-    assert(d.ast == { n: 'R', ch: [{ n: 'R1' }, { n: 'R2' }] });
+    assert(d.ast + "dsf" == { n: 'R', ch: [{ n: 'R1' }, { n: 'R2' }] });
 });
