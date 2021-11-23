@@ -121,9 +121,9 @@ export async function loadComponentsFromDirectory(
 						let i = 0;
 						for (const data of context.template_data.get(comp)) {
 							if (data.endpoint) {
-								const template_endpont = URI.resolveRelative(data.endpoint, endpoint).toString();
-								endpoints.set(template_endpont, { comp, template_data: data });
-								endpoints_strings.push(template_endpont);
+								const template_endpoint = URI.resolveRelative(data.endpoint, endpoint).toString();
+								endpoints.set(template_endpoint, { comp, template_data: data });
+								endpoints_strings.push(template_endpoint);
 							} else {
 								Logger
 									.get("wick")
@@ -164,8 +164,13 @@ export async function loadComponentsFromDirectory(
 		}
 	};
 
-	for (const [, comp] of context.components)
+	for (const [, comp] of context.components) {
+		if (comp.AD_HOC) continue;
 		components.set(comp.location + "", { comp });
+	}
+
+
+	console.dir({ page_components }, { depth: 8 });
 
 	return {
 		endpoints,
