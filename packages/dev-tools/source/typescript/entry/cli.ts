@@ -5,7 +5,10 @@ import {
     addCLIConfig, getPackageJsonObject, processCLIConfig
 } from "@candlelib/paraffin";
 import URI from "@candlelib/uri";
+
+//@ts-ignore
 import fs from "fs";
+
 import { gitCheckout, gitClone } from "../utils/git.js";
 import { getPackageData, validateEligibilityPackages } from "../utils/version-sys.js";
 const dev_logger = Logger.get("dev-tools").activate();
@@ -128,7 +131,7 @@ module imports.`,
         let uri = new URI(package_dir);
 
         if (uri.IS_RELATIVE) {
-            uri = URI.resolveRelative(uri);
+            uri = <URI>URI.resolveRelative(uri);
         }
 
         dev_logger.log(`Creating new Candle Library workspace at ${uri}`);
@@ -176,7 +179,7 @@ module imports.`,
 
             dev_logger.log("Creating VSCode Workspace file");
 
-            const JSON_OBJ = { folders: [] };
+            const JSON_OBJ = { folders: <any[]>[] };
 
             for (const name of candlelib_repo_names) {
 
@@ -216,6 +219,8 @@ Publishes any Candle Library package that has a publish.bounty file.`,
 }).callback = (async (arg, args) => {
 
     const candlelib_repo_names = Object.keys(pkg["candle-lib-modules"]);
+
+    //@ts-ignore
     const cp = (await import("child_process")).default;
 
     for (const name of candlelib_repo_names) {
