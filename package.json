@@ -14,7 +14,6 @@
 		"@candlelib/dev-tools",
 		"@candlelib/glow",
 		"@candlelib/html",
-		"@candlelib/hydrocarbon",
 		"@candlelib/js",
 		"@candlelib/lantern",
 		"@candlelib/log",
