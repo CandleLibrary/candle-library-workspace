@@ -61,7 +61,7 @@ export class Element {
         //  this.page.up(data, src);
     }
 
-    down(data, src) {
+    down(data: any, src: any) {
         this.component.update(data);
     }
 
@@ -73,11 +73,12 @@ export class Element {
         //for (const comp of this.interior_components.filter(c => !c.CONNECTED && c.ele.parentElement))
         //    comp.removeFromDOM();
 
-        this.component.disconnect();
+        //this.component.disconnect();
     }
 
     disconnectComponents() {
-        this.component.disconnect();
+        //this.component.disconnect();
+
     }
 
     loadComponents(url: URI, outgoing_element: Element) {
@@ -110,49 +111,50 @@ export class Element {
         // the contemporary will still be removed. 
 
         if (outgoing_element) {
-
+            console.log("-----------");
             const temp_ele = document.createElement("temp");
-
-            for (const [id_hash, incoming_comp] of outgoing_element.interior_components) {
+            for (const [id_hash, outgoing_comp] of outgoing_element.interior_components) {
 
                 if (this.interior_components.has(id_hash)) {
+                    console.log(outgoing_element.interior_components);
                     //Swap 
                     const
-                        outgoing_comp = this.interior_components.get(id_hash),
+                        incoming_comp = <WickRTComponent>this.interior_components.get(id_hash),
 
-                        incoming_parent = outgoing_comp.par,
+                        incoming_parent = incoming_comp.par,
 
-                        outgoing_parent = incoming_comp.par,
+                        outgoing_parent = outgoing_comp.par,
 
-                        outgoing_index = outgoing_parent.ch.indexOf(incoming_comp),
+                        outgoing_index = outgoing_parent.ch.indexOf(outgoing_comp),
 
-                        incoming_index = incoming_parent.ch.indexOf(outgoing_comp),
+                        incoming_index = incoming_parent.ch.indexOf(incoming_comp),
 
-                        incoming_par_ele = outgoing_comp.ele.parentElement,
+                        incoming_par_ele = incoming_comp.ele?.parentElement,
 
-                        outgoing_par_ele = incoming_comp.ele.parentElement;
+                        outgoing_par_ele = outgoing_comp.ele?.parentElement;
 
                     //Primary parent ele will be removed from document as it belongs to the
                     //outgoing `contemporary` Element
-                    outgoing_par_ele.replaceChild(temp_ele, incoming_comp.ele);
+                    outgoing_par_ele.replaceChild(temp_ele, outgoing_comp.ele);
 
                     //Secondary parent ele will be removed from document as it belongs to the
                     //outgoing `contemporary` Element
-                    incoming_par_ele.replaceChild(incoming_comp.ele, outgoing_comp.ele);
+                    incoming_par_ele.replaceChild(outgoing_comp.ele, incoming_comp.ele);
 
-                    outgoing_par_ele.replaceChild(outgoing_comp.ele, temp_ele);
+                    outgoing_par_ele.replaceChild(incoming_comp.ele, temp_ele);
 
-                    outgoing_element.interior_components.set(id_hash, outgoing_comp);
+                    outgoing_element.interior_components.set(id_hash, incoming_comp);
 
-                    this.interior_components.set(id_hash, incoming_comp);
+                    this.interior_components.set(id_hash, outgoing_comp);
 
-                    incoming_parent.ch[incoming_index] = incoming_comp;
+                    incoming_parent.ch[incoming_index] = outgoing_comp;
 
-                    outgoing_parent.ch[outgoing_index] = outgoing_comp;
+                    outgoing_parent.ch[outgoing_index] = incoming_comp;
 
                     incoming_comp.par = incoming_parent;
 
                     outgoing_comp.par = outgoing_parent;
+
 
                     //TODO: Do Something to update component elements
                 }

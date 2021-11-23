@@ -1,4 +1,5 @@
 import URI from '@candlelib/uri';
+import { Transition } from '@candlelib/glow';
 import { ComponentElement, WickRTComponent } from '../runtime/component.js';
 import { hydrateComponentElements } from '../runtime/html.js';
 import { Element } from './element.js';
@@ -19,9 +20,9 @@ export class PageView {
     url: URI;
     eles: Element[];
     type: PageType;
-    component: WickRTComponent;
-    ele: ComponentElement;
-    ele_backer: HTMLElement;
+    component: WickRTComponent | null;
+    ele: ComponentElement | null;
+    ele_backer: HTMLElement | null;
     CONNECTED: boolean;
     SHOULD_CLOSE: boolean;
     style: any;
@@ -30,6 +31,8 @@ export class PageView {
     page_component_name: string;
 
     constructor(URL: URI, app_page: ComponentElement) {
+
+        app_page.classList.add("radiate-app");
 
         //Initialize the app_page
         this.page_component_name = app_page.classList[0];
@@ -48,31 +51,36 @@ export class PageView {
 
     init_components() {
 
-        for (const comp of hydrateComponentElements([this.ele]))
-            comp.initialize(null).connect();
+        if (this.ele) {
 
 
-        this.component = this.ele.wick_component;
+            for (const comp of hydrateComponentElements([this.ele]))
+                if (comp)
+                    comp.initialize(null).connect();
 
-        //Only gather radiate elements that are direct children of the 
-        //app node to reduce the complexity of transitioning between 
-        //pages.
 
-        const radiate_elements: ComponentElement[] = <any>
+            this.component = this.ele.wick_component;
 
-            Array.from(this.ele.querySelectorAll(`[radiate=${this.page_component_name}]`)).
-                filter(ele => ele.parentElement == this.ele);
+            //Only gather radiate elements that are direct children of the 
+            //app node to reduce the complexity of transitioning between 
+            //pages.
 
-        for (const ele of radiate_elements)
-            this.eles.push(new Element(ele, this));
+            const radiate_elements: ComponentElement[] = <any>
 
+                Array.from(this.ele.querySelectorAll(`[radiate=${this.page_component_name}]`)).
+                    filter(ele => ele.parentElement == this.ele);
+
+            for (const ele of radiate_elements)
+                this.eles.push(new Element(ele, this));
+
+        }
     }
 
     destroy() {
         //for (const element of this.eles)
         //    element.destroy();
 
-        this.eles = null;
+        this.eles = [];
         this.ele = null;
     }
 
@@ -80,14 +88,18 @@ export class PageView {
 
         if (this.CONNECTED) return;
 
-        for (const ele of this.eles)
-            ele.finalizeDisconnect();
+        if (this.ele) {
 
-        if (this.ele.parentElement)
-            this.ele.parentElement.removeChild(this.ele);
 
-        if (this.style && this.style.parentElement)
-            this.style.parentElement.removeChild(this.style);
+            for (const ele of this.eles)
+                ele.finalizeDisconnect();
+
+            if (this.ele.parentElement)
+                this.ele.parentElement.removeChild(this.ele);
+
+            if (this.style && this.style.parentElement)
+                this.style.parentElement.removeChild(this.style);
+        }
     }
 
     primeDisconnect() {
@@ -105,60 +117,69 @@ export class PageView {
     connect(
         app_element: HTMLElement,
         wurl: URI,
-        prev_page: PageView = null
+        prev_page: PageView | null = null
     ) {
 
         if (this.style && !this.style.parentElement)
             document.head.appendChild(this.style);
 
-        this.CONNECTED = true;
+        if (this.ele) {
 
-        if (app_element.firstChild)
-            app_element.insertBefore(this.ele, app_element.firstChild);
-        else
-            app_element.appendChild(this.ele);
 
-        for (const element of this.eles) {
+            this.CONNECTED = true;
 
-            let contemporary = (prev_page && element.ele.id)
-                ? prev_page.getElement(element.id)
-                : null;
+            if (app_element.firstChild)
+                app_element.insertBefore(this.ele, app_element.firstChild);
+            else
+                app_element.appendChild(this.ele);
 
-            element.loadComponents(wurl, contemporary);
+            for (const element of this.eles) {
+
+                let contemporary = (prev_page && element.ele.id)
+                    ? prev_page.getElement(element.id)
+                    : null;
+
+                element.loadComponents(wurl, contemporary);
+            }
         }
     }
-    up(data, src) {
+    up(data: any, src: any) {
         for (const element of this.eles)
             element.down(data, src);
     }
-    transitionOut(transition) {
-        this.component.transitionOut(0, 0, false, transition);
+    transitionOut(transition: Transition) {
+        if (this.component) {
+            this.component.transitionOut(0, 0, false, transition);
+        }
     }
 
-    transitionIn(transition) {
-        this.component.transitionIn(0, 0, false, transition);
+    transitionIn(transition: Transition) {
+
+        if (this.component)
+            this.component.transitionIn(0, 0, false, transition);
     }
 
-    setType(type, router) {
-        this.type = type || "normal";
+    setType(type: PageType, router) {
 
-        if (type == "modal") {
+        this.type = type || PageType.STANDARD;
 
-            if (!this.ele_backer) {
+        if (type == PageType.WICK_MODAL) {
+            if (this.ele)
+                if (!this.ele_backer) {
 
-                this.ele_backer = document.createElement("div");
+                    this.ele_backer = document.createElement("div");
 
-                this.ele_backer.classList.add("modal_backer");
+                    this.ele_backer.classList.add("modal_backer");
 
-                this.ele.insertBefore(this.ele_backer, this.ele.firstChild);
+                    this.ele.insertBefore(this.ele_backer, this.ele.firstChild);
 
-                this.ele_backer.addEventListener("click", (e) => {
+                    this.ele_backer.addEventListener("click", (e) => {
 
-                    if (e.target == this.ele_backer) {
-                        router.closeModal();
-                    }
-                });
-            }
+                        if (e.target == this.ele_backer) {
+                            router.closeModal();
+                        }
+                    });
+                }
         }
     }
 }
