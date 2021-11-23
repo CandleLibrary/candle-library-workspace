@@ -1,4 +1,5 @@
 import spark, { Sparky } from "@candlelib/spark";
+import { Transition } from '@candlelib/glow';
 import { Context } from '../compiler/common/context.js';
 import { BINDING_FLAG, ObservableModel, ObservableWatcher } from "../types/all";
 import { WickContainer } from "./container.js";
@@ -169,7 +170,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     initialize(model: any = this.model) {
 
         if (this.INITIALIZED)
-            return;
+            return this;
 
         this.INITIALIZED = true;
         this.ALLOW_UPDATE = true;
@@ -362,7 +363,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         //Lifecycle Events: Disconnecting <======================================================================
         this.disconnecting();
 
-        if (this.ele && this.ele.parentElement)
+        if (this.ele && this.ele.parentElement && !this.par)
             this.ele.parentElement.removeChild(this.ele);
 
 
@@ -413,7 +414,13 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      * @param DESTROY_AFTER_TRANSITION 
      * @param transition_name 
      */
-    transitionOut(row, col, DESCENDING, transition = null, DESTROY_AFTER_TRANSITION = false) {
+    transitionOut(
+        row: number,
+        col: number,
+        DESCENDING: boolean,
+        transition: Transition | null = null,
+        DESTROY_AFTER_TRANSITION: boolean = false
+    ) {
         for (const ch of this.ch)
             ch.transitionOut(row, col, DESCENDING, transition, false);
 
@@ -479,8 +486,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      * a lower positional index
      * @param trs A transition object that can be used to animate the position change
      */
-    transitionIn(row: number, col: number, DESCENDING: boolean, trs) {
-
+    transitionIn(row: number, col: number, DESCENDING: boolean, trs: Transition) {
         for (const ch of this.ch)
             ch.transitionIn(row, col, DESCENDING, trs);
 
