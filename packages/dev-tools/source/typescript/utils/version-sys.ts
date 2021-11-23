@@ -155,8 +155,6 @@ export async function createDepend(dep_pkg: string | DevPkg | null, prev_commit:
 
         const commit_string = gitLog(CWD, dep_pkg._workspace_location, prev_commit);
 
-        console.log({ commit_string });
-
         const commits: CommitLog[] = <any>commit_string
             .split(/^\s*commit\s*/mg)
             .map(str => str.match(/^(?<hash>.*)$\s*author\s*\:(?<author>.*)$\s*date\s*\:(?<date>.*)$(?<message>(.|\.|[\n\s\r])+)/mi)?.groups)
