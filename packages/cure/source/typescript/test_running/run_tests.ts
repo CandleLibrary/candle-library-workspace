@@ -73,7 +73,7 @@ export async function runTests(
 
             if (pending == active_tests.length) break;
 
-            await spark.sleep(100);
+            await spark.sleep(1);
         }
 
         for (const runner of runners)

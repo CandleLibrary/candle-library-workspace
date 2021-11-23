@@ -10,6 +10,8 @@ import { TestInfo } from "../../types/test_info";
 import { TestRunner, TestRunnerRequest, TestRunnerResponse } from "../../types/test_runner";
 import { createHierarchalName } from "../../utilities/name_hierarchy.js";
 import { createTestErrorFromString } from "../../utilities/test_error.js";
+import { SIGKILL } from 'constants';
+import URI from '@candlelib/uri';
 
 export class DesktopRunner implements TestRunner {
     workers: DesktopWorkerHandle[];
@@ -26,6 +28,9 @@ export class DesktopRunner implements TestRunner {
             module_url = (process.platform == "win32")
                 ? import.meta.url.replace(/file\:\/\/\/ /g, "")
                 : (new URL(import.meta.url)).pathname;
+
+        this.respond = _ => _;
+        this.request = async _ => <any>_;
 
         this.module_url = module_url.replace("desktop_runner.js", "desktop_worker.js");
 
@@ -54,7 +59,12 @@ export class DesktopRunner implements TestRunner {
         this.loadWorkers(RELOAD_DEPENDENCIES, this.workers);
     }
 
-    async init(globals, request, respond, RELOAD_DEPENDENCIES) {
+    async init(
+        globals: Globals,
+        request: TestRunnerRequest,
+        respond: TestRunnerResponse,
+        RELOAD_DEPENDENCIES: boolean = false
+    ) {
 
         this.STOP_ALL_ACTIVITY = true;
 
@@ -74,68 +84,104 @@ export class DesktopRunner implements TestRunner {
 
     async run(globals: Globals) {
 
+        const pending_tests = [];
+
         while (!this.STOP_ALL_ACTIVITY) {
 
-            const current_time = performance.now();
+            try {
 
-            for (const wkr of this.workers) {
+                const current_time = performance.now();
 
+                for (const wkr of this.workers) {
 
-                if (wkr.test && !wkr.READY) {
+                    if (wkr.test && !wkr.READY) {
 
-                    const dur = current_time - wkr.start;
+                        const dur = current_time - wkr.start;
 
-                    if (dur > wkr.test.timeout_limit) {
-                        Logger.get("TEST_RUNNER").activate().log("TEST_TIMED_OUT");
+                        // Check that the test timeout has been exceeded
 
-                        this.createWorkerProcess(wkr);
+                        if (dur > wkr.test.timeout_limit) {
 
-                        if (wkr.test.retries > 0) {
-                            Logger.get("TEST_RUNNER").activate().log("RERUN_TEST");
-                            wkr.test.retries--;
-                            wkr.start = current_time;
-                            wkr.target.send({ type: "test", test: wkr.test });
-                        } else {
-                            const result: TestInfo = <TestInfo>{
-                                name: createHierarchalName(wkr.test.name, "Test Timed Out"),
-                                expression_handler_identifier: -1,
-                                log_start: wkr.start,
-                                clipboard_start: wkr.start,
-                                clipboard_write_start: wkr.start,
-                                previous_clipboard_end: wkr.start,
-                                clipboard_end: wkr.start + dur,
-                                location: {
-                                    compiled: { column: wkr.test.pos.column, line: wkr.test.pos.line, offset: wkr.test.pos.off, },
-                                    source: { column: wkr.test.pos.column, line: wkr.test.pos.line, offset: wkr.test.pos.off, }
-                                },
-                                logs: [],
-                                //@ts-ignore
-                                errors: [createTestErrorFromString("Test timed out at " + dur + " milliseconds", globals.harness)],
-                                test: wkr.test,
-                                TIMED_OUT: true,
-                                PASSED: false
-                            };
+                            Logger.get("TEST_RUNNER").activate()
+                                .log("TEST_TIMED_OUT " + wkr.test.name + " " + wkr.test.timeout_limit + " " + wkr.test.retries);
 
-                            this.respond(wkr.test, result);
+                            this.killWorkerProcess(wkr);
+                            this.createWorkerProcess(wkr);
+
+                            if (wkr.test.retries > 0) {
+
+                                // Allow the test to re-enter the queue after decrementing 
+                                // its retries property
+
+                                Logger.get("TEST_RUNNER").activate().log("RERUN_TEST " + wkr.test.name);
+
+                                wkr.test.retries--;
+
+                                wkr.start = current_time;
+
+                                pending_tests.push(wkr.test);
+
+                            } else if (wkr.test) {
+
+                                // The test has failed through timeout. Create a report of this.
+
+                                Logger.get("TEST_RUNNER").activate().warn("UNABLE_TO_COMPLETE_TEST " + wkr.test.name);
+
+                                const result: TestInfo = <TestInfo>{
+                                    name: createHierarchalName(wkr.test.name, "Test Timed Out"),
+                                    expression_handler_identifier: -1,
+                                    log_start: wkr.start,
+                                    clipboard_start: wkr.start,
+                                    clipboard_write_start: wkr.start,
+                                    previous_clipboard_end: wkr.start,
+                                    clipboard_end: wkr.start + dur,
+                                    location: {
+                                        compiled: { column: wkr.test.pos?.column, line: wkr.test.pos?.line, offset: wkr.test.pos?.off, },
+                                        source: { column: wkr.test.pos?.column, line: wkr.test.pos?.line, offset: wkr.test.pos?.off, }
+                                    },
+                                    logs: [],
+                                    //@ts-ignore
+                                    errors: [createTestErrorFromString("Test timed out at " + dur + " milliseconds", globals.harness)],
+                                    test: wkr.test,
+                                    TIMED_OUT: true,
+                                    PASSED: false
+                                };
+
+                                this.respond(wkr.test, result);
+                            }
 
                             wkr.test = null;
-                            wkr.READY = true;
+                        }
+                    } else if (wkr.READY && wkr.target) {
+
+                        let test = null;
+
+                        if (pending_tests.length > 0) {
+                            test = pending_tests.pop();
+                        } else {
+                            test = await this.request(this);
+                        }
+
+                        if (test) {
+                            wkr.test = test;
+                            wkr.start = current_time;
+                            wkr.target.send({ type: "test", test: wkr.test });
+                            wkr.READY = false;
                         }
                     }
-                } else if (wkr.READY) {
-
-                    const test = await this.request(this);
-
-                    if (test) {
-                        wkr.test = test;
-                        wkr.start = current_time;
-                        wkr.target.send({ type: "test", test: wkr.test });
-                        wkr.READY = false;
-                    }
                 }
+            } catch (e) {
+                console.log(e);
             }
 
-            await spark.sleep(100);
+            await spark.sleep(1);
+        }
+    }
+
+    killWorkerProcess(wkr: DesktopWorkerHandle) {
+        if (wkr.target) {
+            wkr.target.kill(SIGKILL);
+            wkr.target = null;
         }
     }
 
@@ -148,7 +194,7 @@ export class DesktopRunner implements TestRunner {
         }
     }
 
-    createWorkerProcess(wkr, module_url = this.module_url) {
+    createWorkerProcess(wkr: DesktopWorkerHandle, module_url = this.module_url) {
 
         if (wkr.target)
             return;
@@ -174,7 +220,7 @@ export class DesktopRunner implements TestRunner {
                 wkr.READY = true;
             } else {
                 if (!this.STOP_ALL_ACTIVITY && wkr.test) {
-                    results.forEach(res => res.test = wkr.test);
+                    results.forEach(res => res.test = <Test>wkr.test);
                     this.respond(wkr.test, ...results);
                     wkr.test = null;
                     wkr.READY = true;
@@ -201,7 +247,7 @@ export class DesktopRunner implements TestRunner {
         }
         ```
     */
-    private loadWorkers(RELOAD_DEPENDS: boolean, workers, url?) {
+    private loadWorkers(RELOAD_DEPENDS: boolean, workers: DesktopWorkerHandle[], url?: string) {
         for (const wkr of workers) {
 
             wkr.test = null;

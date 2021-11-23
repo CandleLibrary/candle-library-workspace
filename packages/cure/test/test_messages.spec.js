@@ -34,7 +34,7 @@ const { results: [
 ]
 } = await frame.start();
 
-assert_group("Name", 5000, sequence, function () {
+assert_group("Messaging", 20000, sequence, function () {
     assert(result1.test.name == "9:53: Two different numbers are not the same");
     assert(result2.test.name == "11: Assignment expression error");
     assert(result3.test.name == "13: Object is not equal to number");

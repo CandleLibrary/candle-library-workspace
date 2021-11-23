@@ -3,13 +3,13 @@ import { Worker } from "worker_threads";
 import { Test } from "./test.js";
 
 export interface DesktopWorkerHandle {
-    test: Test;
+    test: Test | null;
 
     DISCARD: boolean;
 
     READY: boolean;
 
-    target: ChildProcess;
+    target: ChildProcess | null;
 
     start: number;
 
