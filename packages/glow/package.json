@@ -6,7 +6,7 @@
     "types": "./build/glow.d.ts",
     "type": "module",
     "scripts": {
-        "test": "candle.cure ./test/",
+        "test": "candle.cure --reporter ci ./test/",
         "test.watch": "candle.cure -w ./test/**",
         "prepublishOnly": "rm -rf ./build && tsc & sleep 10"
     },
