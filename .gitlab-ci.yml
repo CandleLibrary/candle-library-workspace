@@ -44,6 +44,7 @@ build_typescript_packages:
     - npm install typescript
     - npx tsc -p ./packages/css/tsconfig.json || true
     - npx tsc -p ./packages/cure/tsconfig.json || true
+    - npx tsc -p ./packages/conflagrate/tsconfig.json || true
     - npx tsc -p ./packages/dev-tools/tsconfig.json || true
     - npx tsc -p ./packages/glow/tsconfig.json || true
     - npx tsc -p ./packages/html/tsconfig.json || true
@@ -62,6 +63,7 @@ build_typescript_packages:
     paths:
       - packages/css/build/
       - packages/cure/build/
+      - packages/conflagrate/build/
       - packages/dev-tools/build/
       - packages/glow/build/
       - packages/html/build/
