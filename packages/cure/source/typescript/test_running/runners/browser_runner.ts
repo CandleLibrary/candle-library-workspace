@@ -1,3 +1,4 @@
+import { LanternServer } from '@candlelib/lantern';
 import { Logger, LogLevel } from '@candlelib/log';
 import { getPackageJsonObject } from '@candlelib/paraffin';
 import spark from "@candlelib/spark";
@@ -6,13 +7,17 @@ import { spawn } from "child_process";
 import { Globals } from "../../types/globals.js";
 import { Test } from "../../types/test.js";
 import { TestInfo } from "../../types/test_info.js";
-import { TestRunner, TestRunnerRequest, TestRunnerResponse } from "../../types/test_runner.js";
+import {
+    TestRunner,
+    TestRunnerRequest,
+    TestRunnerResponse
+} from "../../types/test_runner.js";
 
 
 export class BrowserRunner implements TestRunner {
 
     static active_runner: BrowserRunner;
-    static server: any;
+    static server: LanternServer<any>;
     static resource_directory: string;
     static SERVER_LOADED: boolean;
     static port: number;
@@ -22,34 +27,40 @@ export class BrowserRunner implements TestRunner {
 
     to_complete: number;
 
-    globals: Globals;
-
     kill_switch: () => void;
 
     constructor() {
+
         this.STOP_ALL_ACTIVITY = false;
+        this.kill_switch = () => { };
+
         this.to_complete = 0;
+        this.respond = _ => _;
+        this.request = async _ => <any>_;
+
     }
 
     Can_Accept_Test(test: Test) { return !!test.BROWSER; }
 
     complete() {
-        this.respond = null;
-        this.request = null;
         this.STOP_ALL_ACTIVITY = true;
     }
 
-    close() {
+    async close() {
         if (this.kill_switch)
             this.kill_switch();
 
         if (BrowserRunner.server) {
             BrowserRunner.server.close();
+            //@ts-ignore
             BrowserRunner.server = null;
         }
     }
 
-    async init(globals: Globals, request, respond) {
+    async init(globals: Globals,
+        request: TestRunnerRequest,
+        respond: TestRunnerResponse
+    ) {
 
         this.respond = respond;
         this.request = request;
@@ -104,7 +115,7 @@ export class BrowserRunner implements TestRunner {
 
         const
             { server } = BrowserRunner,
-            server_test = [];
+            server_test: (Test | null)[] = [];
 
         server.addDispatch(
             {
@@ -120,7 +131,7 @@ export class BrowserRunner implements TestRunner {
 
                         const { results, test_id } = test_results;
 
-                        const test = server_test[test_id];
+                        const test = <Test>server_test[test_id];
 
                         server_test[test_id] = null;
 
@@ -224,7 +235,7 @@ export class BrowserRunner implements TestRunner {
     }
 }
 
-function startFirefox(port, globals: Globals) {
+function startFirefox(port: number, globals: Globals) {
     const browser = spawn("firefox",
         [
             (globals.flags.USE_HEADLESS_BROWSER) ? `-headless` : "",
@@ -251,7 +262,7 @@ function startFirefox(port, globals: Globals) {
 }
 
 
-function startChrome(port, globals: Globals): () => void {
+function startChrome(port: number, globals: Globals): () => void {
     const browser = spawn("google-chrome",
         [
             // https://github.com/GoogleChrome/chrome-launcher/blob/master/docs/chrome-flags-for-tools.md#--enable-automation
@@ -267,6 +278,8 @@ function startChrome(port, globals: Globals): () => void {
             '--disable-translate',
             "--use-mock-keychain",
             '--disable-background-timer-throttling',
+            '--disable-gpu',
+            '--disable-sandbox',
             '--disable-extensions',
             '--disable-component-extensions-with-background-pages',
             '--disable-background-networking',
@@ -286,11 +299,11 @@ function startChrome(port, globals: Globals): () => void {
             '--force-fieldtrials=*BackgroundTracing/default/',
             `--enable-logging=stderr`,
             "--remote-debugging-port=9222",
-            (globals.flags.USE_HEADLESS_BROWSER) ? `--headless` : "",
+            ///(globals.flags.USE_HEADLESS_BROWSER) ? `--headless` : "",
             //'--enable-kiosk-mode',
             `https://localhost:${port}/`
         ],
-        { detached: true, stdio: ['ignore', 'ignore', 'ignore'], env: process.env }
+        { detached: false, stdio: ['ignore', 'ignore', 'ignore'], env: process.env }
     );
 
     browser.on('close', (code) => {

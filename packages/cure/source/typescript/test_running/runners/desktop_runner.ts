@@ -63,8 +63,6 @@ export class DesktopRunner implements TestRunner {
         this.STOP_ALL_ACTIVITY = true;
 
         const RELOAD_DEPENDENCIES = false;
-
-        //this.loadWorkers(RELOAD_DEPENDENCIES, this.workers);
     }
 
     async init(
