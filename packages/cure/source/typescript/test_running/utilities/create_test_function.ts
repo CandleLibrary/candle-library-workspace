@@ -8,7 +8,7 @@ export async function createTestFunctionFromTestSource(
     harness: TestHarness,
     ImportedModules: Map<string, NodeModule>,
     ld: (arg: string) => Promise<NodeModule>,
-    createAddendum = (a, b) => ""
+    createAddendum = (..._: any[]) => ""
 ) {
 
     harness.pushTestResult();
@@ -18,7 +18,6 @@ export async function createTestFunctionFromTestSource(
     await loadModules(test, ImportedModules, ld);
 
     harness.popTestResult();
-
 
     harness.pushTestResult();
 
@@ -32,7 +31,7 @@ export async function createTestFunctionFromTestSource(
 }
 
 export function createTest__cfwtest(test: Test, addendum: string, harness: TestHarness, ImportedModules: Map<string, NodeModule>) {
-
+    
     const
         { test_function_object_args, import_arg_specifiers, source } = test,
 
@@ -42,10 +41,13 @@ export function createTest__cfwtest(test: Test, addendum: string, harness: TestH
 
         const module = ImportedModules.get(e.module_specifier);
 
-        if (!module[e.module_name])
-            throw new Error(`Could not find object [${e.module_name}] export of ${e.module_specifier}`);
+        if (module) {
 
-        test_args.push(module[e.module_name]);
+            if (!(e.module_name in module))
+                throw new Error(`Could not find object [${e.module_name}] export of ${e.module_specifier}`);
+            //@ts-ignore
+            test_args.push(module[e.module_name]);
+        }
     }
 
     try {
@@ -53,7 +55,6 @@ export function createTest__cfwtest(test: Test, addendum: string, harness: TestH
 
         return () => fn.apply({}, test_args);
     } catch (e) {
-        e.message = e.message + "dds";
         throw e;
     }
 }
@@ -64,7 +65,7 @@ async function loadModules(test: Test, ImportedModules: Map<string, NodeModule>,
 
         if (!ImportedModules.has(module_specifier)) {
 
-            const mod = await ld(source, module_specifier);
+            const mod = await ld(source);
 
             if (!mod) {
                 throw new Error(`Could not load module ${module_specifier} located ${source}`);
