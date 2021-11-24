@@ -10,7 +10,7 @@
     },
     "scripts": {
         "test.watch": "candle.cure -w ./test/**",
-        "test": "candle.cure --report ci ./test/**",
+        "test": "candle.cure --reporter ci ./test/**",
         "build.table": "node ./source/nodejs/build_unicode_tables.node.js"
     },
     "repository": {
