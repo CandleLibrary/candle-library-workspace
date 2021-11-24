@@ -12,7 +12,6 @@
         "build.watch": "tsc --watch",
         "build": "tsc",
         "test-wickurse": "node ./test/composite.practical.spec.js",
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
         "build-colors": "./utils/build_colors.js",
         "test": "candle.cure --reporter ci ./tests/",
         "compile.terminfo.debug": "hydrocarbon compile --nom terminfo_parser --output_dir ./source/typescript/parser/ --annotations --debug  ./source/grammar/terminfo.hcg",

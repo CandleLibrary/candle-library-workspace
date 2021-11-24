@@ -7,8 +7,7 @@
     "type": "module",
     "scripts": {
         "test": "candle.cure --reporter ci ./test/",
-        "test.watch": "candle.cure -w ./test/**",
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 10"
+        "test.watch": "candle.cure -w ./test/**"
     },
     "repository": {
         "type": "git",

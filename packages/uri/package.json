@@ -8,8 +8,7 @@
     "scripts": {
         "test": "candle.cure --reporter ci ./test/",
         "test.watch": "candle.cure -w ./test/**",
-        "build": "./bin/cfw_test.js ./load_test.spec.js",
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 5"
+        "build": "./bin/cfw_test.js ./load_test.spec.js"
     },
     "repository": {
         "type": "git",

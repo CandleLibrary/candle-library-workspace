@@ -9,7 +9,6 @@
         "lantern": "index.js"
     },
     "scripts": {
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
         "test": "candle.cure --headless --reporter ci ./test/",
         "test.watch": "candle.cure -w ./test/**"
     },

@@ -6,7 +6,6 @@
     "types": "build/spark.d.ts",
     "type": "module",
     "scripts": {
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
         "test": "true"
     },
     "repository": {
