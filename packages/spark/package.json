@@ -2,8 +2,8 @@
     "name": "@candlelib/spark",
     "version": "0.3.4",
     "description": "Simple Task Scheduler",
-    "main": "build/library/spark.js",
-    "types": "build/types/spark.d.ts",
+    "main": "build/spark.js",
+    "types": "build/spark.d.ts",
     "type": "module",
     "scripts": {
         "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
