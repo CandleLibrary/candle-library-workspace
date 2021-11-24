@@ -25,9 +25,6 @@ export async function runTests(
         let pending = 0;
 
         const
-            runners: TestRunner[] = test_runners.filter(
-                r => tests.some(t => r.Can_Accept_Test(t))
-            ),
 
             intermediate_results = [],
 
@@ -38,7 +35,13 @@ export async function runTests(
                     return { state: 0, test };
                 })
                     .filter(({ test }) => test.RUN && (!SOLO_RUN || test.INSPECT || test.SOLO)),
+
+
             active_tests = pending_tests.filter(({ test }) => !test.SKIP),
+
+            runners: TestRunner[] = test_runners.filter(
+                r => active_tests.some(t => r.Can_Accept_Test(t.test))
+            ),
 
 
             response: TestRunnerResponse = async function (test: Test, ...results: TestInfo[]) {
