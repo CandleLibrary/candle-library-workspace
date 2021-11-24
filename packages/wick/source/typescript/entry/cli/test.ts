@@ -40,7 +40,7 @@ Test components that have been defined with the \`@test\` synthetic import
             test_logger.activate(log_level_arg.value);
 
             //const input_path = URI.resolveRelative(args.trailing_arguments.pop() ?? "./");
-            const root_path = URI.resolveRelative(input_path);
+            const root_path = <URI>URI.resolveRelative(input_path);
             const config = config_arg.value;
 
             test_logger
@@ -75,7 +75,7 @@ Test components that have been defined with the \`@test\` synthetic import
 
             await test_frame.init();
 
-            test_frame.setReporter(new BasicReporter);
+            test_frame.setReporter(new BasicReporter());
 
             let i = 0;
 
@@ -94,7 +94,7 @@ Test components that have been defined with the \`@test\` synthetic import
 
                     suites.push(test_suite);
 
-                    let source_ast_block = context.test_rig_sources.get(component)[0];
+                    let source_ast_block = <JSNode><any>context.test_rig_sources.get(component)?.[0];
 
                     const components = getDependentComponents(component, context);
 
@@ -133,7 +133,7 @@ Test components that have been defined with the \`@test\` synthetic import
 
                     const ast: JSNode = {
                         type: JSNodeType.Module,
-                        nodes: [source_ast_block],
+                        nodes: [<any>source_ast_block],
                         pos: component.root_frame.ast.pos
                     };
 
@@ -182,6 +182,8 @@ Test components that have been defined with the \`@test\` synthetic import
                 } else
                     test_logger.log("No tests were found. Exiting");
             }
+
+            test_frame.endWatchedTests();
         }
     );
 
