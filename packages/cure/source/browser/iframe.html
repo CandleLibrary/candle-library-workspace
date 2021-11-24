@@ -5,7 +5,6 @@
 
 <body>
     <script type=module>
-            import parser from "/utilities/parser.js";
             import { createNameErrorMessage } from "/utilities/library_errors.js";
             import { createHierarchalName } from "/utilities/name_hierarchy.js";
             import { createTestHarnessEnvironmentInstance } from "/test_running/utilities/test_harness.js";
@@ -13,11 +12,11 @@
             const TestError = function(d){ const {message, stack} = new Error(d); this.message = message, this.stack = stack};
 
             //Load test runners 
-            async function loadImport(source, module_specifier) {
+            async function loadImport(module_specifier) {
                 return await import(module_specifier[0] == "/" ? module_specifier : "/" + module_specifier );
             }  
 
-            const logger = console.log
+            const logger = console.log;
             const ImportedModules= new Map();
 
             export function createAddendum(sources, test) {
@@ -38,8 +37,6 @@
                 } = createTestHarnessEnvironmentInstance(
                     (a,b)=>a===b, {  inspect: JSON.stringify,  }, performance, ""
                 );
-
-                logger("STARTING")
 
                  try {
                     //@ts-ignore
@@ -88,20 +85,22 @@
 
                 } catch (e) {
 
-                    harness_restoreLog();
+                    if (e instanceof Error) {
 
-                    harness_flushClipboard();
+                        harness_restoreLog();
 
-                    harness.addException(e);
+                        harness_flushClipboard();
 
-                    harness.popTestResult();
+                        harness.addException(e);
+
+                        harness.popTestResult();
+                    }
 
                     results = harness_getResults().slice(-1); //Only return the worker test
-
                 }
 
+                if (results.length == 0) {
 
-                if (results.length == 0) {results
                     harness_init(
                         test.source_location,
                         test.working_directory
