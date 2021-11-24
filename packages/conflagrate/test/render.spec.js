@@ -1,5 +1,5 @@
-import { skribble_mappings } from "../../hydrocarbon/build/library/skribble/mappings.js";
-import { sk } from "../../hydrocarbon/build/library/skribble/skribble.js";
+import { skribble_mappings } from "../../hydrocarbon/build/skribble/mappings.js";
+import { sk } from "../../hydrocarbon/build/skribble/skribble.js";
 import { constructRenderers, render } from "../build/render/render_experimental.js";
 
 //const renderers = constructRenderers(skribble_mappings);

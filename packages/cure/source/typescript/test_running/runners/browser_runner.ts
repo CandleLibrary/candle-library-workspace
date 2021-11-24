@@ -165,7 +165,7 @@ export class BrowserRunner implements TestRunner {
                 MIME: "application/javascript",
                 respond: async function (tools) {
                     tools.setMIME();
-                    const str = await tools.getUTF8FromFile(root_directory + "/build/library" + tools.url.path);
+                    const str = await tools.getUTF8FromFile(root_directory + "/build" + tools.url.path);
                     return tools.sendUTF8String(str.replace(/\"\@candlelib\/([^\/\"]+)\/?/g, "\"/@cl\/$1/"));
                 },
                 keys: { ext: server.ext.all, dir: "/test_running/utilities/" }
@@ -176,7 +176,7 @@ export class BrowserRunner implements TestRunner {
                 MIME: "application/javascript",
                 respond: async function (tools) {
                     tools.setMIME();
-                    const str = await tools.getUTF8FromFile(root_directory + "/build/library" + tools.url.path);
+                    const str = await tools.getUTF8FromFile(root_directory + "/build" + tools.url.path);
                     return tools.sendUTF8String(str.replace(/\"\@candlelib\/([^\/\"]+)\/?/g, "\"/@cl\/$1/"));
                 },
                 keys: { ext: server.ext.all, dir: "/utilities/*" }

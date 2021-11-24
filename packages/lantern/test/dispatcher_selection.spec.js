@@ -5,9 +5,9 @@
  * ASCENDING based on the order in which the dispatchers
  * where submitted to AddDispatch
  */
-import { AddDispatch, getDispatches } from "@candlelib/lantern/build/library/dispatchers/dispatch.js";
-import { LogQueue } from "@candlelib/lantern/build/library/utils/log.js";
-import ext_map from "@candlelib/lantern/build/library/extension/extension_map.js";
+import { AddDispatch, getDispatches } from "@candlelib/lantern/build/dispatchers/dispatch.js";
+import { LogQueue } from "@candlelib/lantern/build/utils/log.js";
+import ext_map from "@candlelib/lantern/build/extension/extension_map.js";
 import URL from "@candlelib/uri";
 
 await URL.server();

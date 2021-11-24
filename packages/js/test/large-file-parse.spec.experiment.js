@@ -2,7 +2,7 @@ import { parser, parser_new } from "@candlelib/js";
 import URL from "@candlelib/uri";
 import { default as s } from "acorn";
 
-const d = await URL.resolveRelative("@candlelib/js/build/library/parser/javascript2.js").fetchText();
+const d = await URL.resolveRelative("@candlelib/js/build/parser/javascript2.js").fetchText();
 let g = 0;
 
 harness.markTime();

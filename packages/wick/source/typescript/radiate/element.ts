@@ -111,7 +111,7 @@ export class Element {
         // the contemporary will still be removed. 
 
         if (outgoing_element) {
-            console.log("-----------");
+
             const temp_ele = document.createElement("temp");
             for (const [id_hash, outgoing_comp] of outgoing_element.interior_components) {
 
