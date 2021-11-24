@@ -104,6 +104,7 @@ export class BasicReporter implements Reporter {
         this.WORKING = false;
         this.root_suite = createSuite("/");
         this.time_start = 0;
+        this.pending = [];
         this.notifications = [];
     }
 
@@ -211,9 +212,6 @@ export class BasicReporter implements Reporter {
 
     }
     async start(pending_tests: Test[], global: Globals, terminal: CLITextDraw) {
-
-        //Each test is its own suite.
-        await this.renderToTerminal(["starting"], terminal);
 
         terminal.CLEAR_SCREEN = true;
 

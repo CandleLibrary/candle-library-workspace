@@ -1,5 +1,4 @@
 import HTML from "@candlelib/html";
-import { assert } from "console";
 import { componentDataToCompiledHTML } from "../build/compiler/ast-build/html.js";
 import { htmlTemplateToString } from "../build/compiler/ast-render/html.js";
 import { enableBuildFeatures } from "../build/compiler/build_system.js";
@@ -81,13 +80,11 @@ assert_group("Imported Container With Export Static Resolution", sequence, () =>
     const source_string = `
 import temp_comp from "./test/render/data/temp_prefill.wick"
 
-var datas = [
+var data = [
     {header:"test1"},
     {header:"test2"}
 ];
-export default <div> 
-    <temp_comp export={ datas as data}></temp_comp>
-</div>`;
+export default <div><temp_comp { data }/></div>`;
 
     const context = new Context();
 

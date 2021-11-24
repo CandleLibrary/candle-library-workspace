@@ -1,6 +1,9 @@
 {
 	"name": "@candlelib/workspace",
 	"version": "1.0.0",
+	"scripts": {
+		"version_ts_packages": "npx candle.dev version @candlelib/workspace"
+	},
 	"workspaces": [
 		"packages/*"
 	],
@@ -11,7 +14,6 @@
 		"@candlelib/dev-tools",
 		"@candlelib/glow",
 		"@candlelib/html",
-		"@candlelib/hydrocarbon",
 		"@candlelib/js",
 		"@candlelib/lantern",
 		"@candlelib/log",

@@ -1,8 +1,8 @@
 import spark from '@candlelib/spark';
+//@ts-ignore
 import equal from "deep-equal";
 import { performance } from "perf_hooks";
-import util from "util";
-//import { parentPort } from "worker_threads";
+import * as util from "util";
 import { rst } from "../../reporting/utilities/colors.js";
 import { ImportSource } from "../../types/imports.js";
 import { Test } from "../../types/test.js";
@@ -16,20 +16,22 @@ import { createTestHarnessEnvironmentInstance } from "../utilities/test_harness.
 const harness_env = createTestHarnessEnvironmentInstance(equal, util, <Performance><any>performance, rst);
 export const harness = harness_env.harness;
 export const ImportedModules: Map<string, any> = new Map();
-export async function loadImport(source) {
+export async function loadImport(source: string) {
     try {
         return await import(source);
     } catch (e) {
-        e.message;
         throw (e);
-    } q;
+    };
 }
 
 export function createAddendum(sources: ImportSource[], test: Test) {
+
+
     if (sources.findIndex(s => s.module_specifier == "@candlelib/wick") >= 0)
         return `const __URI__ = (await import("@candlelib/uri")).default; __URI__.GLOBAL = new __URI__("${test.working_directory + "/"}")`;
-    if (sources.findIndex(s => s.module_specifier == "@candlelib/uri") >= 0)
+    if (sources.findIndex(s => s.module_specifier == "@candlelib/uri") >= 0) {
         return `const __URI__ = (await import("@candlelib/uri")).default; __URI__.server(); __URI__.GLOBAL = new __URI__("${test.working_directory + "/"}")`;
+    }
     return "";
 }
 
@@ -55,11 +57,10 @@ async function RunTest({ test }: { test: Test; }) {
             test.source_location,
             test.working_directory
         );
-
         harness_overrideLog();
 
         //Test Initialization TestResult
-
+        //console.log({ ImportedModules });
         const fn = (await createTestFunctionFromTestSource(
             test,
             harness,
@@ -94,16 +95,18 @@ async function RunTest({ test }: { test: Test; }) {
 
     } catch (e) {
 
-        harness_restoreLog();
+        if (e instanceof Error) {
 
-        harness_flushClipboard();
+            harness_restoreLog();
 
-        harness.addException(e);
+            harness_flushClipboard();
 
-        harness.popTestResult();
+            harness.addException(e);
+
+            harness.popTestResult();
+        }
 
         results = harness_getResults().slice(-1); //Only return the worker test
-
     }
 
 
@@ -147,18 +150,33 @@ process.on("message", async (m: { type: "close"; } | { type: "test"; test: Test;
     if (m.type == "close") {
         POLLING = false;
     } else {
+
         const results = await RunTest(m);
-        process.send(results);
+
+        if (process.send)
+            process.send(results);
     }
 });
 
-async function poll() {
+process.on("SIGTERM", () => {
+    POLLING = false;
+    process.exit();
+});
 
-    while (POLLING) { await spark.sleep(1); }
+process.on("disconnect", () => {
+    POLLING = false;
+    process.exit();
+});
 
+if (process.send) {
+
+    process.send({ ready: true });
+
+    async function poll() {
+        while (POLLING) { await spark.sleep(50); }
+        process.exit();
+    }
+
+    await poll();
 }
-
-process.send({ ready: true });
-
-await poll();
 

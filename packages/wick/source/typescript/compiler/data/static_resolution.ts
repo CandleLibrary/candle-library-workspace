@@ -10,7 +10,7 @@ import {
     tools
 } from "@candlelib/js";
 import {
-    BindingVariable, BINDING_VARIABLE_TYPE, HTMLElementNode, HTMLNodeClass, Node, PLUGIN_TYPE,
+    BindingVariable, BINDING_VARIABLE_TYPE, HookTemplatePackage, HTMLElementNode, HTMLNodeClass, Node, PLUGIN_TYPE,
     STATIC_RESOLUTION_TYPE
 } from "../../types/all.js";
 import {
@@ -22,7 +22,7 @@ import {
 } from '../common/binding.js';
 import { ComponentData } from '../common/component.js';
 import { Context } from '../common/context.js';
-import { Is_Extend_Type, registerHookType } from '../common/extended_types.js';
+import { Is_Extend_Type } from '../common/extended_types.js';
 import { AttributeHook, getAttribute } from '../common/html.js';
 import { convertObjectToJSNode } from "../common/js.js";
 import { BindingIdentifierBinding, BindingIdentifierReference } from "../common/js_hook_types.js";
@@ -62,8 +62,7 @@ export async function getStaticValue(
     static_data_pack: StaticDataPack,
     ASSUME_RUNTIME: boolean = false,
     ref: any = null
-): Promise<{ html: any, value: any; }> {
-
+): Promise<HookTemplatePackage> {
     const input_args = new Map;
 
     const ast = await getStaticValueAstFromSourceAST(
@@ -144,9 +143,10 @@ export async function getStaticValue(
 export function getExpressionStaticResolutionType(
     ast: JSNode,
     static_data_pack: StaticDataPack,
-    m: Set<BindingVariable> = null,
-    g: Set<BindingVariable> = null
+    m: Set<BindingVariable> | null = null,
+    g: Set<BindingVariable> | null = null
 ): STATIC_RESOLUTION_TYPE {
+
 
 
     let type: number = STATIC_RESOLUTION_TYPE.CONSTANT_STATIC;
@@ -211,7 +211,7 @@ export async function getDefaultBindingValueAST(
     static_data_pack: StaticDataPack,
     ASSUME_RUNTIME: boolean = false,
     node_lookups: Map<string, Node>
-): Promise<JSExpressionClass> {
+): Promise<JSExpressionClass | undefined> {
 
     const { self: comp, context, model } = static_data_pack;
 
@@ -219,9 +219,25 @@ export async function getDefaultBindingValueAST(
 
     if (binding) {
 
-        if (binding.type == BINDING_VARIABLE_TYPE.CONSTANT_DATA_SOURCE) {
+        if (binding.type == BINDING_VARIABLE_TYPE.TEMPLATE_DATA) {
+            //Resolve the template component
 
-            if (binding.source_location.ext == "json") {
+            const temp_comp_name = comp.local_component_names.get(binding.internal_name.toUpperCase());
+
+            if (temp_comp_name) {
+                const temp_comp = context.components.get(temp_comp_name);
+
+                if (temp_comp) {
+                    const data = context.template_data.get(temp_comp);
+
+                    if (data)
+                        return <any>convertObjectToJSNode(data);
+                }
+            }
+
+        } else if (binding.type == BINDING_VARIABLE_TYPE.CONSTANT_DATA_SOURCE) {
+
+            if (binding.source_location?.ext == "json") {
 
                 const value = await context.getDataSource(binding.source_location);
 
@@ -246,8 +262,6 @@ export async function getDefaultBindingValueAST(
             //check the guest ast for the attribute bound to this name
             const attrib = getAttribute(external_name, static_data_pack.root_element);
 
-            const parent = static_data_pack?.prev?.self;
-
             if (attrib) {
 
                 return <any>attrib.value ?
@@ -255,9 +269,12 @@ export async function getDefaultBindingValueAST(
                     :
                     exp("true");
 
-            } else if (parent) {
+            } else if (static_data_pack.root_element && static_data_pack?.prev) {
 
+                const parent = static_data_pack?.prev?.self;
                 const index = static_data_pack.root_element.id;
+
+
                 for (const hook of (<ComponentData><any>parent).indirect_hooks.filter(h => h.type == AttributeHook)) {
                     if (
                         hook.ele_index == index &&
@@ -306,7 +323,8 @@ export async function getDefaultBindingValueAST(
                     ASSUME_RUNTIME,
                     node_lookups
                 );
-        } else if (Is_Statically_Resolvable_On_Server(binding, static_data_pack))
+        } else if (Is_Statically_Resolvable_On_Server(binding, static_data_pack)) {
+
             return await <any>getStaticValueAstFromSourceAST(
                 <any>binding.default_val,
                 static_data_pack,
@@ -314,6 +332,7 @@ export async function getDefaultBindingValueAST(
                 node_lookups
             );
 
+        }
     }
 
     return undefined;
@@ -333,7 +352,8 @@ export async function getStaticValueAstFromSourceAST(
     static_data_pack: StaticDataPack,
     ASSUME_RUNTIME: boolean = false,
     node_lookups: Map<string, Node>
-): Promise<Node> {
+): Promise<Node | undefined> {
+
 
     const { context, self: comp } = static_data_pack;
 
@@ -394,7 +414,7 @@ export async function getStaticValueAstFromSourceAST(
                     PLUGIN_TYPE.STATIC_DATA_FETCH,
                     name
                 )
-                    .serverHandler(context, ...vals.map(v => eval(renderCompressed(v))));
+                    .serverHandler?.(context, ...vals.map(v => eval(renderCompressed(v))));
 
                 meta.replace(<JSNode>convertObjectToJSNode(val));
             }
@@ -410,7 +430,7 @@ export async function getStaticValueAstFromSourceAST(
              * Only accept references whose value can be resolved through binding variable
              * resolution.
              */
-            if (comp.root_frame.binding_variables.has(name)) {
+            if (comp.root_frame.binding_variables?.has(name)) {
 
                 const val = <any>await getDefaultBindingValueAST(
                     name,

@@ -128,12 +128,11 @@ static site that can be optionally hydrated with associated support scripts.`
 
                 for (const endpoint of ep) {
 
-                    const { comp: component } = components.get(component_name);
+                    const { comp: component } = components.get(component_name) ?? {};
 
+                    if (component?.TEMPLATE) {
 
-                    if (component.TEMPLATE) {
-
-                        const { comp, template_data } = endpoints.get(endpoint);
+                        const { comp, template_data } = endpoints.get(endpoint) ?? {};
 
                         context.active_template_data = template_data;
 

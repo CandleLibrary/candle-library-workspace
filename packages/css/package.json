@@ -6,8 +6,7 @@
     "main": "./build/css.js",
     "types": "./build/css.d.ts",
     "scripts": {
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
-        "test": "candle.cure ./test/",
+        "test": "candle.cure --reporter ci ./test/",
         "test.watch": "candle.cure -w ./test/**",
         "compile": "hydrocarbon compile --threads 5 --out_path ./source/typescript/parser/parser_new.ts --recognizer ts ./source/grammar/css.hcg"
     },

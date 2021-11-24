@@ -55,11 +55,9 @@ export function createTestFrame(
 
     const global_init = initializeGlobals(globals, number_of_workers);
 
-    let resolution: Resolver = null;
+    let resolution: Resolver | null = null;
 
     function initializeResolver(res: Resolver) {
-
-        if (resolution) endWatchedTests(globals, resolution);
 
         resolution = res;
     }
@@ -119,11 +117,7 @@ export function createTestFrame(
 
             try {
 
-
-
                 await loadAndRunTestSuites(globals, suites);
-
-                watchTestsOrExit(globals, resolution);
 
             } catch (e) {
 
@@ -133,36 +127,37 @@ export function createTestFrame(
 
                     globals.reportErrors();
 
-                    watchTestsOrExit(globals, resolution);
-
                 } else {
                     //Some uncaught error has occured Exit completely
                     globals.exit("Uncaught Exception", e);
+
                     //Just to make sure
                     process.exit(-1);
                 }
+            } finally {
+                await watchTestsOrExit(globals, resolution);
             }
         })
     };
 };
 
 
-function watchTestsOrExit(globals: Globals, resolution: any) {
+async function watchTestsOrExit(globals: Globals, resolution: any) {
 
     if (globals.flags.WATCH) {
 
         globals.reporter.notify("Waiting for changes...");
 
-        process.on("exit", () => {
+        process.on("exit", async () => {
 
             globals.reporter.notify("EXITING");
 
-            endWatchedTests(globals, resolution);
+            await endWatchedTests(globals, resolution);
         });
 
     } else {
 
-        endWatchedTests(globals, resolution);
+        await endWatchedTests(globals, resolution);
     }
 }
 
@@ -204,7 +199,9 @@ async function loadAndRunTestSuites(globals: Globals, suites: TestSuite[]) {
                 globals.reportErrors();
 
         } catch (e) {
-            createGlobalError(globals, e, "Critical Error Encountered");
+
+            if (e instanceof Error)
+                createGlobalError(globals, e, "Critical Error Encountered");
         }
 
         globals.unlock();
@@ -225,7 +222,8 @@ async function loadTestSuites(test_suite_url_strings: string[], globals: Globals
 
             await loadSuite(suite, globals, suiteReloader);
     } catch (e) {
-        createGlobalError(globals, e, "Critical Error Encountered");
+        if (e instanceof Error)
+            createGlobalError(globals, e, "Critical Error Encountered");
     }
 
     const st = Array.from(globals.suites.values());

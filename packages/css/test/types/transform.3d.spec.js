@@ -1,4 +1,4 @@
-import { CSS_Transform3D, CSS_Transform2D } from "../../build/transform.js";
+import { CSS_Transform3D, CSS_Transform2D } from "../../build/types/transform.js";
 
 const transform = new CSS_Transform3D();
 

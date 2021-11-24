@@ -1,5 +1,6 @@
 import { traverse } from "@candlelib/conflagrate";
 import { JSIdentifier, JSNode, JSNodeType } from "@candlelib/js";
+import URI from "@candlelib/uri";
 import { Lexer } from "@candlelib/wind";
 import { PluginStore } from "../../plugin/plugin.js";
 import {
@@ -10,24 +11,23 @@ import {
     FunctionFrame, PLUGIN_TYPE,
     STATIC_BINDING_STATE, STATIC_RESOLUTION_TYPE
 } from "../../types/all.js";
-import { getOriginalTypeOfExtendedType } from "./extended_types.js";
 import { getExpressionStaticResolutionType, StaticDataPack } from '../data/static_resolution.js';
-import { getSetOfEnvironmentGlobalNames } from "./global_variables.js";
-import { BindingIdentifierBinding, BindingIdentifierReference } from "./js_hook_types.js";
-import { Context } from './context.js';
 import { ComponentData } from './component.js';
-import URI from "@candlelib/uri";
+import { Context } from './context.js';
+import { getOriginalTypeOfExtendedType } from "./extended_types.js";
+import { getSetOfEnvironmentGlobalNames } from "./global_variables.js";
 import { AttributeHook, getAttribute } from './html.js';
+import { BindingIdentifierBinding, BindingIdentifierReference } from "./js_hook_types.js";
 
 
 function getNonTempFrame(frame: FunctionFrame) {
-    while (frame && frame.IS_TEMP_CLOSURE)
+    while (frame && frame.IS_TEMP_CLOSURE && frame.prev)
         frame = frame.prev;
     return frame;
 }
 
 export function getRootFrame(frame: FunctionFrame) {
-    while (!frame.IS_ROOT)
+    while (!frame.IS_ROOT && frame.prev)
         frame = frame.prev;
     return frame;
 }
@@ -69,8 +69,6 @@ export function addBindingReference(input_node: JSNode, input_parent: JSNode, fr
 
         return;
     }
-
-    console.log(input_node);
 
     throw new Error(`Missing reference in expression`);
 }
@@ -116,7 +114,7 @@ export function addWriteFlagToBindingVariable(var_name: string, frame: FunctionF
 
     const root = getRootFrame(frame);
 
-    if (root.binding_variables.has(var_name))
+    if (root.binding_variables?.has(var_name))
         root.binding_variables.get(var_name).flags |= BINDING_FLAG.WRITTEN;
 
     getNonTempFrame(frame).output_names.add(var_name);
@@ -128,7 +126,7 @@ export function addSourceLocationToBindingVariable(var_name: string, uri: URI, f
 
     const root = getRootFrame(frame);
 
-    if (root.binding_variables.has(var_name))
+    if (root.binding_variables?.has(var_name))
         root.binding_variables.get(var_name).source_location = uri;
 }
 
@@ -148,9 +146,10 @@ export function addDefaultValueToBindingVariable(frame: FunctionFrame, name: str
 
     const root = getRootFrame(frame);
 
-    if (root.binding_variables.has(name)) {
+    if (root.binding_variables?.has(name)) {
         const binding = root.binding_variables.get(name);
-        binding.default_val = value;
+        if (binding)
+            binding.default_val = value;
     }
 }
 /**
@@ -188,41 +187,44 @@ export function addBindingVariable(
 
     const root = getRootFrame(frame);
 
-    if (root.binding_variables.has(internal_name)) {
+    if (root.binding_variables?.has(internal_name)) {
 
 
         let UPGRADED = false;
 
         const existing_binding = root.binding_variables.get(internal_name);
 
-        if (
-            existing_binding.type == BINDING_VARIABLE_TYPE.UNDECLARED
-            &&
-            type != BINDING_VARIABLE_TYPE.UNDECLARED
-        ) {
+        if (existing_binding)
+            if (
 
-            root.binding_variables.set(binding_var.internal_name, binding_var);
+                existing_binding.type == BINDING_VARIABLE_TYPE.UNDECLARED
+                &&
+                type != BINDING_VARIABLE_TYPE.UNDECLARED
+            ) {
 
-            binding_var.flags |= existing_binding.flags;
+                root.binding_variables.set(binding_var.internal_name, binding_var);
 
-            binding_var.ref_count = existing_binding.ref_count;
+                binding_var.flags |= existing_binding.flags;
 
-            UPGRADED = true;
-        } else if (
-            existing_binding.external_name == internal_name
-            &&
-            existing_binding.external_name != external_name
-        ) {
+                binding_var.ref_count = existing_binding.ref_count;
 
-            existing_binding.external_name = external_name;
+                UPGRADED = true;
+            } else if (
 
-            UPGRADED = true;
-        }
+                existing_binding.external_name == internal_name
+                &&
+                existing_binding.external_name != external_name
+            ) {
+
+                existing_binding.external_name = external_name;
+
+                UPGRADED = true;
+            }
 
         return UPGRADED;
     }
 
-    root.binding_variables.set(binding_var.internal_name, binding_var);
+    root.binding_variables?.set(binding_var.internal_name, binding_var);
 
     return true;
 
@@ -240,7 +242,7 @@ export function addBindingVariableFlag(binding_var_name: string, flag: BINDING_F
 
     const root = getRootFrame(frame);
 
-    if (root.binding_variables.has(binding_var_name)) {
+    if (root.binding_variables?.has(binding_var_name)) {
         root.binding_variables.get(binding_var_name).flags != flag;
         return true;
     }
@@ -278,7 +280,7 @@ export function processUndefinedBindingVariables(component: ComponentData, conte
         if (binding_variable.type == BINDING_VARIABLE_TYPE.UNDECLARED) {
 
             if (!getSetOfEnvironmentGlobalNames().has(getExternalName(binding_variable))) {
-                
+
                 binding_variable.type = BINDING_VARIABLE_TYPE.MODEL_VARIABLE;
 
                 binding_variable.flags |= BINDING_FLAG.ALLOW_UPDATE_FROM_MODEL
@@ -310,7 +312,6 @@ export function getCompiledBindingVariableName(
 ) {
     const external_name = getExternalName(binding);
     const internal_name = getInternalName(binding);
-
     if (!binding || binding.type == BINDING_VARIABLE_TYPE.UNDECLARED) {
         const global_names = getSetOfEnvironmentGlobalNames();
         if (global_names.has(external_name)) {
@@ -350,6 +351,7 @@ export function getCompiledBindingVariableName(
 
             case BINDING_VARIABLE_TYPE.TEMPLATE_INITIALIZER:
             case BINDING_VARIABLE_TYPE.TEMPLATE_CONSTANT:
+            case BINDING_VARIABLE_TYPE.TEMPLATE_DATA:
             case BINDING_VARIABLE_TYPE.CONFIG_GLOBAL:
             case BINDING_VARIABLE_TYPE.CURE_TEST:
             case BINDING_VARIABLE_TYPE.CONSTANT_DATA_SOURCE:
@@ -405,15 +407,17 @@ export function haveStaticPluginForRefName(name: string, context: Context) {
 export function getBindingStaticResolutionType(
     binding: BindingVariable,
     static_data_pack: StaticDataPack,
-    modules: Set<BindingVariable> = null,
-    globals: Set<BindingVariable> = null,
+    modules: Set<BindingVariable> | null = null,
+    globals: Set<BindingVariable> | null = null,
 ): STATIC_RESOLUTION_TYPE {
+
 
     if (!binding.static_resolution_type) {
 
         let type = STATIC_RESOLUTION_TYPE.INVALID;
 
         switch (binding.type) {
+
             case BINDING_VARIABLE_TYPE.INTERNAL_VARIABLE:
                 type = STATIC_RESOLUTION_TYPE.STATIC_WITH_VARIABLE;
                 break;
@@ -443,6 +447,7 @@ export function getBindingStaticResolutionType(
             case BINDING_VARIABLE_TYPE.TEMPLATE_CONSTANT:
             case BINDING_VARIABLE_TYPE.CONFIG_GLOBAL:
             case BINDING_VARIABLE_TYPE.CONSTANT_DATA_SOURCE:
+            case BINDING_VARIABLE_TYPE.TEMPLATE_DATA:
                 type = STATIC_RESOLUTION_TYPE.CONSTANT_STATIC;
                 break;
 

@@ -147,7 +147,7 @@ export async function parseComponentAST(
     source_string: string,
     url: URL,
     context: Context,
-    parent: ComponentData = null,
+    parent: ComponentData | null = null,
     parse_errors: Error[] = [],
 
 ): Promise<{ IS_NEW: boolean, comp: ComponentData; }> {

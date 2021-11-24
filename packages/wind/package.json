@@ -10,9 +10,8 @@
     },
     "scripts": {
         "test.watch": "candle.cure -w ./test/**",
-        "test": "candle.cure ./test/**",
-        "build.table": "node ./source/nodejs/build_unicode_tables.node.js",
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 10"
+        "test": "candle.cure --reporter ci ./test/**",
+        "build.table": "node ./source/nodejs/build_unicode_tables.node.js"
     },
     "repository": {
         "type": "git",

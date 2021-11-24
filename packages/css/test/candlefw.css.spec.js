@@ -5,7 +5,7 @@ import {
     selector,
 } from "../build/parser/parse.js";
 import { renderCompressed } from "../build/render/render.js";
-import { isSelectorEqual, doesRuleHaveMatchingSelector } from "../build/selector/utilities.js";
+import { isSelectorEqual, doesRuleHaveMatchingSelector } from "../build/tools/selectors.js";
 
 await spark.sleep(100);
 

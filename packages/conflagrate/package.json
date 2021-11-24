@@ -9,8 +9,7 @@
     "author": "Anthony C Weathersby",
     "license": "MIT",
     "scripts": {
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
-        "test": "candle.cure ./test/",
+        "test": "candle.cure --reporter ci ./test/",
         "test.watch": "candle.cure -w ./test/**",
         "compile": "hydrocarbon compile --type ts --output ./source/typescript/render/parser_new ./source/grammar/render.hcg"
     },
