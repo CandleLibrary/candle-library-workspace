@@ -9,9 +9,8 @@ import {
     stmt
 } from '@candlelib/js';
 import URI from '@candlelib/uri';
-import { Token } from '../../../../../hydrocarbon/build/runtime/token.js';
 import {
-    BINDING_VARIABLE_TYPE, HookTemplatePackage, HTMLAttribute,
+    BINDING_VARIABLE_TYPE, HTMLAttribute,
     HTMLContainerNode,
     HTMLElementNode,
     HTMLNode,
@@ -23,7 +22,7 @@ import {
 import { registerFeature } from '../build_system.js';
 import { Can_AttributeBinding_Be_Resolved } from '../common/binding.js';
 import { ComponentData } from '../common/component.js';
-import { registerHookType, getOriginalTypeOfExtendedType } from "../common/extended_types.js";
+import { getOriginalTypeOfExtendedType, registerHookType } from "../common/extended_types.js";
 import { getElementAtIndex } from "../common/html.js";
 import { BindingIdentifierBinding, BindingIdentifierReference } from "../common/js_hook_types.js";
 import { ExpressionIsConstantStatic, getExpressionStaticResolutionType, getStaticValue, StaticDataPack } from "../data/static_resolution.js";

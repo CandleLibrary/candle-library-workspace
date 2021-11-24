@@ -253,9 +253,13 @@ registerFeature(
                                 name: "expat",
                                 value: ComponentHash(index + comp.name)
                             });
-                            console.log("AASDADSAsd");
+
                             if (hasAttribute("radiate_element", node)) {
-                                console.log("AASDADSAsd");
+                                new_node.attributes.push({
+                                    type: HTMLNodeType.HTMLAttribute,
+                                    name: "radiate",
+                                    value: component.name,
+                                });
                             }
                             /*
                             */
@@ -351,7 +355,14 @@ registerFeature(
 
                         node.component = comp;
 
+
+
                         if (comp) {
+
+                            console.log(comp);
+
+                            if (comp.TEMPLATE)
+                                node.pos.throw("Cannot use a template component as a regular component instance.");
 
                             node.component_name = node.component?.name;
 

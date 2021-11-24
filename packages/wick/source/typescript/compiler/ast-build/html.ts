@@ -502,7 +502,7 @@ async function processContainerHooks(
         let result = await processHookForHTML(data_hook, static_data_pack);
 
         if (result) {
-            
+
             let { value: data } = result;
 
             if (data && Array.isArray(data) && data.length > 0) {
@@ -628,6 +628,7 @@ async function resolveHTMLBinding(
     comp_data: string[],
 ): Promise<TemplateHTMLNode> {
     //*
+
 
     let value: any = null, child_html: any = null, type: any = null;
     const

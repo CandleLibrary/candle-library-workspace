@@ -31,13 +31,14 @@ registerFeature(
 
                     if (comp.TEMPLATE) {
 
-                        const [call] = node.nodes;
+                        const [call] = <any[]>node.nodes;
 
                         if (call.type == JSNodeType.CallExpression) {
 
                             const id = tools.getIdentifierName(call.nodes[0]);
 
                             const binding = build_system.getBindingFromExternalName(id, comp);
+
 
                             if (binding && binding.type == BINDING_VARIABLE_TYPE.TEMPLATE_INITIALIZER) {
 
@@ -53,7 +54,6 @@ registerFeature(
                                 utils.set_working_directory(comp.location);
 
                                 const template_data = await initializer(utils);
-
 
                                 utils.reset_working_directory();
 

@@ -83,7 +83,7 @@ export interface CompileWarning {
     id: string,
     message: string,
     source?: URI,
-    loc?: Token
+    loc?: Token;
 }
 
 /**
@@ -97,7 +97,7 @@ export interface CompileError {
     message: string,
     error: Error,
     source?: URI,
-    loc?: Token
+    loc?: Token;
 }
 
 /**
@@ -249,7 +249,7 @@ export class ComponentData {
     /**
      * A list of URI's to resources and nodes that defined the URI
      */
-    URI: { type: "src" | "href" | "other", uri: string, node: Node }[]
+    URI: { type: "src" | "href" | "other", uri: string, node: Node; }[];
 
     indirect_hooks: IndirectHook<any>[];
 
@@ -307,7 +307,7 @@ export class ComponentData {
 
         this.indirect_hooks = [];
 
-        this.URI = []
+        this.URI = [];
 
         this.template = null;
 

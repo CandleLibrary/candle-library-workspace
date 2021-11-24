@@ -22,7 +22,7 @@ function getModuleName(context: Context, module_name: string) {
     if (!context.repo.has(module_name))
         return addPendingModuleToPresets(context, module_name);
     else
-        return context.repo.get(module_name).hash;
+        return context.repo.get(module_name)?.hash || "";
 }
 
 /**
@@ -34,16 +34,26 @@ function getModuleName(context: Context, module_name: string) {
  * @param local_name
  * @returns
  */
-export async function importComponentData(new_component_url, component, context: Context, local_name: string): Promise<boolean> {
+export async function importComponentData(
+    new_component_url: string,
+    component: ComponentData,
+    context: Context,
+    local_name: string,
+    node: HTMLNode | JSNode,
+    frame: FunctionFrame
+): Promise<boolean> {
 
     try {
 
-        const { IS_NEW, comp: new_comp_data } = await parseSource(new URI(new_component_url), context, component.location);
+        const { IS_NEW, comp: new_comp_data }
+            = await parseSource(new URI(new_component_url), context, component.location);
 
 
-        if (new_comp_data.HAS_ERRORS) {
+        if (new_comp_data.HAS_ERRORS)
             return false;
-        }
+
+
+
 
         if (IS_NEW) {
 
@@ -56,6 +66,9 @@ export async function importComponentData(new_component_url, component, context:
                 mergeComponentData(component, new_comp_data);
         }
 
+        if (new_comp_data.TEMPLATE && local_name) {
+            addBindingVariable(frame, local_name, node.pos, BINDING_VARIABLE_TYPE.TEMPLATE_DATA, local_name);
+        }
         if (local_name)
             component.local_component_names.set(local_name.toUpperCase(), new_comp_data.name);
 
@@ -82,12 +95,13 @@ export async function importResource(
     frame: FunctionFrame
 ): Promise<void> {
 
-    let flag: BINDING_FLAG = null, ref_type: BINDING_VARIABLE_TYPE = null;
+    let flag: BINDING_FLAG = 0,
+        ref_type: BINDING_VARIABLE_TYPE = 0;
 
     const
         [url, meta] = from_value.split(":"),
 
-        uri = URI.resolveRelative(url, component.location);
+        uri = <URI>URI.resolveRelative(url, component.location);
 
     switch (url + "") {
 
@@ -104,8 +118,8 @@ export async function importResource(
                     processWickCSS_AST({ type: HTMLNodeType.HTML_STYLE, nodes: [<any>css_ast], pos: <any>css_ast.pos }, component, context, uri);
 
                 } catch (e) {
-
-                    error(e);
+                    if (e instanceof Error)
+                        error(e);
                 }
                 return;
             } else if (uri.ext == "json") {
@@ -124,6 +138,7 @@ export async function importResource(
                     addSourceLocationToBindingVariable(local, uri, frame);
                 }
             }
+
             // Read file and determine if we have a component, a script or some other resource. 
             // Compile Component Data
             else if (!(uri.ext == "wick" || uri.ext == "html")
@@ -132,7 +147,9 @@ export async function importResource(
                     from_value,
                     component,
                     context,
-                    default_name
+                    default_name,
+                    node,
+                    frame
                 ))
             ) {
                 let external_name = getModuleName(context, from_value.trim());
@@ -174,7 +191,7 @@ export async function importResource(
         case "@registered":
             const comp_name = default_name.toUpperCase();
             if (default_name && context.named_components.has(comp_name))
-                component.local_component_names.set(comp_name, context.named_components.get(comp_name).name);
+                component.local_component_names.set(comp_name, context.named_components.get(comp_name)?.name ?? "");
             return;
         case "@test":
             if (default_name)
@@ -182,7 +199,7 @@ export async function importResource(
                     BINDING_FLAG.FROM_OUTSIDE);
 
             if (names.length > 0)
-                node.pos.throw("Cure synthetic module only exports a default value");
+                node.pos?.throw("Cure synthetic module only exports a default value");
 
             break;
 

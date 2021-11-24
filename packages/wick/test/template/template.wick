@@ -1,0 +1,10 @@
+import init, {name} from "@template";
+
+export default <div> { name } </div>;
+
+init(tools=>{
+    return [
+        {name:"charly", endpoint:"/blog/1/" },
+        {name:"charllene", endpoint:"/blog/2/" }
+    ]
+})

@@ -1,5 +1,4 @@
 import HTML from "@candlelib/html";
-import { assert } from "console";
 import { componentDataToCompiledHTML } from "../build/compiler/ast-build/html.js";
 import { htmlTemplateToString } from "../build/compiler/ast-render/html.js";
 import { enableBuildFeatures } from "../build/compiler/build_system.js";
