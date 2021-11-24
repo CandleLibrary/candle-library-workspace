@@ -236,6 +236,7 @@ function integrateParentComponentScope(
 
             case BINDING_VARIABLE_TYPE.MODULE_NAMESPACE_VARIABLE:
             case BINDING_VARIABLE_TYPE.TEMPLATE_CONSTANT:
+            case BINDING_VARIABLE_TYPE.TEMPLATE_DATA:
                 {
                     addBindingVariable(
                         component.root_frame,
@@ -246,7 +247,6 @@ function integrateParentComponentScope(
                         BINDING_FLAG.FROM_PRESETS | BINDING_FLAG.FROM_OUTSIDE
                     );
                 } break;
-
             case BINDING_VARIABLE_TYPE.INTERNAL_VARIABLE: {
                 addBindingVariable(
                     component.root_frame,
