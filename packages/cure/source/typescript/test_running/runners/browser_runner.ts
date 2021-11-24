@@ -176,7 +176,8 @@ export class BrowserRunner implements TestRunner {
                 MIME: "application/javascript",
                 respond: async function (tools) {
                     tools.setMIME();
-                    const str = await tools.getUTF8FromFile(root_directory + "/build" + tools.url.path);
+                    const path = root_directory + "build" + tools.url.path;
+                    const str = await tools.getUTF8FromFile(path);
                     return tools.sendUTF8String(str.replace(/\"\@candlelib\/([^\/\"]+)\/?/g, "\"/@cl\/$1/"));
                 },
                 keys: { ext: server.ext.all, dir: "/test_running/utilities/" }
@@ -187,7 +188,8 @@ export class BrowserRunner implements TestRunner {
                 MIME: "application/javascript",
                 respond: async function (tools) {
                     tools.setMIME();
-                    const str = await tools.getUTF8FromFile(root_directory + "/build" + tools.url.path);
+                    const path = root_directory + "build" + tools.url.path;
+                    const str = await tools.getUTF8FromFile(path);
                     return tools.sendUTF8String(str.replace(/\"\@candlelib\/([^\/\"]+)\/?/g, "\"/@cl\/$1/"));
                 },
                 keys: { ext: server.ext.all, dir: "/utilities/*" }
@@ -299,11 +301,11 @@ function startChrome(port: number, globals: Globals): () => void {
             '--force-fieldtrials=*BackgroundTracing/default/',
             `--enable-logging=stderr`,
             "--remote-debugging-port=9222",
-            ///(globals.flags.USE_HEADLESS_BROWSER) ? `--headless` : "",
+            (globals.flags.USE_HEADLESS_BROWSER) ? `--headless` : "",
             //'--enable-kiosk-mode',
             `https://localhost:${port}/`
         ],
-        { detached: false, stdio: ['ignore', 'ignore', 'ignore'], env: process.env }
+        { detached: true, stdio: ['ignore', 'ignore', 'ignore'], env: process.env }
     );
 
     browser.on('close', (code) => {
