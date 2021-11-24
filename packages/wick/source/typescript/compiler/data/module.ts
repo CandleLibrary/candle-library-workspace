@@ -45,8 +45,32 @@ export async function importComponentData(
 
     try {
 
+        let uri = <URI>URI.resolveRelative(new_component_url, component.location);
+
+        if (!uri.ext) {
+
+            const candidates = [
+                <URI>URI.resolveRelative("./" + uri.filename + ".wick", uri),
+                <URI>URI.resolveRelative("./" + uri.filename + ".md", uri),
+                <URI>URI.resolveRelative("./" + "index" + ".wick", uri + "/"),
+                <URI>URI.resolveRelative("./" + "index" + ".md", uri + "/"),
+            ];
+
+            const results = await Promise.all(candidates.map(c => c.DOES_THIS_EXIST()));
+
+            const first = results.indexOf(true);
+
+            console.log({ candidates });
+
+            if (first >= 0)
+                uri = candidates[first];
+            else
+                throw new Error(`Could not locate a component at ${new_component_url}`);
+
+        }
+
         const { IS_NEW, comp: new_comp_data }
-            = await parseSource(new URI(new_component_url), context, component.location);
+            = await parseSource(uri, context, component.location);
 
         if (new_comp_data.HAS_ERRORS)
             return false;
@@ -137,7 +161,7 @@ export async function importResource(
 
             // Read file and determine if we have a component, a script or some other resource. 
             // Compile Component Data
-            else if (!(uri.ext == "wick" || uri.ext == "html")
+            else if (!(uri.ext == "wick" || uri.ext == "html" || uri.ext == "")
                 ||
                 !(await importComponentData(
                     from_value,

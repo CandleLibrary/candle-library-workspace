@@ -1,0 +1,32 @@
+import elementA from "./elementA";
+import elementB from "./elementB";
+import elementC from "./elementC";
+import elementD from "./elementD";
+
+export default <div>
+    <elementA/>
+    <elementB/>
+    <elementC/>
+    <elementD/>
+</div>;
+
+import test from "@test";
+
+test: {
+    
+    assert("Imports component from a filepath that omits the file extension `.wick`", 
+        ele.children[0].classList[1] == "eleA" 
+    );
+
+    assert("Imports component from a filepath that omits the file extension `.md`", 
+        ele.children[3].children[0].tagName == "H1" 
+    );
+
+    assert("Imports component from a filepath of a folder with an index.wick component", 
+        ele.children[1].classList[1] == "eleB" 
+    );
+
+    assert("Imports component from a filepath of a folder with an index.md component", 
+        ele.children[2].children[0].tagName == "H1" 
+    );
+}

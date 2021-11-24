@@ -1,5 +1,5 @@
-import spark, { Sparky } from "@candlelib/spark";
 import { Transition } from '@candlelib/glow';
+import spark, { Sparky } from "@candlelib/spark";
 import { Context } from '../compiler/common/context.js';
 import { BINDING_FLAG, ObservableModel, ObservableWatcher } from "../types/all";
 import { WickContainer } from "./container.js";
@@ -27,7 +27,7 @@ const enum ComponentFlag {
 
 export class WickRTComponent implements Sparky, ObservableWatcher {
 
-    ele: HTMLElement | null;
+    ele: HTMLElement;
 
     elu: (HTMLElement | Text)[][];
 
@@ -52,7 +52,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      * Parent component
      */
     //@ts-ignore
-    par: WickRTComponent;
+    par: WickRTComponent | null;
 
     ctr: WickContainer[];
     /**
@@ -106,8 +106,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     ) {
         this.name = this.constructor.name;
 
-
-        this.ele = null;
         this.ci = 0;
         this.ch = [];
         this.elu = [];
@@ -160,12 +158,13 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.wrapper = wrapper;
 
         if (existing_element) {
-            this.integrateElement(existing_element, parent_chain.concat(this));
+            this.ele = existing_element;
+            this.integrateElement(existing_element, true, parent_chain.concat(this));
         } else
             this.ele = this.createElement(context, [this]);
 
-        if (this.ele)
-            this.ele.setAttribute("wrt:c", this.name);
+
+        this.ele.setAttribute("wrt:c", this.name);
     }
 
     initialize(model: any = this.model) {
@@ -194,7 +193,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         const context = this.context, wrapper = this.wrapper;
 
-        if (wrapper) {
+        if (wrapper && this.wrapper) {
 
             this.ele.appendChild(this.wrapper.ele);
 
@@ -366,6 +365,10 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         //Lifecycle Events: Disconnecting <======================================================================
         this.disconnecting();
 
+        /**
+         * Only disconnect from DOM if the component is 
+         * the root (has no parent) of a Component tree.
+         */
         if (this.ele && this.ele.parentElement && !this.par)
             this.ele.parentElement.removeChild(this.ele);
 
@@ -374,8 +377,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.disconnect();
 
         this.disconnected();
-
-
     }
 
     /***
@@ -396,7 +397,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         if (!this.TRANSITIONED_IN) {
 
-            this.removeFromDOM();
+            //this.removeFromDOM();
 
             if (this.DESTROY_AFTER_TRANSITION)
                 this.destructor();
@@ -455,7 +456,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         return transition_time;
     }
 
-    se(index: number, ele: HTMLElement) {
+    se(index: number, ele: HTMLElement | Text) {
 
         if (!this.elu[index])
             this.elu[index] = [];
@@ -463,7 +464,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.elu[index].push(ele);
     }
 
-    re(index: number, ele: HTMLElement) {
+    re(index: number, ele: HTMLElement | Text) {
 
         if (!this.elu[index])
             return;
@@ -822,13 +823,17 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     //=========================================================
     //=========================================================
     //=========================================================
-    integrateElement(ele: HTMLElement, component_chain: WickRTComponent[] = [this]): number {
+    integrateElement(
+        ele: HTMLElement,
+        root: boolean = true,
+        component_chain: WickRTComponent[] = [this]
+    ): number {
 
         let sk = 0, PROCESS_CHILDREN = true;
 
         let scope_component: WickRTComponent = this;
 
-        if (!this.ele) {
+        if (root) {
 
             ele.classList.add(this.name);
 
@@ -855,7 +860,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                 const child = <any>ele.children[0];
 
-                this.integrateElement(child, component_chain);
+                this.integrateElement(child, false, component_chain);
 
                 if (ele.hasAttribute("w:u"))
                     this.se(parseInt((ele.getAttribute("w:u") || "0")), child);
@@ -894,8 +899,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 if (ele.hasAttribute("w:o")) {
 
                     // Element outside the scope of the current component
-
-                    this.par.se(+ele.hasAttribute("w:o"), ele);
+                    if (this.par)
+                        this.par.se(+ele.hasAttribute("w:o"), ele);
 
                     //@ts-ignore
                     iterateElementChildren(ele, this.par, component_chain);
@@ -1031,7 +1036,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         hydrateComponentElement(ele, parent_chain, this);
 
-        this.integrateElement(ele, parent_chain);
+        this.integrateElement(ele, true, parent_chain);
 
         return ele;
     }
@@ -1089,6 +1094,6 @@ function iterateElementChildren(
         if (skip_count-- > 0) continue;
 
         skip_count = scope_component
-            .integrateElement(<HTMLElement>child, component_chain);
+            .integrateElement(<HTMLElement>child, false, component_chain);
     }
 }

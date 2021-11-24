@@ -379,6 +379,9 @@ export class Router {
         await transition.asyncPlay();
 
         this.finalizePageDisconnects(finalizing_pages);
+
+        for (const anchor of Array.from(document.querySelectorAll("a")))
+            this.wick.rt.context.processLink(anchor);
     }
 
     /**
