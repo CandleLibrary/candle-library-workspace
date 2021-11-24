@@ -48,12 +48,8 @@ export async function importComponentData(
         const { IS_NEW, comp: new_comp_data }
             = await parseSource(new URI(new_component_url), context, component.location);
 
-
         if (new_comp_data.HAS_ERRORS)
             return false;
-
-
-
 
         if (IS_NEW) {
 

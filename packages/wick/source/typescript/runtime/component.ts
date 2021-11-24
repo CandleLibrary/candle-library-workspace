@@ -72,7 +72,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     name: string;
 
-    protected wrapper?: WickRTComponent;
+    protected wrapper: WickRTComponent | null;
     INITIALIZED: boolean;
     TRANSITIONED_IN: boolean;
     DESTROY_AFTER_TRANSITION: boolean;
@@ -98,7 +98,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     constructor(
         existing_element = null,
-        wrapper = null,
+        wrapper: WickRTComponent | null = null,
         parent_chain: WickRTComponent[] = [],
         default_model_name = "",
         context: Context = rt.context,
@@ -164,7 +164,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         } else
             this.ele = this.createElement(context, [this]);
 
-        this.ele.setAttribute("wrt:c", this.name);
+        if (this.ele)
+            this.ele.setAttribute("wrt:c", this.name);
     }
 
     initialize(model: any = this.model) {
@@ -337,20 +338,22 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         this.connect();
 
-        if (other_element) {
-            if (!INSERT_AFTER)
-                other_element.parentElement.insertBefore(this.ele, other_element);
-            else {
-                if (other_element.nextElementSibling)
-                    other_element.parentElement
-                        .insertBefore(this.ele, other_element.nextElementSibling);
-                else
-                    other_element.parentElement.appendChild(this.ele);
-            }
-        } else {
-            parent_element.appendChild(this.ele);
-        }
+        if (this.ele) {
 
+            if (other_element) {
+                if (!INSERT_AFTER)
+                    other_element.parentElement?.insertBefore(this.ele, other_element);
+                else {
+                    if (other_element.nextElementSibling)
+                        other_element.parentElement?.insertBefore(this.ele, other_element.nextElementSibling);
+                    else
+                        other_element.parentElement?.appendChild(this.ele);
+                }
+            } else {
+                parent_element.appendChild(this.ele);
+            }
+
+        }
         //Lifecycle Events: Connected <======================================================================
         this.connected();
     }
@@ -384,9 +387,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      */
 
 
-    oTI(row: number, col: number, DESCENDING: boolean, trs) { }
-    oTO(row: number, col: number, DESCENDING: boolean, trs) { }
-    aRR(row: number, col: number, trs) { }
+    oTI(row: number, col: number, DESCENDING: boolean, trs: Transition) { }
+    oTO(row: number, col: number, DESCENDING: boolean, trs: Transition) { }
+    aRR(row: number, col: number, trs: Transition) { }
 
 
     onTransitionOutEnd() {
@@ -435,7 +438,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             this.oTO(row, col, DESCENDING, transition.out);
 
             transition.addEventListener(
-                "stopped",
+                <any>"stopped",
                 this.onTransitionOutEnd.bind(this)
             );
 
@@ -452,7 +455,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         return transition_time;
     }
 
-    se(index, ele) {
+    se(index: number, ele: HTMLElement) {
 
         if (!this.elu[index])
             this.elu[index] = [];
@@ -460,7 +463,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.elu[index].push(ele);
     }
 
-    re(index, ele) {
+    re(index: number, ele: HTMLElement) {
 
         if (!this.elu[index])
             return;
@@ -475,7 +478,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      * @param col The new column number in which the component lies
      * @param trs A transition object that can be used to animate the position change
      */
-    arrange(row: number, col: number, trs) { this.aRR(row, col, trs.in); }
+    arrange(row: number, col: number, trs: Transition) { this.aRR(row, col, trs.in); }
 
     /**
      * Call when the object should transition from an out of view state to 

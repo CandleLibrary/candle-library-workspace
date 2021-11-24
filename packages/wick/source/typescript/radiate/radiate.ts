@@ -284,7 +284,8 @@ export class Router {
 
         let app_ele = document.getElementById("app");
 
-        let transition_elements = {};
+        if (!app_ele)
+            throw ("App element not found");
 
         let finalizing_pages: PageView[] = [];
 
@@ -323,8 +324,6 @@ export class Router {
                 }
                 return r;
             }, []);
-            //*/
-            //this.modal_stack.length = UNWIND;
 
             this.modal_stack.push(page);
 
@@ -372,7 +371,6 @@ export class Router {
             page.transitionIn(transition);
 
         } else if (!current_view) {
-
             page.connect(app_ele, wurl);
 
             page.transitionIn(transition);
@@ -464,13 +462,11 @@ export class Router {
 
                 if (wick_style)
                     page.style = wick_style.cloneNode(true);
-
-
             }
 
             if (app_source.dataset.modal == "true" || pending_modal_reply) {
 
-                page.setType("modal", this);
+                page.setType(PageType.WICK_MODAL, this);
                 let modal: ComponentElement = <ComponentElement>document.createElement("radiate-modal");
                 modal.innerHTML = app_source.innerHTML;
                 app_source.innerHTML = "";
@@ -489,7 +485,7 @@ export class Router {
                     dom_app = new_app;
                 }
             } else if (app_source.dataset.modal == "transition") {
-                page.setType("transitioning_modal", this);
+                page.setType(PageType.WICK_TRANSITIONING_MODAL, this);
             }
 
             /**
@@ -506,6 +502,8 @@ export class Router {
                 NO_BUFFER = true;
 
             if (!NO_BUFFER) this.pages[url.path] = page;
+
+
 
             return page;
         }
