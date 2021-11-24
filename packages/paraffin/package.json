@@ -1,6 +1,6 @@
 {
     "name": "@candlelib/paraffin",
-    "version": "0.1.24",
+    "version": "0.1.26",
     "description": "Command Line Interface Library",
     "type": "module",
     "main": "./build/paraffin.js",
@@ -12,9 +12,8 @@
         "build.watch": "tsc --watch",
         "build": "tsc",
         "test-wickurse": "node ./test/composite.practical.spec.js",
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
         "build-colors": "./utils/build_colors.js",
-        "test": "candle.cure ./tests/",
+        "test": "candle.cure --reporter ci ./tests/",
         "compile.terminfo.debug": "hydrocarbon compile --nom terminfo_parser --output_dir ./source/typescript/parser/ --annotations --debug  ./source/grammar/terminfo.hcg",
         "compile.terminfo.release": "hydrocarbon compile --nom terminfo_parser --output_dir ./source/typescript/parser/ --recognizer_type wasm  ./source/grammar/terminfo.hcg",
         "compile.debug": "hydrocarbon compile --type ts --output ./source/typescript/parser/args_parser ./source/grammar/args_parser.hcg",
@@ -34,8 +33,8 @@
     "license": "MIT",
     "dependencies": {
         "@candlelib/hydrocarbon": "*",
-        "@candlelib/uri": "*",
-        "@candlelib/log": "*"
+        "@candlelib/uri": "0.3.4",
+        "@candlelib/log": "0.3.2"
     },
     "devDependencies": {
         "@candlelib/cure": "*",

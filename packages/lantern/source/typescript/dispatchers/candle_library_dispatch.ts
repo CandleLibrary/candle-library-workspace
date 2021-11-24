@@ -119,7 +119,7 @@ Available libraries: (@cl can be freely replaced with @candlelib)
                 "spark": "spark/spark",
                 "js": "js/javascript",
             }[pkg],
-            file_path = dir_sections.slice(2).join("/").replace("build/library/", ""),
+            file_path = dir_sections.slice(2).join("/").replace("build/", ""),
             return_path = ([
                 "wick",
                 "uri",
@@ -160,10 +160,10 @@ Available libraries: (@cl can be freely replaced with @candlelib)
                     file_name = url.filename;
                 //Can only be from a source map, so deliver from host folder based on the source 
                 //root directory
-                //Replace build/library with source/typescript
+                //Replace build/ with source/typescript
 
 
-                return tools.sendUTF8FromFile(return_path.replace("build/library", "source/typescript"));
+                return tools.sendUTF8FromFile(return_path.replace("build", "source/typescript"));
             } else {
 
                 tools.log(file_path, return_path);

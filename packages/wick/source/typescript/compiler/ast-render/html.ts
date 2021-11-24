@@ -34,7 +34,10 @@ export async function componentDataToHTML(
     return { html: html_string, template_map };
 }
 
-function nodeAllowsFormatting(node, parent): boolean {
+function nodeAllowsFormatting(
+    node: TemplateHTMLNode,
+    parent: TemplateHTMLNode
+): boolean {
     return !((parent?.tagName == "pre") || (node?.tagName == "w-b") || (node?.tagName == "pre"));
 }
 
@@ -43,7 +46,10 @@ function nodeAllowsFormatting(node, parent): boolean {
  */
 export function htmlTemplateToString(html: TemplateHTMLNode, html_indent: number = 0) {
 
-    html.strings.length = 0;
+    if (html.strings)
+        html.strings.length = 0;
+    else
+        html.strings = [];
 
     for (const { node, meta: { depth, parent, traverse_state } } of bidirectionalTraverse(html, "children")) {
 
@@ -115,7 +121,8 @@ export function htmlTemplateToString(html: TemplateHTMLNode, html_indent: number
 }
 
 function addAttributesToString(node: TraversedNode<TemplateHTMLNode>, string: string) {
-    for (const [key, val] of node.attributes.entries())
+
+    for (const [key, val] of node.attributes?.entries() ?? [])
         if (val === "")
             string += ` ${key}`;
         else

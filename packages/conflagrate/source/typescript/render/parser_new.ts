@@ -3,7 +3,7 @@ import {
     ParserFramework,
     KernelParserCore2,
     fillByteBufferWithUTF8FromString
-} from "@candlelib/hydrocarbon/build/library/entry/runtime.js";
+} from "@candlelib/hydrocarbon";
 
 
 const {

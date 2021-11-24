@@ -44,11 +44,13 @@ build_typescript_packages:
     - npm install typescript
     - npx tsc -p ./packages/css/tsconfig.json || true
     - npx tsc -p ./packages/cure/tsconfig.json || true
+    - npx tsc -p ./packages/conflagrate/tsconfig.json || true
     - npx tsc -p ./packages/dev-tools/tsconfig.json || true
     - npx tsc -p ./packages/glow/tsconfig.json || true
     - npx tsc -p ./packages/html/tsconfig.json || true
     - npx tsc -p ./packages/js/tsconfig.json || true
     - npx tsc -p ./packages/lantern/tsconfig.json || true
+    - npx tsc -p ./packages/hydrocarbon/tsconfig.json || true
     - npx tsc -p ./packages/log/tsconfig.json || true
     - npx tsc -p ./packages/paraffin/tsconfig.json || true
     - npx tsc -p ./packages/spark/tsconfig.json || true
@@ -59,19 +61,21 @@ build_typescript_packages:
   artifacts:
     expire_in: 2 hours
     paths:
-      - /packages/css/build/
-      - /packages/cure/build/
-      - /packages/dev-tools/build/
-      - /packages/glow/build/
-      - /packages/html/build/
-      - /packages/js/build/
-      - /packages/lantern/build/
-      - /packages/log/build/
-      - /packages/paraffin/build/
-      - /packages/spark/build/
-      - /packages/uri/build/
-      - /packages/wick/build/
-      - /packages/wind/build/
+      - packages/css/build/
+      - packages/cure/build/
+      - packages/conflagrate/build/
+      - packages/dev-tools/build/
+      - packages/glow/build/
+      - packages/html/build/
+      - packages/js/build/
+      - packages/lantern/build/
+      - packages/hydrocarbon/build/
+      - packages/log/build/
+      - packages/paraffin/build/
+      - packages/spark/build/
+      - packages/uri/build/
+      - packages/wick/build/
+      - packages/wind/build/
 
   dependencies:
     - fetch_dependencies
@@ -110,6 +114,7 @@ version_ts_modules:
       - "./*.bounty"
       - packages/**/*.bounty
       - packages/**/*.temp.json
+      - packages/**/change_log_addition.md
 
   dependencies:
     - fetch_dependencies

@@ -1,15 +1,15 @@
 import { Globals, Outcome } from "../types/globals";
 
 
-export function endWatchedTests(globals: Globals, resolution: (arg: Outcome) => void) {
+export async function endWatchedTests(globals: Globals, resolution: (arg: Outcome) => void) {
 
     for (const watcher of globals.watchers)
         watcher.close();
 
-    if (globals.runners.length > 0) {
+    if (globals.runners && globals.runners.length > 0)
         for (const runner of globals.runners)
-            runner.close();
-    }
+            await runner.close();
+
     if (resolution) {
 
         if (globals.outcome) {

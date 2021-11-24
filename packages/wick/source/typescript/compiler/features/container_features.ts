@@ -9,6 +9,7 @@ import {
     stmt
 } from '@candlelib/js';
 import URI from '@candlelib/uri';
+import { Token } from '../../../../../hydrocarbon/build/runtime/token.js';
 import {
     BINDING_VARIABLE_TYPE, HookTemplatePackage, HTMLAttribute,
     HTMLContainerNode,
@@ -51,7 +52,7 @@ registerFeature(
 
                 async prepareHTMLNode(node, host_node, host_element, index, skip, component, context) {
 
-                    if (node.tag.toLowerCase() == "container") {
+                    if (node.tag?.toLowerCase() == "container") {
 
                         //Turn children into components if they are not already so.   
                         let ch = null;
@@ -59,6 +60,10 @@ registerFeature(
                         const container_id = component.container_count;
 
                         const ctr: HTMLContainerNode = Object.assign(<HTMLContainerNode>{
+
+                            type: HTMLNodeType.HTML_Element,
+
+                            pos: node.pos,
 
                             IS_CONTAINER: true,
 
@@ -72,15 +77,15 @@ registerFeature(
 
                         }, node);
 
-                        for (const ch of ctr.nodes) {
+                        for (const ch of ctr.nodes ?? []) {
 
                             if (!(HTMLNodeIsElement(ch))) { continue; }
 
                             let comp, comp_index = ctr.components.length;
 
-                            const inherited_attributes = [];
+                            const inherited_attributes: [string, string][] = [];
 
-                            const IS_GENERATED_COMPONENT = !(component.local_component_names.has(ch.tag));
+                            const IS_GENERATED_COMPONENT = !(component.local_component_names.has(ch.tag ?? ""));
 
                             const new_attribs = [];
 
@@ -114,10 +119,9 @@ registerFeature(
 
                             ch.attributes = new_attribs;
 
-
                             ctr.component_attributes.push(inherited_attributes);
 
-                            if (ch.tag.toLowerCase() == "self") {
+                            if (ch.tag?.toLowerCase() == "self") {
                                 comp = component;
                             } else {
 
@@ -227,7 +231,7 @@ registerFeature(
             }, HTMLNodeType.HTMLAttribute
         );
 
-        build_system.registerHookHandler<IndirectHook<JSNode>, void | JSNode>({
+        build_system.registerHookHandler<IndirectHook<any>, void | any>({
             name: "Container Data Attribute",
 
             types: [ContainerDataHook],
@@ -256,11 +260,11 @@ registerFeature(
             },
 
             buildHTML: async (hook, sdp) => {
-                const ast = hook.value[0];
-                const container_ele: HTMLContainerNode = <any>getElementAtIndex(sdp.self, hook.ele_index);
 
+                const container_ele: HTMLContainerNode = <any>getElementAtIndex(sdp.self, hook.ele_index);
+                const static_resolution_type = getExpressionStaticResolutionType(<JSNode>hook.value[0], sdp);
                 if (
-                    getExpressionStaticResolutionType(<JSNode>hook.value[0], sdp)
+                    static_resolution_type
                     !==
                     STATIC_RESOLUTION_TYPE.INVALID
                     &&
@@ -269,7 +273,7 @@ registerFeature(
                     return await getStaticValue(hook.value[0], sdp);
                 }
 
-                return <HookTemplatePackage>null;
+                return null;
             }
         });
 
@@ -430,7 +434,7 @@ registerFeature(
         build_system.registerHookHandler<JSNode | JSIdentifier | any, void>({
             description: ``,
 
-            name: "Container limit Hook",
+            name: "Container Limit Hook",
 
             types: [ContainerLimitHook],
 

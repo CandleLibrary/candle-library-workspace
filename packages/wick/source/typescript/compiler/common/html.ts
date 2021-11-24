@@ -1,5 +1,5 @@
 import { JSNodeType } from '@candlelib/js';
-import { HTMLNode, HTMLElementNode, HTMLNodeClass } from "../../types/all.js";
+import { HTMLNode, HTMLElementNode, HTMLNodeClass, HTMLAttribute, WickBindingNode } from "../../types/all.js";
 import { ComponentData } from './component.js';
 import { registerHookType } from './extended_types.js';
 
@@ -120,28 +120,33 @@ export function escape_html_string(string: string): string {
     //.replace(/\s/g, "&#8199;");
 }
 
-export function getAttributeValue(name, node: HTMLElementNode) {
-    for (const att of node.attributes) {
-        if (att.name == name)
-            return att.value;
-    }
+export function getAttributeValue(name: string, node: HTMLElementNode): string | WickBindingNode | null {
+    if (node)
+        for (const att of node.attributes ?? []) {
+            if (att.name == name)
+                return att.value;
+        }
+
+    return null;
 }
 
-export function getAttribute(name, node: HTMLElementNode) {
-    for (const att of node.attributes) {
-        if (att.name == name)
-            return att;
-    }
+export function getAttribute(name: string, node?: HTMLElementNode): HTMLAttribute | null {
+    if (node)
+        for (const att of node.attributes ?? []) {
+            if (att.name == name)
+                return att;
+        }
 
     return null;
 }
 
 
-export function hasAttribute(name, node: HTMLElementNode) {
-    for (const att of node.attributes) {
-        if (att.name == name)
-            return true;
-    }
+export function hasAttribute(name: string, node?: HTMLElementNode): boolean {
+    if (node)
+        for (const att of node.attributes ?? []) {
+            if (att.name == name)
+                return true;
+        }
 
     return false;
 }

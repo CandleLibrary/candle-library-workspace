@@ -104,6 +104,7 @@ export class BasicReporter implements Reporter {
         this.WORKING = false;
         this.root_suite = createSuite("/");
         this.time_start = 0;
+        this.pending = [];
         this.notifications = [];
     }
 

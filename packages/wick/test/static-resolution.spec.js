@@ -81,13 +81,11 @@ assert_group("Imported Container With Export Static Resolution", sequence, () =>
     const source_string = `
 import temp_comp from "./test/render/data/temp_prefill.wick"
 
-var datas = [
+var data = [
     {header:"test1"},
     {header:"test2"}
 ];
-export default <div> 
-    <temp_comp export={ datas as data}></temp_comp>
-</div>`;
+export default <div><temp_comp { data }/></div>`;
 
     const context = new Context();
 

@@ -496,78 +496,75 @@ async function processContainerHooks(
         shift_hook = hooks.find(t => t.type == ContainerShiftHook),
         use_if_hooks = hooks.filter(t => t.type == ContainerUseIfHook);
 
-
-
-
     if (data_hook) {
 
-        let { value: data } = await processHookForHTML(data_hook, static_data_pack);
 
-        if (Array.isArray(data) && data.length > 0) {
+        let result = await processHookForHTML(data_hook, static_data_pack);
 
+        if (result) {
+            
+            let { value: data } = result;
 
-            let limit = data.length, offset = 0, shift = 1;
+            if (data && Array.isArray(data) && data.length > 0) {
 
-            if (filter_hook) {
-                const { value: arrow_filter } = await processHookForHTML(filter_hook, static_data_pack);
+                let limit = data.length, offset = 0, shift = 1;
 
-                if (arrow_filter)
-                    data = data.filter(arrow_filter);
-            }
+                if (filter_hook) {
+                    const arrow_filter = await processHookForHTML(filter_hook, static_data_pack);
+                    if (arrow_filter && arrow_filter.value !== null)
+                        data = data.filter(arrow_filter.value);
+                }
 
-            if (sort_hook) {
-                const { value: sort_filter } = await processHookForHTML(sort_hook, static_data_pack);
+                if (sort_hook) {
+                    const sort_result = await processHookForHTML(sort_hook, static_data_pack);
+                    if (sort_result && sort_result.value !== null)
+                        data = data.sort(sort_result.value);
+                }
 
-                if (sort_filter)
-                    data = data.sort(sort_filter);
-            }
+                if (limit_hook) {
+                    const pending_limit = await processHookForHTML(limit_hook, static_data_pack);
+                    if (pending_limit && typeof pending_limit.value == "number")
+                        limit = Math.max(0, Math.min(pending_limit.value, data.length));
+                }
 
-            if (limit_hook) {
-                const { value: pending_limit } = await processHookForHTML(limit_hook, static_data_pack);
+                if (shift_hook) {
+                    const pending_shift = await processHookForHTML(shift_hook, static_data_pack);
+                    if (pending_shift && typeof pending_shift.value == "number")
+                        shift = Math.max(1, pending_shift.value);
+                }
 
-                if (typeof pending_limit == "number")
-                    limit = Math.max(0, Math.min(pending_limit, data.length));
-            }
+                if (offset_hook) {
+                    const pending_offset = await processHookForHTML(offset_hook, static_data_pack);
+                    if (pending_offset && typeof pending_offset.value == "number")
+                        offset = Math.max(0, Math.min(pending_offset.value, data.length));
+                }
 
-            if (shift_hook) {
-                const { value: pending_shift } = await processHookForHTML(shift_hook, static_data_pack);
+                data = data.slice(offset * shift, offset * shift + limit);
 
-                if (typeof pending_shift == "number")
-                    shift = Math.max(1, pending_shift);
-            }
+                if (data.length > 0) {
 
-            if (offset_hook) {
-                const { value: pending_offset } = await processHookForHTML(offset_hook, static_data_pack);
+                    const
 
-                if (typeof pending_offset == "number")
-                    offset = Math.max(0, Math.min(pending_offset, data.length));
-            }
+                        comp_name = html.component_names[0],
 
-            data = data.slice(offset * shift, offset * shift + limit);
+                        child_comp = static_data_pack.context.components.get(comp_name);
 
-            if (data.length > 0) {
+                    //Don't forget use-if hooks which may be present in the above component types.
+                    if (child_comp && node.children)
+                        for (const model of data) {
 
-                const
+                            const new_static_data_pack: StaticDataPack = {
+                                self: child_comp,
+                                root_element: child_comp.HTML,
+                                context: static_data_pack.context,
+                                model: model,
+                                prev: static_data_pack
+                            };
 
-                    comp_name = html.component_names[0],
+                            const result = await __componentDataToCompiledHTML__(child_comp.HTML, new_static_data_pack, template_map);
 
-                    child_comp = static_data_pack.context.components.get(comp_name);
-
-                //Don't forget use-if hooks which may be present in the above component types.
-
-                for (const model of data) {
-
-                    const new_static_data_pack: StaticDataPack = {
-                        self: child_comp,
-                        root_element: child_comp.HTML,
-                        context: static_data_pack.context,
-                        model: model,
-                        prev: static_data_pack
-                    };
-
-                    const result = await __componentDataToCompiledHTML__(child_comp.HTML, new_static_data_pack, template_map);
-
-                    node.children.push(result.html[0]);
+                            node.children.push(result.html[0]);
+                        }
                 }
             }
         }

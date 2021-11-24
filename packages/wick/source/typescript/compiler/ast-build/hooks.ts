@@ -94,9 +94,9 @@ export async function processHookForHTML(
     indirect_hook: IndirectHook<any>,
     sdp: StaticDataPack
 
-): Promise<HookTemplatePackage> {
+): Promise<HookTemplatePackage | null> {
 
-    var pkg: HookTemplatePackage = { value: null, html: null, templates: null };
+    var pkg: HookTemplatePackage | null = { value: null, html: null, templates: null };
     //@ts-ignore
 
     for (const handler of getHookHandlers()) {

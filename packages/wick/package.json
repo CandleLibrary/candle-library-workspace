@@ -1,6 +1,6 @@
 {
     "name": "@candlelib/wick",
-    "version": "0.16.1",
+    "version": "0.16.3",
     "description": "Web Component Compiler",
     "main": "./build/entry/wick-server.js",
     "types": "./build/entry/wick-server",
@@ -9,12 +9,7 @@
         "candle.wick": "./index.js"
     },
     "scripts": {
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
-        "compile": "./scripts/compile.sh",
-        "test": "candle.cure  --headless ./test/* && candle.wick test ./test/",
-        "test.watch": "candle.cure -w ./test/*",
-        "server": "lantern",
-        "buildsite": "npm install && candle.wick compile --output ./www ./site"
+        "test": "candle.cure ./test/*"
     },
     "repository": {
         "type": "git",
@@ -58,18 +53,18 @@
         "unused": true
     },
     "dependencies": {
-        "@candlelib/conflagrate": "*",
-        "@candlelib/css": "*",
-        "@candlelib/cure": "*",
-        "@candlelib/glow": "*",
-        "@candlelib/html": "*",
+        "@candlelib/conflagrate": "0.5.10",
+        "@candlelib/css": "0.3.20",
+        "@candlelib/cure": "0.7.3",
+        "@candlelib/glow": "0.4.19",
+        "@candlelib/html": "0.2.7",
         "@candlelib/hydrocarbon": "*",
-        "@candlelib/js": "*",
-        "@candlelib/log": "*",
-        "@candlelib/paraffin": "*",
-        "@candlelib/spark": "*",
-        "@candlelib/uri": "*",
-        "@candlelib/wind": "*",
+        "@candlelib/js": "0.5.26",
+        "@candlelib/log": "0.3.2",
+        "@candlelib/paraffin": "0.1.26",
+        "@candlelib/spark": "0.3.6",
+        "@candlelib/uri": "0.3.4",
+        "@candlelib/wind": "0.5.6",
         "esbuild": "^0.13.15"
     }
 }

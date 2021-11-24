@@ -75,7 +75,7 @@ interface buildHTMLFunction<T = IndirectHook<JSNode>> {
          * Static component data including the context object
          */
         static_data_pack: StaticDataPack,
-    ): (HookTemplatePackage | Promise<HookTemplatePackage> | null);
+    ): (HookTemplatePackage | null | void | Promise<HookTemplatePackage | null | void>);
 }
 
 export interface HookHandlerPackage<T = DefaultJSHandlerNodeType, U = DefaultJSHandlerNodeType> {

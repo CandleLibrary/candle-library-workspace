@@ -74,6 +74,6 @@ export type TemplatePackage = {
 
 export type HookTemplatePackage = {
     value: any,
-    html?: TemplateHTMLNode;
-    templates?: Map<string, TemplateHTMLNode>;
+    html: TemplateHTMLNode | null;
+    templates?: Map<string, TemplateHTMLNode> | null;
 };

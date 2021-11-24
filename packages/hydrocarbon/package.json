@@ -6,7 +6,6 @@
     "types": "./build/entry/runtime.d.ts",
     "type": "module",
     "scripts": {
-        "prepublishOnly": "rm -rf ./build && rm -rf ./build && tsc & sleep 20",
         "test": "candle.cure --threads 2 ./test/",
         "test.hcg_grammar_parser": "candle.cure ./test/bootstrap/hcg3-bootstrap.spec.js",
         "compile.skribble.debug": "./source/cli/cli.js compile --workers 10 --annotations --recognizer_type js --output_dir ./source/typescript/parsers/ ./source/grammars/misc/skribble.hcg",
@@ -17,8 +16,7 @@
         "url": "git+https://github.com/CandleLibrary/Hydrocarbon.git"
     },
     "files": [
-        "/build/types",
-        "/build/library",
+        "/build",
         "/README.md",
         "/CHANGELOG.md",
         "/LICENSE",

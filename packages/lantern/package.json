@@ -1,6 +1,6 @@
 {
     "name": "@candlelib/lantern",
-    "version": "0.2.7",
+    "version": "0.2.9",
     "description": "Extensible Web Server",
     "main": "./build/lantern.js",
     "types": "./build/lantern.d.ts",
@@ -9,8 +9,7 @@
         "lantern": "index.js"
     },
     "scripts": {
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
-        "test": "candle.cure --headless ./test/",
+        "test": "candle.cure --headless --reporter ci ./test/",
         "test.watch": "candle.cure -w ./test/**"
     },
     "repository": {
@@ -35,17 +34,17 @@
     },
     "homepage": "https://github.com/CandleLibrary/lantern#readme",
     "dependencies": {
-        "@candlelib/paraffin": "*",
-        "@candlelib/conflagrate": "*",
-        "@candlelib/css": "*",
-        "@candlelib/log": "*",
-        "@candlelib/glow": "*",
+        "@candlelib/paraffin": "0.1.26",
+        "@candlelib/conflagrate": "0.5.10",
+        "@candlelib/css": "0.3.20",
+        "@candlelib/log": "0.3.2",
+        "@candlelib/glow": "0.4.19",
         "@candlelib/hydrocarbon": "*",
-        "@candlelib/js": "*",
-        "@candlelib/spark": "*",
-        "@candlelib/uri": "*",
-        "@candlelib/wick": "*",
-        "@candlelib/wind": "*",
+        "@candlelib/js": "0.5.26",
+        "@candlelib/spark": "0.3.6",
+        "@candlelib/uri": "0.3.4",
+        "@candlelib/wick": "0.16.3",
+        "@candlelib/wind": "0.5.6",
         "node-watch": "^0.6.3"
     }
 }

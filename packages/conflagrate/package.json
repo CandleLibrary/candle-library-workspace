@@ -1,6 +1,6 @@
 {
     "name": "@candlelib/conflagrate",
-    "version": "0.5.8",
+    "version": "0.5.10",
     "description": "Node Tree Traversal Library",
     "main": "./build/conflagrate.js",
     "types": "./build/conflagrate.d.ts",
@@ -9,8 +9,7 @@
     "author": "Anthony C Weathersby",
     "license": "MIT",
     "scripts": {
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 10",
-        "test": "candle.cure ./test/",
+        "test": "candle.cure --reporter ci ./test/",
         "test.watch": "candle.cure -w ./test/**",
         "compile": "hydrocarbon compile --type ts --output ./source/typescript/render/parser_new ./source/grammar/render.hcg"
     },
@@ -21,9 +20,9 @@
         "/LICENSE"
     ],
     "dependencies": {
-        "@candlelib/log": "*",
-        "@candlelib/uri": "*",
-        "@candlelib/wind": "*",
+        "@candlelib/log": "0.3.2",
+        "@candlelib/uri": "0.3.4",
+        "@candlelib/wind": "0.5.6",
         "@candlelib/hydrocarbon": "*"
     },
     "devDependencies": {

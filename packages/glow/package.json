@@ -1,14 +1,13 @@
 {
     "name": "@candlelib/glow",
-    "version": "0.4.17",
+    "version": "0.4.19",
     "description": "Animation Library",
     "main": "./build/glow.js",
     "types": "./build/glow.d.ts",
     "type": "module",
     "scripts": {
-        "test": "candle.cure ./test/",
-        "test.watch": "candle.cure -w ./test/**",
-        "prepublishOnly": "rm -rf ./build && tsc & sleep 10"
+        "test": "candle.cure --reporter ci ./test/",
+        "test.watch": "candle.cure -w ./test/**"
     },
     "repository": {
         "type": "git",
@@ -40,7 +39,7 @@
     },
     "homepage": "https://github.com/galactrax/cfw-glow#readme",
     "dependencies": {
-        "@candlelib/css": "*",
-        "@candlelib/spark": "*"
+        "@candlelib/css": "0.3.20",
+        "@candlelib/spark": "0.3.6"
     }
 }

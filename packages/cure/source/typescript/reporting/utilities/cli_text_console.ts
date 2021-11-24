@@ -53,18 +53,22 @@ export class CLITextDraw {
         const buffer = this.buffer;
         this.clear();
 
+        if (this.CLEAR_SCREEN) {
 
-        if (this.CLEAR_SCREEN && typeof process.stdout.cursorTo == "function") {
+            if (typeof process.stdout.cursorTo == "function") {
 
-            new Promise(res => {
-                process.stdout.write("\u001b[3J\u001b[2J\u001b[1J");;
-                process.stdout.cursorTo(0, 0);
-                process.stdout.clearScreenDown();
-                process.stdout.write(buffer);
-            });
+                new Promise(res => {
+                    process.stdout.write("\u001b[3J\u001b[2J\u001b[1J");;
+                    process.stdout.cursorTo(0, 0);
+                    process.stdout.clearScreenDown();
+                    process.stdout.write(buffer);
+                });
 
+            } else {
+                this.S = false;
+            }
         } else {
-            this.S = false;
+            process.stdout.write(buffer);
         }
     }
 

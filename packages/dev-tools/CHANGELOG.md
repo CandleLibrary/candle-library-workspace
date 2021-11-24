@@ -1,3 +1,9 @@
+## [v0.7.16] - 2021-11-24 
+
+- [2021-11-23]
+
+    Versioning: Removed references to CandleLibrary and made the versioning system more agnostic to the composition of packages.
+
 ## [v0.6.1] - 2021-10-09 
 
 - [2021-10-09]
@@ -69,4 +75,3 @@
 - [Mon Jun 07 2021]
 
     Updated README.md with preliminary usage information
-
