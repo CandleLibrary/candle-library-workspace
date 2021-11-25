@@ -127,7 +127,7 @@ function createTestRig(
 
         source_location: suite?.url?.toString() ?? "",
 
-        working_directory: globals?.package_dir?.toString() ?? "",
+        working_directory: suite?.url?.dir ?? "",
 
     };
 }
