@@ -1,6 +1,6 @@
 /**
- * This Compnent demonstrates the ability to limit the number of entries that
- * appear by utilizying the container tag's `limit` attribute. 
+ * This Component demonstrates the ability to limit the number of entries that
+ * appear by utilizing the container tag's `limit` attribute. 
  */
 
 let data = [{v:1},{v:2},{v:3},{v:4}];
