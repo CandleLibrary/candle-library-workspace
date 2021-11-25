@@ -36,7 +36,8 @@ function getValue(lex, attribute?) {
                 n *= Math.PI / 200;
                 break;
             case "deg":
-                n *= Math.PI / 180;
+                //Converts degrees to radians
+                n *= (Math.PI / 180);
                 break;
             case "turn":
                 n *= Math.PI * 2;
@@ -168,7 +169,7 @@ function ParseString(string, transform) {
 // A 2D transform composition of 2D position, 2D scale, and 1D rotation.
 const cos = Math.cos, sin = Math.sin;
 
-const smooth_float = i => Math.round(i * 10000) * 0.0001;
+const smooth_float = i => Math.round(i * 100000) * 0.00001;
 
 export class CSS_Transform2D extends Float64Array {
 
@@ -184,11 +185,11 @@ export class CSS_Transform2D extends Float64Array {
             sy = 1,
             r = 0, cos = 1, sin = 0;
         if (pos.length == 5) {
-            px = pos[0];
-            py = pos[1];
-            sx = pos[2];
-            sy = pos[3];
-            r = pos[4];
+            px = pos[TAttrib.px];
+            py = pos[TAttrib.py];
+            sx = pos[TAttrib.sx];
+            sy = pos[TAttrib.sy];
+            r = pos[TAttrib.rz];
         } else {
             px = pos[0];
             py = pos[1];
@@ -206,24 +207,30 @@ export class CSS_Transform2D extends Float64Array {
     }
 
 
-    constructor(px?, py?, sx?, sy?, r?) {
+    constructor(
+        px?: number | CSS_Transform2D | string,
+        py?: number,
+        sx?: number,
+        sy?: number,
+        r?: number
+    ) {
         super(5);
         this.sx = 1;
         this.sy = 1;
         if (px !== undefined) {
             if (px instanceof CSS_Transform2D) {
-                this[0] = px[0];
-                this[1] = px[1];
-                this[2] = px[2];
-                this[3] = px[3];
-                this[4] = px[4];
+                this[TAttrib.px] = px[TAttrib.px];
+                this[TAttrib.py] = px[TAttrib.py];
+                this[TAttrib.sx] = px[TAttrib.sx];
+                this[TAttrib.sy] = px[TAttrib.sy];
+                this[TAttrib.rz] = px[TAttrib.rz];
             } else if (typeof (px) == "string") return ParseString(px, this);
             else {
-                this[0] = px;
-                this[1] = py;
-                this[2] = sx;
-                this[3] = sy;
-                this[4] = r;
+                this[TAttrib.px] = px || 0;
+                this[TAttrib.py] = py || 0;
+                this[TAttrib.sx] = sx || 0;
+                this[TAttrib.sy] = sy || 0;
+                this[TAttrib.rz] = r || 0;
             }
         }
     }
@@ -280,7 +287,7 @@ export class CSS_Transform2D extends Float64Array {
         return CSS_Transform2D.ToString(this);
     }
 
-    copy(v) {
+    copy(v: string) {
         let copy = new CSS_Transform2D(this);
 
 
@@ -291,7 +298,7 @@ export class CSS_Transform2D extends Float64Array {
     /**
      * Sets the transform value of a canvas 2D context;
      */
-    setCTX(ctx) {
+    setCTX(ctx: CanvasRenderingContext2D) {
         let cos = 1, sin = 0;
         if (this[4] != 0) {
             cos = Math.cos(this[4]);
@@ -300,15 +307,27 @@ export class CSS_Transform2D extends Float64Array {
         ctx.transform(cos * this[2], -sin * this[2], this[3] * sin, this[3] * cos, this[0], this[1]);
     }
 
-    getLocalX(X) {
+    getLocalX(X: number) {
         return (X - this.px) / this.sx;
     }
 
-    getLocalY(Y) {
+    getLocalY(Y: number) {
         return (Y - this.py) / this.sy;
     }
 }
 
+const enum TAttrib {
+    px,
+    py,
+    sx,
+    sy,
+    rz,
+    rx,
+    ry,
+    pz,
+    sz,
+
+}
 
 export class CSS_Transform3D extends Float64Array {
 
@@ -330,63 +349,80 @@ export class CSS_Transform3D extends Float64Array {
             sr4 = 0, sr5 = 0, sr6 = 0,
             sr7 = 0, sr8 = 0, sr9 = 0;
 
-        px = pos[0];
-        py = pos[1];
-        pz = pos[7];
-        sx = pos[2];
-        sy = pos[3];
-        sz = pos[8];
-        cX = cos(pos[5]);
-        sX = sin(pos[5]);
-        cY = cos(pos[6]);
-        sY = sin(pos[6]);
-        cZ = cos(pos[4]);
-        sZ = sin(pos[4]);
+        px = pos[TAttrib.px];
+        py = pos[TAttrib.py];
+        pz = pos[TAttrib.pz];
+        sx = pos[TAttrib.sx];
+        sy = pos[TAttrib.sy];
+        sz = pos[TAttrib.sz];
+        cX = cos(pos[TAttrib.rx]);
+        sX = sin(pos[TAttrib.rx]);
+        cY = cos(pos[TAttrib.ry]);
+        sY = sin(pos[TAttrib.ry]);
+        cZ = cos(pos[TAttrib.rz]);
+        sZ = sin(pos[TAttrib.rz]);
 
-        sr1 = (cZ * cY) * sx;
-        sr4 = ((cZ * sY * sX) - (sZ * cX)) * sx;
-        sr7 = ((cZ * sY * sX) + (sZ * sX)) * sx;
+        const
+            r1 = cZ * cY,
+            r2 = cZ * sY * sX - sZ * cX,
+            r3 = cZ * sY * cX + sZ * sX,
+            r4 = sZ * cY,
+            r5 = sZ * sY * sX + cZ * cX,
+            r6 = sZ * sY * cX - sZ * sX,
+            r7 = -sY,
+            r8 = cY * sX,
+            r9 = cY * cX;
 
-        sr2 = (sZ * cY) * sy;
-        sr5 = ((sZ * sY * sX) + (cZ * cX)) * sy;
-        sr8 = ((sZ * sY * cX) - (cZ * sX)) * sy;
+        sr1 = r1 * sx;
+        sr4 = r2 * sx;
+        sr7 = r3 * sx;
+        //
+        sr2 = r4 * sy;
+        sr5 = r5 * sy;
+        sr8 = r6 * sy;
+        //
+        sr3 = r7 * sz;
+        sr6 = r8 * sz;
+        sr9 = r9 * sz;
 
-        sr3 = (-sY) * sz;
-        sr6 = (cY * sX) * sz;
-        sr9 = (cX * cY) * sz;
-
-        return `matrix3d(${[sr1, sr2, sr3, 0, sr4, sr5, sr6, 0, sr7, sr8, sr9, 0, px, py, pz, 1].map(smooth_float).join(",")})`;
+        return `matrix3d(${[sr1, sr4, sr7, 0, sr2, sr5, sr8, 0, sr3, sr6, sr9, 0, px, py, pz, 1].map(smooth_float).join(",")})`;
     }
 
     get px(): number {
-        return this[0];
+        return this[TAttrib.px];
     }
     set px(v: number) {
-        this[0] = v;
+        this[TAttrib.px] = v;
     }
     get py(): number {
-        return this[1];
+        return this[TAttrib.py];
     }
     set py(v: number) {
-        this[1] = v;
+        this[TAttrib.py] = v;
     }
     get pz(): number {
-        return this[7];
+        return this[TAttrib.pz];
     }
     set pz(v: number) {
-        this[7] = v;
+        this[TAttrib.pz] = v;
     }
     get sx(): number {
-        return this[2];
+        return this[TAttrib.sx];
     }
     set sx(v: number) {
-        this[2] = v;
+        this[TAttrib.sx] = v;
     }
     get sy(): number {
-        return this[3];
+        return this[TAttrib.sy];
     }
     set sy(v: number) {
-        this[3] = v;
+        this[TAttrib.sy] = v;
+    }
+    get sz(): number {
+        return this[TAttrib.sz];
+    }
+    set sz(v: number) {
+        this[TAttrib.sz] = v;
     }
     set r(v: number) {
         this.rx = 0;
