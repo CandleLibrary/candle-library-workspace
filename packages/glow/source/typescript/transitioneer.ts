@@ -137,10 +137,12 @@ export class TransitionClass {
         this.out = $out.bind(this);
         this.out.addEventListener = this.addEventListener.bind(this);
         this.out.removeEventListener = this.removeEventListener.bind(this);
+        this.out.easing = Animation.easing;
 
         this.in = $in.bind(this);
         this.in.addEventListener = this.addEventListener.bind(this);
         this.in.removeEventListener = this.removeEventListener.bind(this);
+        this.in.easing = Animation.easing;
 
         Object.defineProperty(this.out, "out_duration", {
             get: () => this.out_duration

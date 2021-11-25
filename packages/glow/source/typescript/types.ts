@@ -122,14 +122,17 @@ export interface GlowAnimation {
         obj: any,
     } & any)[]) => AnimSequence,
     createGroup: (...rest: AnimSequence[]) => AnimGroup,
-    linear: AnimationInterpolation,
-    ease: AnimationInterpolation,
-    ease_in: AnimationInterpolation,
-    ease_out: AnimationInterpolation,
-    ease_in_out: AnimationInterpolation,
-    overshoot: AnimationInterpolation,
-    anticipate: AnimationInterpolation,
-    custom: (x1: number, y1: number, x2: number, y2: number) => AnimationInterpolation;
+
+    easing: {
+        linear: AnimationInterpolation,
+        ease: AnimationInterpolation,
+        ease_in: AnimationInterpolation,
+        ease_out: AnimationInterpolation,
+        ease_in_out: AnimationInterpolation,
+        overshoot: AnimationInterpolation,
+        anticipate: AnimationInterpolation,
+        custom: (x1: number, y1: number, x2: number, y2: number) => AnimationInterpolation;
+    };
 
 
 }

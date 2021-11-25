@@ -75,6 +75,8 @@ const
             end: boolean;
             keys: Array<any>;
             current_val: any;
+            curr_key: number;
+            time_cache: number;
             type: any;
 
             constructor(keys: AnimationProp, obj, prop_name, type) {
@@ -82,6 +84,8 @@ const
                 this.end = false;
                 this.keys = [];
                 this.current_val = null;
+                this.curr_key = 0;
+                this.time_cache = 0;
 
                 const
                     IS_ARRAY = Array.isArray(keys),
@@ -106,7 +110,7 @@ const
             }
 
             destroy() {
-                this.keys = null;
+                this.keys.length = 0;
                 this.type = null;
                 this.current_val = null;
             }
@@ -201,13 +205,15 @@ const
             }
 
             getValueAtTime(time = 0) {
+
                 let val_start = this.current_val,
                     val_end = this.current_val,
                     key, val_out = val_start;
 
+                const keys = this.keys;
 
-                for (let i = 0; i < this.keys.length; i++) {
-                    key = this.keys[i];
+                for (let i = 0, l = keys.length; i < l; i++) {
+                    key = keys[i];
                     val_end = key.val;
                     if (time < key.len) {
                         break;
@@ -215,7 +221,6 @@ const
                         time -= key.len;
                     val_start = key.val;
                 }
-
 
                 if (key) {
                     if (time < key.len) {
@@ -513,14 +518,16 @@ const
 
             linear: Linear,
 
-            ease: new CSS_Bezier(0.25, 0.1, 0.25, 1),
-            ease_in: new CSS_Bezier(0.42, 0, 1, 1),
-            ease_out: new CSS_Bezier(0, 0.8, 0.8, 1),
-            ease_in_out: new CSS_Bezier(0.42, 0, 0.58, 1),
-            overshoot: new CSS_Bezier(5, 5, 0.2, 0.8),
-            anticipate: new CSS_Bezier(0.5, -0.1, 0.5, 0.8),
+            easing: {
+                ease: new CSS_Bezier(0.25, 0.1, 0.25, 1),
+                ease_in: new CSS_Bezier(0.42, 0, 1, 1),
+                ease_out: new CSS_Bezier(0, 0, 0.0, 1),
+                ease_in_out: new CSS_Bezier(0.42, 0, 0.58, 1),
+                overshoot: new CSS_Bezier(5, 5, 0.2, 0.8),
+                anticipate: new CSS_Bezier(0.5, -0.1, 0.5, 0.8),
+            },
 
-            custom: (x1, y1, x2, y2) => new CSS_Bezier(x1, y1, x2, y2)
+            custom: (x1: number, y1: number, x2: number, y2: number) => new CSS_Bezier(x1, y1, x2, y2)
         });
 
         return GlowFunction;
