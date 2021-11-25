@@ -52,12 +52,15 @@ registerFeature(
                          */
                         const internal_method_name = {
                             "ontransitionin": "oTI",
+                            "onin": "oTI",
                             "ontrsin": "oTI",
+                            "onout": "oTO",
                             "ontransitionout": "oTO",
                             "ontrsout": "oTO",
                             "onarrange": "aRR",
                             "onload": "onload",
                             "onmount": "onload",
+
                         }[name.toLocaleLowerCase().replace("on_", "on")] ?? "";
 
                         if (internal_method_name != "") {
