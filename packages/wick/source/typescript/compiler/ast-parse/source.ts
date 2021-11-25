@@ -62,7 +62,7 @@ export async function parseSource(
     if (typeof (window) == "undefined") await URL.server();
 
     let
-        source_url: URL = null,
+        source_url: URL | null = null,
         data: any = empty_obj,
         errors: Error[] = [];
 
@@ -73,7 +73,7 @@ export async function parseSource(
         //Sloppy tests to see if the input is A URL or not
         if (typeof input == "string") {
             if (
-                input.trim[0] == "."
+                input.trim()[0] == "."
                 ||
                 url.ext == "wick"
                 ||
@@ -89,9 +89,9 @@ export async function parseSource(
         }
 
         if (url.IS_RELATIVE)
-            url = URL.resolveRelative(url, root_url);
+            url = <URI>URL.resolveRelative(url, root_url);
 
-        data = await fetchASTFromRemote(url);
+        data = await fetchASTFromRemote(url, root_url);
 
         source_url = url;
 
@@ -99,7 +99,6 @@ export async function parseSource(
             throw data.errors.pop();
 
     } catch (e) {
-
 
         if (typeof input == "string") {
 
@@ -263,10 +262,10 @@ function integrateParentComponentScope(
     }
 }
 
-export async function fetchASTFromRemote(url: URL) {
+export async function fetchASTFromRemote(url: URL, origin: URL = URI.GLOBAL) {
 
     const
-        errors = [];
+        errors: Error[] = [];
 
     let ast = null,
         comments = null,
@@ -276,8 +275,19 @@ export async function fetchASTFromRemote(url: URL) {
     if (!url)
         throw new Error("Could not load URL: " + url + "");
 
+
     try {
         string = <string>await url.fetchText();
+    } catch (e) {
+
+        const error = new Error(`Could not retrieve component data from ${url} as requested from ${origin}`);
+
+        console.error(error);
+
+        return { ast: null, string, resolved_url: url.toString(), errors: [error], comments };
+    }
+
+    try {
 
         // HACK -- if the source data is a css file, then wrap the source string into a <style></style> element string to enable 
         // the wick parser to parser the data correctly. 
@@ -327,6 +337,8 @@ export default <tmpcomp>
             errors.push(error);
 
     } catch (e) {
+
+
         console.log(e);
 
         errors.push(e);
