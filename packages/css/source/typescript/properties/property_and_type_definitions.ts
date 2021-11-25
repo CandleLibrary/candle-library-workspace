@@ -95,7 +95,7 @@ export const property_definitions = {
 	backdrop_filter: `<filter_value_list>`,
 
 	/* https://www.w3.org/TR/css-box-3 */
-	margin: `[<length>|<percentage>|0|auto]{1,4}`,
+	margin: `[ <length> | <percentage> | 0 | auto ]{1,4}`,
 	margin_top: `<length>|<percentage>|0|auto`,
 	margin_right: `<length>|<percentage>|0|auto`,
 	margin_bottom: `<length>|<percentage>|0|auto`,
@@ -332,6 +332,7 @@ export const property_definitions = {
 	/* Transform */
 	transform: "<transform2D>|none",
 	perspective: "<length>|none",
+	perspective_origin: "<position>",
 	transform_origin: "[<length-percentage>|left|center|right|top|bottom]|[[<length-percentage>|left|center|right]&&[<length-percentage>|top|center|bottom]]<length>?",
 
 
@@ -354,7 +355,7 @@ export const property_definitions = {
 	grid_row: "<grid-line>[/<grid-line>]?",
 	grid_row_end: "<grid-line>",
 	grid_row_start: "<grid-line>",
-	grid_template: "none | [ <'grid-template-rows'> / <'grid-template-columns'> ] | [ <line-names>? <string> <track-size>? <line-names>? ]+ [ / <explicit-track-list> ]?",
+	grid_template: "none | [ <grid-template-rows> / <grid-template-columns> ] | [ <line-names>? <string> <track-size>? <line-names>? ]+ [ / <explicit-track-list> ]?",
 	grid_template_areas: "none | <string>+",
 	grid_template_columns: "none|<track-list>|<auto-track-list>|subgrid <line-name-list>?",
 	grid_template_rows: "none | <track-list> | <auto-track-list> | subgrid <line-name-list>?",
