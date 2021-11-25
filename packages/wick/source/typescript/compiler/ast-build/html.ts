@@ -125,7 +125,8 @@ export async function __componentDataToCompiledHTML__(
         if (namespace_id)
             node.namespace = namespace_id;
 
-        if ("IS_CONTAINER" in html && html.IS_CONTAINER)
+        if ("IS_CONTAINER" in html && html.IS_CONTAINER) {
+
             await addContainer(
                 html,
                 static_data_pack,
@@ -135,7 +136,7 @@ export async function __componentDataToCompiledHTML__(
                 node
             );
 
-        else if (component_name && context.components?.has(component_name)) {
+        } else if (component_name && context.components?.has(component_name)) {
 
 
             ({ node, state } =
@@ -169,9 +170,12 @@ export async function __componentDataToCompiledHTML__(
 
             await processElement(html, static_data_pack, node, tag_name, state, comp_data, template_map);
 
-        } else if ("IS_BINDING" in html)
+        } else if ("IS_BINDING" in html) {
+
             node = await resolveHTMLBinding(html, static_data_pack, state, node, comp_data);
-        else if ("data" in html)
+
+        } else if ("data" in html)
+
             processTextNode(node, html.data);
 
         const child_state = (((state) & (htmlState.IS_INTERLEAVED | htmlState.IS_COMPONENT))
