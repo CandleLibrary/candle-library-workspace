@@ -1,6 +1,7 @@
 //@ts-ignore
 import glow from '@candlelib/glow';
 import URI from '@candlelib/uri';
+import { Logger } from "@candlelib/log";
 import Wick, { gatherWickElements } from '../entry/wick-runtime.js';
 import { ComponentElement } from '../runtime/component.js';
 import { Element } from "./element.js";
@@ -16,6 +17,8 @@ export {
     PageView,
     Element
 };
+
+const logger = Logger.get("radiate").activate();
 
 /** @namespace Router */
 
@@ -75,8 +78,6 @@ export class Router {
     constructor(wick: typeof Wick) {
 
         //Initialize CSS + Conflagrate Parsers
-
-        console.log(glow);
 
         this.pages = {};
 
@@ -207,7 +208,8 @@ export class Router {
 
                 URL_HOST.wurl = wurl;
 
-                console.log("missing same-page resolution");
+                logger.log("missing same-page resolution");
+
                 return;
             }
 
@@ -222,7 +224,7 @@ export class Router {
                 page = await this.loadNewPage(wurl, DOM, pending_modal_reply);
 
             } catch (e) {
-                console.warn(
+                logger.warn(
                     `Unable to process response for request made to: ${wurl}. Response: ${e}. Error Received: ${e}`
                 );
             }
@@ -323,7 +325,7 @@ export class Router {
                     a.transitionOut(transition.out);
                 }
                 return r;
-            }, []);
+            }, <PageView[]>[]);
 
             this.modal_stack.push(page);
 
