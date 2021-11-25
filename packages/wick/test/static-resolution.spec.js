@@ -43,7 +43,6 @@ export default <div>
 
     const { html } = await componentDataToCompiledHTML(component, context);
 
-
     assertTree({
         t: "div",
         c: [{ d: "55" }, {
@@ -78,7 +77,7 @@ export default <div>
 
 assert_group("Imported Container With Export Static Resolution", sequence, () => {
     const source_string = `
-import temp_comp from "./test/render/data/temp_prefill.wick"
+import temp_comp from "./render/data/temp_prefill.wick"
 
 var data = [
     {header:"test1"},
@@ -119,7 +118,6 @@ export default <div><temp_comp { data }/></div>`;
 
 assert_group("Binding expressions with static objects", sequence, () => {
     const source_string = `
-import temp_comp from "./test/render/data/temp_prefill.wick"
 
 var data = {
     headerA:"test1",
