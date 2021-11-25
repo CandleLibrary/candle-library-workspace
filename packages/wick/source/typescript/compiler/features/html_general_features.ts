@@ -359,8 +359,6 @@ registerFeature(
 
                         if (comp) {
 
-                            console.log(comp);
-
                             if (comp.TEMPLATE)
                                 node.pos.throw("Cannot use a template component as a regular component instance.");
 

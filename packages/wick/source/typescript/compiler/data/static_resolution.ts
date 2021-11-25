@@ -109,7 +109,6 @@ export async function getStaticValue(
                 // Keep these errors quiet - An error here simply means
                 // That this expression will not be able to be resolved 
                 // statically.
-                // console.log(data_string);
                 // console.error(e);
             }
         }

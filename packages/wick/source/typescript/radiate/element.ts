@@ -116,7 +116,7 @@ export class Element {
             for (const [id_hash, outgoing_comp] of outgoing_element.interior_components) {
 
                 if (this.interior_components.has(id_hash)) {
-                    console.log(outgoing_element.interior_components);
+
                     //Swap 
                     const
                         incoming_comp = <WickRTComponent>this.interior_components.get(id_hash),

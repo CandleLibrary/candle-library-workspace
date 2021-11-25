@@ -154,10 +154,6 @@ Test components that have been defined with the \`@test\` synthetic import
                     //@ts-ignore
                     source.nodes.push(...test_source_ast.nodes);
 
-
-
-                    //console.log(renderNewFormatted(source));
-
                     compileTestsFromAST(source, test_suite, test_frame.globals);
 
                     for (const test of test_suite.tests) {

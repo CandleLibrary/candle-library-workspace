@@ -56,7 +56,7 @@ registerFeature(
                         break;
 
                     case "ctx2d":
-                        console.log(component.HTML);
+
                         html_node = build_system.css.matchAll("canvas", component.HTML)[0];
                         if (html_node)
                             expression = build_system.js.expr(`$$ele${html_node.id}.getContext("2d")`);

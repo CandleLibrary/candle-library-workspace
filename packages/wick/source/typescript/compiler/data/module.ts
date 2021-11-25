@@ -60,8 +60,6 @@ export async function importComponentData(
 
             const first = results.indexOf(true);
 
-            console.log({ candidates });
-
             if (first >= 0)
                 uri = candidates[first];
             else
