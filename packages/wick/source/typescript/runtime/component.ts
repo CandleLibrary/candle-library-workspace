@@ -848,6 +848,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 ({ sk, PROCESS_CHILDREN } = process_container(ele, scope_component, sk, PROCESS_CHILDREN));
             }
 
+            this.se(0, ele);
+
         } else {
 
 
