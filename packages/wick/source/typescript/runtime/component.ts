@@ -933,10 +933,10 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                     PROCESS_CHILDREN = false;
                 }
             }
-        }
 
-        if (ele.hasAttribute("w:u"))
-            this.se(parseInt((ele.getAttribute("w:u") || "0")), ele);
+            if (ele.hasAttribute("w:u"))
+                this.se(parseInt((ele.getAttribute("w:u") || "0")), ele);
+        }
 
 
         if (PROCESS_CHILDREN)

@@ -138,7 +138,6 @@ export async function __componentDataToCompiledHTML__(
 
         } else if (component_name && context.components?.has(component_name)) {
 
-
             ({ node, state } =
                 await addComponent(
                     html,
@@ -152,6 +151,10 @@ export async function __componentDataToCompiledHTML__(
                     comp_data,
                 )
             );
+
+            //Replace the woo attribute with the local component index value
+            if (node)
+                node.attributes.set("w:u", html.id + "");
 
         } else if (tag_name) {
 
