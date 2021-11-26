@@ -59,23 +59,23 @@ export class Logger {
 
         this.delete_fn(this);
     }
-    message(...v) {
+    message(...v: any[]) {
         this.messages.push(...(v.map(v => (<any>{ level: "log", str: v + "" }))));
         return this;
     }
 
-    debug(...v) {
+    debug(...v: any[]) {
 
         if ((CoreLogger.ACTIVE & LogLevel.DEBUG) == 0)
             return this;
         this.messages.push(...(v.map(v => (<any>{ level: "dbg", str: v + "" }))));
         return this;
     }
-    sub_message(...v) {
+    sub_message(...v: any[]) {
         this.messages.push(...(v.map(v => (<any>{ level: "dbg", str: v + "" }))));
         return this;
     }
-    sub_error(...v) {
+    sub_error(...v: any[]) {
         this.messages.push(...(v.map(v => (<any>{ level: "log", str: v + "" }))));
         return this;
     }

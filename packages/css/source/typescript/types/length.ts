@@ -105,11 +105,11 @@ export default class CSS_Length extends Number {
         return this.toString();
     }
 
-    lerp(to, t) {
+    lerp(to: CSS_Length, t: number) {
         return new CSS_Length(Number(this) + (to - Number(this)) * t, this.unit);
     }
 
-    copy(other) {
+    copy(other: number | CSS_Length = this) {
         return new CSS_Length(other, this.unit);
     }
 

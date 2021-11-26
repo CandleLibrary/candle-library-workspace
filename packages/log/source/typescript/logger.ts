@@ -34,7 +34,7 @@ export class LogWriter {
     }
 }
 let __default_log_level__ = 0;
-let __internal_logger__ = null;
+let __internal_logger__: Logger | null = null;
 let logs = new Map;
 
 function internal_logger() {
@@ -90,41 +90,41 @@ export class Logger {
         return this;
     }
 
-    rewrite_log(...args) {
+    rewrite_log(...args: any[]) {
         if (this.ACTIVE & LogLevel.INFO)
             for (const writer of this.log_writers)
                 writer.writeLog(this.render_name, LogLevel.INFO, true, ...args);
         return this;
     }
 
-    log(...args) {
+    log(...args: any[]) {
         if (this.ACTIVE & LogLevel.INFO)
             for (const writer of this.log_writers)
                 writer.writeLog(this.render_name, LogLevel.INFO, false, ...args);
         return this;
     }
-    critical(...args) {
+    critical(...args: any[]) {
         if (this.ACTIVE & LogLevel.CRITICAL)
             for (const writer of this.log_writers)
                 writer.writeLog(this.render_name, LogLevel.CRITICAL, false, ...args);
         return this;
     }
 
-    error(...args) {
+    error(...args: any[]) {
         if (this.ACTIVE & LogLevel.ERROR)
             for (const writer of this.log_writers)
                 writer.writeLog(this.render_name, LogLevel.ERROR, false, ...args);
         return this;
     }
 
-    warn(...args) {
+    warn(...args: any[]) {
         if (this.ACTIVE & LogLevel.WARN)
             for (const writer of this.log_writers)
                 writer.writeLog(this.render_name, LogLevel.WARN, false, ...args);
         return this;
     }
 
-    debug(...args) {
+    debug(...args: any[]) {
         if (this.ACTIVE & LogLevel.DEBUG)
             for (const writer of this.log_writers)
                 writer.writeLog(this.render_name, LogLevel.DEBUG, false, ...args);
@@ -143,7 +143,7 @@ export class Logger {
             for (const child of this.children)
                 child.addWriter(writer);
         } else
-            internal_logger().console.warn(`Attempt to add writer to logger [${this.render_name}] failed: The writer does not have a valid [writeLog] method.`);
+            internal_logger().warn(`Attempt to add writer to logger [${this.render_name}] failed: The writer does not have a valid [writeLog] method.`);
     }
 
     get name() {
@@ -176,7 +176,7 @@ export class Logger {
         return this.createLogger(name);
     }
 
-    constructor(name, writer: LogWriter = null) {
+    constructor(name: string, writer: null | LogWriter = null) {
         this._name = name;
         this.base_name = name;
         this.render_name = name;
@@ -202,7 +202,7 @@ export class Logger {
 
     render_name: string;
 
-    parent: Logger;
+    parent: Logger | null;
 
     ACTIVE: LogLevel;
 

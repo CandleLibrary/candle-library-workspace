@@ -6,7 +6,7 @@ const
 	PI = Math.PI;
 
 // A real-cuberoots-only function:
-function cuberoot(v) {
+function cuberoot(v: number) {
 	if (v < 0) return -pow(-v, 1 / 3);
 	return pow(v, 1 / 3);
 }
@@ -210,7 +210,7 @@ export default class CSS_Bezier extends Float64Array {
 		return this.roots(this[0], this[2], this[4], this[6]);
 	}
 
-	getYatX(x) {
+	getYatX(x: number) {
 		var x1 = this[0] - x, x2 = this[2] - x, x3 = this[4] - x, x4 = this[6] - x,
 			x2_3 = x2 * 3, x1_3 = x1 * 3, x3_3 = x3 * 3,
 			d = (-x1 + x2_3 - x3_3 + x4), di = 1 / d, i3 = 1 / 3,

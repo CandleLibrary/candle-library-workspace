@@ -1,4 +1,5 @@
-import { AnimationInterpolation } from "./types";
+
+import CB from "@candlelib/css/build/types/cubic_bezier.js";
 
 export interface AnimationProp {
 
@@ -9,8 +10,8 @@ export interface AnimationProp {
     duration?: number,
     delay?: number;
     del?: number;
-    easing?: AnimationInterpolation;
-    e?: AnimationInterpolation;
+    easing?: CB;
+    e?: CB;
     forEach(arg: (arg: AnimationProp) => any): any;
 
 }
