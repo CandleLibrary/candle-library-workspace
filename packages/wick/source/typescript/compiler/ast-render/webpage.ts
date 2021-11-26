@@ -53,7 +53,7 @@ function renderComponentInit(component_class_declarations, context) {
     return `
     const w = wick;
 
-    await w.appendPresets(${renderPresets(context)});
+    w.appendPresets(${renderPresets(context)});
 
     ${component_class_declarations}
     `;
