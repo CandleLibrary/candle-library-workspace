@@ -1,80 +1,15 @@
 import { Token } from '@candlelib/hydrocarbon';
 import { default as URI, default as URL } from "@candlelib/uri";
 import { WickRTComponent } from "../../runtime/component.js";
-import { FunctionFrame, HTMLElementNode, HTMLNode, HTMLNodeType, IndirectHook, IntermediateHook } from "../../types/all.js";
+import { FunctionFrame, HTMLNode, IndirectHook, IntermediateHook } from "../../types/all.js";
 import { ComponentStyle } from "../../types/component";
 import { TemplateHTMLNode } from "../../types/html";
 import { addBindingVariable } from './binding.js';
 import { Context } from './context.js';
 import { ComponentHash } from "./hash_name.js";
 
-export function createErrorComponent(
-    errors: Error[],
-    src: string,
-    location: URL,
-    component: ComponentData = createComponentData(src, location)
-) {
-
-    const error_data = [...errors
-        .map(
-            e => (e.stack + "")
-            //.split("\n")
-        )
-        //.map(s => s.replace(/\ /g, "\u00A0"))
-    ]
-        .map(e => <HTMLElementNode>{
-            type: HTMLNodeType.HTML_P,
-            pos: new Token("", "", 0, 0),
-            tag: "p",
-            nodes: [
-                {
-                    type: HTMLNodeType.HTMLText,
-                    data: e.replace(/>/g, "&gt;")
-                        .replace(/</g, "&lt;")
-                        .replace(/>/g, "&gt;")
-                        .replace(/\n/g, "<br/>")
-                        .replace(/\s/g, "&#8199;")
-                }
-            ]
-        });
-
-    const pos = new Token(component.source, "", 0, 0);
-
-    component.errors.push(...errors);
-
-    component.HTML = <HTMLElementNode>{
-        type: HTMLNodeType.HTML_Element,
-        tag: "ERROR",
-        id: 0,
-        attributes: [
-            { type: HTMLNodeType.HTMLAttribute, name: "style", value: "font-family:monospace" }
-        ],
-        nodes: [
-            {
-                tag: "div",
-                nodes: [{
-                    tag_name: "p",
-                    nodes: [
-                        {
-                            tag_name: "",
-                            data: `Error in ${location}:`,
-                            //@ts-ignore
-                            pos: {}
-                        }
-                    ]
-                }, ...error_data],
-                pos
-            }
-        ],
-        pos
-    };
-
-    component.HAS_ERRORS = true;
-
-    return component;
-}
 /**
- * A message emited from a compile process
+ * A message emitted from a compile process
  * indicating some problem that does not affect
  * the compilation of a component but may need
  * to be addressed by the component author.
@@ -87,7 +22,7 @@ export interface CompileWarning {
 }
 
 /**
- * A message emited from a compile process
+ * A message emitted from a compile process
  * indicating some problem that does not affect
  * the compilation of a component but may need
  * to be addressed by the component author.
@@ -128,20 +63,6 @@ export class ComponentData {
      * to the DOM.
      */
     HAS_ERRORS: boolean;
-
-    /**
-     * A list of errors encountered during the parse or
-     * compile phases. No attempt to render the component
-     * should be made if there are errors, as this output 
-     * from such a component is undefined.
-     */
-    errors: Error[];
-
-    /**
-     * A list of warnings that have been encountered 
-     * during the parse or compile phases.
-     */
-    warnings: CompileWarning[];
 
     /**
      * Count of number of container tags identified in HTML
@@ -301,8 +222,6 @@ export class ComponentData {
 
         this.children = [];
 
-        this.errors = [];
-
         this.root_ele_claims = [];
 
         this.indirect_hooks = [];
@@ -332,7 +251,6 @@ export class ComponentData {
     copy() {
         const new_comp = new ComponentData(this.source, new URI(this.location));
 
-        new_comp.errors = this.errors.slice();
         new_comp.CSS = this.CSS.slice();
         new_comp.INLINE_HTML = this.INLINE_HTML.slice();
         new_comp.children = this.children.slice();

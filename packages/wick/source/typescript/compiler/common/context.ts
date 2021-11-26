@@ -190,8 +190,10 @@ export class Context {
     active_template_data?: any;
     static global = { get v() { return CachedPresets; }, set v(e) { } };
 
+    errors: { comp: string, error: Error; }[];
+
     /**
-     * Constructs a Presets object that can be passed to the Wick compiler.
+     * Constructs a Context object that can be passed to the Wick compiler.
      * @param user_presets - An object of optional configurations.
      */
     constructor(user_presets: UserPresets | Context = <UserPresets>{}) {
@@ -243,6 +245,8 @@ export class Context {
         this.template_data = new WeakMap;
 
         this.active_template_data = null;
+
+        this.errors = [];
 
         this.processLink = _ => _;
 

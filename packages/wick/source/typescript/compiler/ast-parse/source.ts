@@ -1,4 +1,5 @@
 import { JSNode, JSNodeType } from "@candlelib/js";
+import { Logger } from '@candlelib/log';
 import { default as URI, default as URL } from "@candlelib/uri";
 import { BINDING_FLAG, BINDING_VARIABLE_TYPE, HTMLNode, HTMLNodeClass } from "../../types/all.js";
 import { addBindingVariable, processUndefinedBindingVariables } from "../common/binding.js";
@@ -151,8 +152,6 @@ export async function parseComponentAST(
 
 ): Promise<{ IS_NEW: boolean, comp: ComponentData; }> {
 
-
-
     const
         run_tag = metrics.startRun("Parse Source AST"),
 
@@ -162,6 +161,8 @@ export async function parseComponentAST(
         metrics.endRun(run_tag);
         return { IS_NEW: false, comp: context.components.get(component.name) };
     }
+
+    let HAS_ERRORS = parse_errors.length > 0;
 
     context.components.set(component.name, component);
 
@@ -174,8 +175,11 @@ export async function parseComponentAST(
     if (parent)
         integrateParentComponentScope(parent, component);
 
-    component.errors.push(...parse_errors);
 
+    context.errors.push(...parse_errors.map(e => ({
+        comp: component.name,
+        error: e
+    })));
 
     if (ast)
         try {
@@ -198,13 +202,17 @@ export async function parseComponentAST(
             }
 
         } catch (e) {
-            console.error(e);
-            component.errors.push(e);
+            HAS_ERRORS = true;
+            if (e instanceof Error)
+                context.errors.push({
+                    comp: component.name,
+                    error: e
+                });
         }
 
     metrics.endRun(run_tag);
 
-    component.HAS_ERRORS = component.errors.length > 0;
+    component.HAS_ERRORS = HAS_ERRORS;
 
     return { IS_NEW: true, comp: component };
 }
@@ -337,11 +345,10 @@ export default <tmpcomp>
             errors.push(error);
 
     } catch (e) {
-
-
-        console.log(e);
-
-        errors.push(e);
+        if (e instanceof Error)
+            errors.push(e);
+        else
+            Logger.get("wick").activate().error(e);
     }
 
     return { ast, string, resolved_url: url.toString(), errors, comments };

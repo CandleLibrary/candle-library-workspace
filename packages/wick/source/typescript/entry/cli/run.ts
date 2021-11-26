@@ -13,6 +13,7 @@ import URI from '@candlelib/uri';
 import { RenderPage } from "../../compiler/ast-render/webpage.js";
 import { Context } from "../../compiler/common/context.js";
 import { createComponent } from '../../compiler/create_component.js';
+import { ComponentData } from '../../compiler/common/component.js';
 import { create_config_arg_properties } from "./config_arg_properties.js";
 
 const run_logger = Logger.get("wick").get("run").activate().deactivate(LogLevel.DEBUG);
@@ -82,11 +83,18 @@ Host a single component on a local server.
                                 context.assignGlobals(config?.globals ?? {});
                                 const component = await createComponent(root_path, context);
 
-                                if (component.errors.length > 0) {
-                                    for (const err of component.errors)
-                                        run_logger.error(err);
+                                if (context.errors.length > 0) {
+                                    for (const { comp: name, error } of context.errors) {
+                                        const comp = <ComponentData>context.components.get(name);
+                                        const location = root_path.getRelativeTo(comp.location);
+                                        run_logger.warn(`
+Error encountered in component ${comp.name} (${location}):`);
+                                        run_logger.error(error);
+                                    }
 
                                     return false;
+                                } else {
+                                    run_logger.log("Component rebuilt");
                                 }
 
                                 try {

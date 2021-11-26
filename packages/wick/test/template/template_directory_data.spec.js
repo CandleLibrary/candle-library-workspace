@@ -37,5 +37,4 @@ export default <div> <directory/> </div>
 `, context);
 
 
-assert("An element cannot be instantiate from a template component",
-    template_component2.errors.length > 0);
+assert("An element cannot be instantiate from a template component", context.errors[0].comp == template_component2.name);
