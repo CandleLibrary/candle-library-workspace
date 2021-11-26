@@ -18,9 +18,15 @@ import { parse_css } from '../source-code-parse/parse.js';
 
 
 
-function getModuleName(context: Context, module_name: string) {
+function getModuleName(
+    context: Context,
+    from_value: URI,
+    requesting_source: URI
+) {
+
+    return addPendingModuleToPresets(context, from_value, requesting_source);
     if (!context.repo.has(module_name))
-        return addPendingModuleToPresets(context, module_name);
+        return addPendingModuleToPresets(context, from_value, requesting_source);
     else
         return context.repo.get(module_name)?.hash || "";
 }
@@ -116,6 +122,8 @@ export async function importResource(
     let flag: BINDING_FLAG = 0,
         ref_type: BINDING_VARIABLE_TYPE = 0;
 
+    let module_name = "";
+
     const
         [url, meta] = from_value.split(":"),
 
@@ -170,19 +178,19 @@ export async function importResource(
                     frame
                 ))
             ) {
-                let external_name = getModuleName(context, from_value.trim());
+                module_name = getModuleName(context, new URI(from_value.trim()), component.location);
 
-                for (const name of names)
+                for (const name of names) {
                     if (name.external == "namespace")
-                        addBindingVariable(frame, name.local, node.pos, BINDING_VARIABLE_TYPE.MODULE_NAMESPACE_VARIABLE, external_name, flag);
-                    else
-                        name.external = external_name;
+                        addBindingVariable(frame, name.local, node.pos, BINDING_VARIABLE_TYPE.MODULE_NAMESPACE_VARIABLE, name.external, flag, module_name);
+                }
 
                 if (default_name)
-                    addBindingVariable(frame, default_name, node.pos, BINDING_VARIABLE_TYPE.MODULE_VARIABLE, external_name, flag);
+                    addBindingVariable(frame, default_name, node.pos, BINDING_VARIABLE_TYPE.MODULE_VARIABLE, default_name, flag, module_name);
 
                 ref_type = BINDING_VARIABLE_TYPE.MODULE_MEMBER_VARIABLE;
                 flag = BINDING_FLAG.FROM_OUTSIDE;
+
                 break;
             }
 
@@ -264,7 +272,7 @@ export async function importResource(
         if (external == "namespace")
             continue;
 
-        if (!addBindingVariable(frame, local, node.pos, ref_type, external || local, flag)) {
+        if (!addBindingVariable(frame, local, node.pos, ref_type, external || local, flag, module_name)) {
 
             //@ts-ignore
             node.pos.throw(`Import variable [${local}] already declared`);

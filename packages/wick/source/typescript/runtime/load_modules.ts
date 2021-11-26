@@ -14,10 +14,11 @@ export async function loadModules(incoming_options: UserPresets, extant_presets:
 
             try {
 
-                const uri = new URI(url);
+                const uri = URI.resolveRelative(url);
 
-                const
-                    mod = await import(uri + "");
+                const mod = await import(uri + "");
+
+                console.log({ mod });
 
                 extant_presets.api[id] = {
                     default: mod.default ?? null,

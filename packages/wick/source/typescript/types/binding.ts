@@ -148,4 +148,6 @@ export interface BindingVariable {
     ref_count: number;
 
     source_location?: URI;
+
+    module_name?: string;
 }

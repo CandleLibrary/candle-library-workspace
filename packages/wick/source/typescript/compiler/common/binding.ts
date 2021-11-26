@@ -169,6 +169,7 @@ export function addBindingVariable(
     type: BINDING_VARIABLE_TYPE = BINDING_VARIABLE_TYPE.UNDECLARED,
     external_name: string = internal_name,
     flags: BINDING_FLAG = 0,
+    module_name: string = ""
 ): boolean {
 
 
@@ -184,6 +185,8 @@ export function addBindingVariable(
         default_val: null,
         ref_count: 0
     };
+
+    binding_var.module_name = module_name;
 
     const root = getRootFrame(frame);
 
@@ -312,6 +315,7 @@ export function getCompiledBindingVariableName(
 ) {
     const external_name = getExternalName(binding);
     const internal_name = getInternalName(binding);
+    const module_name = getModuleName(binding);
     if (!binding || binding.type == BINDING_VARIABLE_TYPE.UNDECLARED) {
         const global_names = getSetOfEnvironmentGlobalNames();
         if (global_names.has(external_name)) {
@@ -323,13 +327,14 @@ export function getCompiledBindingVariableName(
         switch (binding.type) {
 
             case BINDING_VARIABLE_TYPE.MODULE_VARIABLE:
-                return `${comp_name}.context.api.${external_name}.default`;
+                return `${comp_name}.context.api.${module_name}.default`;
 
             case BINDING_VARIABLE_TYPE.MODULE_NAMESPACE_VARIABLE:
-                return `${comp_name}.context.api.${external_name}.module`;
+                return `${comp_name}.context.api.${module_name}.module`;
 
             case BINDING_VARIABLE_TYPE.MODULE_MEMBER_VARIABLE:
-                return `${comp_name}.context.api.${external_name}.module.${internal_name}`;
+                console.log({ binding });
+                return `${comp_name}.context.api.${module_name}.module.${external_name}`;
 
             case BINDING_VARIABLE_TYPE.UNDECLARED:
                 const global_names = getSetOfEnvironmentGlobalNames();
@@ -370,6 +375,10 @@ export function getExternalName(binding: BindingVariable) {
 
 export function getInternalName(binding: BindingVariable) {
     return binding.internal_name;
+}
+
+export function getModuleName(binding: BindingVariable) {
+    return binding.module_name || "";
 }
 
 

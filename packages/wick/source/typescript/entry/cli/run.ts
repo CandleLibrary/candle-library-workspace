@@ -16,7 +16,7 @@ import { createComponent } from '../../compiler/create_component.js';
 import { create_config_arg_properties } from "./config_arg_properties.js";
 
 const run_logger = Logger.get("wick").get("run").activate().deactivate(LogLevel.DEBUG);
-Logger.get("lantern").deactivate();
+//Logger.get("lantern").activate();
 const log_level_arg = addCLIConfig("run", para_args.log_level_properties);
 const config_arg = addCLIConfig("run", create_config_arg_properties());
 const port_arg = addCLIConfig("run", args.create_port_arg_properties("Wick", "WICK_DEV_PORT", "8080"));
@@ -91,6 +91,18 @@ Host a single component on a local server.
 
                                 try {
 
+                                    //Resolve module paths
+
+                                    for (const [, m] of context.repo) {
+                                        const url = new URI(m.url);
+
+                                        if (!url.IS_RELATIVE && !url.host) {
+                                            //Resolve the URI to a path relative to CWD
+                                            console.log(url, root_path);
+                                            m.url = root_path?.getRelativeTo(url).toString() || m.url;
+                                        }
+                                    }
+
                                     const {
                                         page
                                     } = await RenderPage(component, context);
@@ -102,11 +114,13 @@ Host a single component on a local server.
                                 }
                             }
                         },
+                        filesystem_dispatch,
                         candle_favicon_dispatch,
                         candle_library_dispatch,
                         $404_dispatch,
-                        filesystem_dispatch
                     );
+
+
 
                     run_logger.log(`Component running at: [ http://localhost:${port_arg.value}/ ]`);
 
