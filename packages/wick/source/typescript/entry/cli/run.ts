@@ -106,7 +106,6 @@ Error encountered in component ${comp.name} (${location}):`);
 
                                         if (!url.IS_RELATIVE && !url.host) {
                                             //Resolve the URI to a path relative to CWD
-                                            console.log(url, root_path);
                                             m.url = root_path?.getRelativeTo(url).toString() || m.url;
                                         }
                                     }

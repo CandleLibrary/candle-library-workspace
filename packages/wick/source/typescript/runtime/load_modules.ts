@@ -18,8 +18,6 @@ export async function loadModules(incoming_options: UserPresets, extant_presets:
 
                 const mod = await import(uri + "");
 
-                console.log({ mod });
-
                 extant_presets.api[id] = {
                     default: mod.default ?? null,
                     module: mod

@@ -333,7 +333,6 @@ export function getCompiledBindingVariableName(
                 return `${comp_name}.context.api.${module_name}.module`;
 
             case BINDING_VARIABLE_TYPE.MODULE_MEMBER_VARIABLE:
-                console.log({ binding });
                 return `${comp_name}.context.api.${module_name}.module.${external_name}`;
 
             case BINDING_VARIABLE_TYPE.UNDECLARED:
