@@ -34,7 +34,7 @@ registerFeature(
 
             const css_selector = string_node.value.slice(1); //remove "@"
 
-            let html_node: HTMLNode = null, expression = null;
+            let html_node: null | HTMLNode = null, expression = null;
             try {
 
 

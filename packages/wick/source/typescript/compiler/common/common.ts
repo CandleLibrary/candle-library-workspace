@@ -26,7 +26,11 @@ export function setPos<T>(node: T, pos: Lexer | any): T {
 }
 
 
-export function addPendingModuleToPresets(context: Context, from_value: string): string {
+export function addPendingModuleToPresets(
+    context: Context,
+    from_value: URI,
+    requesting_source: URI,
+): string {
 
     const url = from_value.toString().trim();
 

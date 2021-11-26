@@ -1,12 +1,12 @@
-import { default as URI, default as URL } from "@candlelib/uri";
-import { ComponentClassStrings, ComponentStyle } from 'source/typescript/types/component.js';
-import { WickCompileConfig } from "source/typescript/types/config.js";
 import { JSNode } from '@candlelib/js';
+import { default as URI, default as URL } from "@candlelib/uri";
 import { PluginStore } from "../../plugin/plugin.js";
 import { WickRTComponent } from '../../runtime/component.js';
+import { ComponentClassStrings, ComponentStyle } from '../../types/component.js';
+import { WickCompileConfig } from "../../types/config.js";
 import { ComponentData } from './component.js';
 
-let CachedPresets = null;
+let CachedPresets: Context | null = null;
 
 /**
  * Default configuration options
@@ -109,9 +109,9 @@ export class Context {
 
     /**
      * An object of globally registered data models that
-     * components can reference directly when initialized
+     * components can be reference within runtime components
      */
-    models: any;
+    models: { [key: string]: any; };
 
     /**
      * URL of the initiating script.
@@ -174,7 +174,7 @@ export class Context {
 
     named_components: Map<string, ComponentData>;
 
-    processLink: (...any) => any;
+    processLink: (...any: any[]) => any;
 
     component_class_string: Map<string, ComponentClassStrings>;
 

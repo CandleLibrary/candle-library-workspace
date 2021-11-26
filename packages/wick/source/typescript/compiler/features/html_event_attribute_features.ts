@@ -42,7 +42,7 @@ registerFeature(
         );
 
 
-        build_system.registerHookHandler<IndirectHook<{ nodes: [JSNode], action: string; }>, JSNode | void>({
+        build_system.registerHookHandler<IndirectHook<[{ nodes: [JSNode], action: string; }]>, JSNode | void>({
 
             name: "On Event Hook",
 

@@ -29,7 +29,7 @@ export const css_selector_helpers: tools.selectors.SelectionHelpers<HTMLNode> = 
 
     hasPseudoElement: (ele, id, val) => false,
 
-    hasType: (ele, namespace, type) => {
+    hasType: (ele, namespace, type): boolean => {
 
         if (type == "root")
             return ele.id == 0;

@@ -275,7 +275,9 @@ async function processSlot(
             const pkg = extern_children[i];
 
             if (pkg.child.slot_name == slot_name && !pkg.USED) {
+
                 pkg.USED = true;
+
                 pkg.child.host_component_index = pkg.id;
                 r_.html.push(...(await __componentDataToCompiledHTML__(
                     pkg.child,
@@ -293,8 +295,11 @@ async function processSlot(
             const pkg = extern_children[i];
 
             if (!pkg.child.slot_name && !pkg.USED) {
+
                 pkg.USED = true;
+
                 pkg.child.host_component_index = pkg.id;
+
                 r_.html.push(...(await __componentDataToCompiledHTML__(
                     pkg.child,
                     static_data_pack,
@@ -304,6 +309,7 @@ async function processSlot(
             }
         }
     }
+
     return r_;
 }
 
