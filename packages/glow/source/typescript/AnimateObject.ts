@@ -17,7 +17,7 @@ export interface AnimationProp {
 }
 
 export interface AnimationProps {
-    [key: string]: AnimationProp;
+    [key: string]: AnimationProp[];
 }
 
 export interface AnimateObject {
