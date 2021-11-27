@@ -1,23 +1,20 @@
 import lantern, {
-    candle_library_dispatch,
-    $404_dispatch,
-    filesystem_dispatch,
-    candle_favicon_dispatch,
-    args,
-    Dispatcher,
-    ext_map
+    $404_dispatch, args, candle_favicon_dispatch, candle_library_dispatch, Dispatcher,
+    ext_map, filesystem_dispatch
 } from "@candlelib/lantern";
 import { Logger, LogLevel } from "@candlelib/log";
 import { addCLIConfig, args as para_args } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
+import { mkdirSync } from 'fs';
 import { RenderPage } from "../../compiler/ast-render/webpage.js";
+import { ComponentData } from '../../compiler/common/component.js';
 import { Context } from "../../compiler/common/context.js";
 import { createComponent } from '../../compiler/create_component.js';
-import { ComponentData } from '../../compiler/common/component.js';
+import { compile_pack } from '../../server/compile_module.js';
 import { create_config_arg_properties } from "./config_arg_properties.js";
 
 const run_logger = Logger.get("wick").get("run").activate().deactivate(LogLevel.DEBUG);
-//Logger.get("lantern").activate();
+
 const log_level_arg = addCLIConfig("run", para_args.log_level_properties);
 const config_arg = addCLIConfig("run", create_config_arg_properties());
 const port_arg = addCLIConfig("run", args.create_port_arg_properties("Wick", "WICK_DEV_PORT", "8080"));
@@ -49,6 +46,11 @@ Host a single component on a local server.
             const root_path = URI.resolveRelative(input_path);
             const config = config_arg.value;
 
+            const output_dir = <URI>URI.resolveRelative("./.wick-temp/");
+
+            if (!await output_dir.DOES_THIS_EXIST())
+                mkdirSync(output_dir + "", { recursive: true });
+
             if (root_path) {
 
                 run_logger
@@ -73,7 +75,18 @@ Host a single component on a local server.
                         cwd: root_path.dir
                     });
 
+                    let pack = `console.log("goobagoobagooba")`;
+
                     server.addDispatch(
+                        <Dispatcher>{
+                            name: "Wick Hosted Modules",
+                            MIME: "application/javascript",
+                            keys: [{ ext: ext_map.js, dir: "/pack/*" }],
+                            async respond(tools) {
+                                tools.setMIME();
+                                return tools.sendUTF8FromFile("" + URI.resolveRelative("./" + tools.url.file, output_dir));
+                            }
+                        },
                         <Dispatcher>{
                             name: "Wick Hosted Component",
                             MIME: "text/html",
@@ -99,6 +112,10 @@ Error encountered in component ${comp.name} (${location}):`);
 
                                 try {
 
+
+
+                                    const module_packs = [];
+
                                     //Resolve module paths
 
                                     for (const [, m] of context.repo) {
@@ -106,13 +123,14 @@ Error encountered in component ${comp.name} (${location}):`);
 
                                         if (!url.IS_RELATIVE && !url.host) {
                                             //Resolve the URI to a path relative to CWD
-                                            m.url = root_path?.getRelativeTo(url).toString() || m.url;
+                                            module_packs.push(m.url);
+                                            m.url = "/pack/" + url.filename + ".js";
                                         }
                                     }
 
-                                    const {
-                                        page
-                                    } = await RenderPage(component, context);
+                                    await compile_pack(module_packs, output_dir + "");
+
+                                    const { page } = await RenderPage(component, context);
 
                                     return tools.sendUTF8String(page);
                                 } catch (e) {
@@ -133,13 +151,13 @@ Error encountered in component ${comp.name} (${location}):`);
 
                     const { spawn } = await import("child_process");
 
-                    ({
-                        chrome: (spawn, site) => spawn("google-chrome", [site]),
-                        firefox: (spawn, site) => spawn("firefox", [site]),
-                        edge: (spawn, site) => spawn("msedge", [site]),
-                        opera: (spawn, site) => spawn("opera", [site]),
+                    (<any>({
+                        chrome: (site: string) => spawn("google-chrome", [site]),
+                        firefox: (site: string) => spawn("firefox", [site]),
+                        edge: (site: string) => spawn("msedge", [site]),
+                        opera: (site: string) => spawn("opera", [site]),
 
-                    })?.[browser_arg.value]?.(spawn, `http://localhost:${port_arg.value}/`);
+                    }))?.[browser_arg.value]?.(`http://localhost:${port_arg.value}/`);
 
                 } else {
 
