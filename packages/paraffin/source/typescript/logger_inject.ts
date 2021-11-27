@@ -50,7 +50,7 @@ LogWriter.prototype.writeLog = function (
     REWRITE: boolean,
     ...args: any[]
 ) {
-    const max_column = process.stdout.columns;
+    const max_column = process.stderr.columns;
 
     const data = limitColumnLength(args.map(i => typeof i == "string" ? i : inspect(i, {
         depth: 8, colors: true
