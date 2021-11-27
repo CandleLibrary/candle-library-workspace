@@ -1,26 +1,18 @@
 
 import CB from "@candlelib/css/build/types/cubic_bezier.js";
 
-export interface AnimationProp {
-
-    [key: number]: AnimationProp,
-    v?: any,
-    value?: any,
+export interface KeyArg {
+    val: any,
     dur?: number,
-    duration?: number,
-    delay?: number;
     del?: number;
-    easing?: CB;
-    e?: CB;
-    forEach(arg: (arg: AnimationProp) => any): any;
-
+    eas?: CB;
 }
 
-export interface AnimationProps {
-    [key: string]: AnimationProp[];
+export interface AnimationArgs {
+    [key: string]: KeyArg[];
 }
 
-export interface AnimateObject {
+export interface BaseAnimateObjectArg {
     /**
      * Any object with properties that can be animated.
      */
@@ -29,6 +21,9 @@ export interface AnimateObject {
     match?: any;
 
     delay?: number;
+}
 
-    [key: string]: AnimationProp;
+export interface AnimateObjectArg extends BaseAnimateObjectArg {
+
+    [key: string]: KeyArg[];
 }

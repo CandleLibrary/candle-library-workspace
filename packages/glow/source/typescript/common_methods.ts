@@ -11,6 +11,7 @@ export default <AnimationMethods>{
         return this.observeStop();
     },
 
+
     shuttle(SHUTTLE = true) {
         this.SHUTTLE = !!SHUTTLE;
         return this;
