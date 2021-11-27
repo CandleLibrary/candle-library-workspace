@@ -127,10 +127,10 @@ export async function createCompiledComponentClass(
             processResolvedHooks(component, class_info);
 
             if (class_info.lfu_table_entries.length > 0)
-                prependStmtToFrame(class_info.init_frame, nlu);
+                prependStmtToFrame(class_info.init_interface_frame, nlu);
 
             if (class_info.lfu_table_entries.length > 0)
-                prependStmtToFrame(class_info.init_frame, nluf);
+                prependStmtToFrame(class_info.init_interface_frame, nluf);
 
 
             // check for any onload frames. This will be converted to the async_init frame. Any
@@ -242,6 +242,7 @@ export function createClassInfoObject(): CompiledComponentClass {
 
     const
         binding_setup_frame = createBuildFrame("c", ""),
+    init_interface_frame = createBuildFrame("init_interfaces", "c"),
         init_frame = createBuildFrame("init", "c"),
         async_init_frame = createBuildFrame("async_init"),
         terminate_frame = createBuildFrame("terminate"),
@@ -250,13 +251,14 @@ export function createClassInfoObject(): CompiledComponentClass {
             binding_setup_frame,
             init_frame,
             async_init_frame,
+            init_interface_frame,
             terminate_frame,
             nluf_public_variables: null,
             lfu_table_entries: [],
             lu_public_variables: [],
             write_records: [],
             binding_records: new Map(),
-            method_frames: [async_init_frame, init_frame, binding_setup_frame],
+            method_frames: [async_init_frame, init_frame, init_interface_frame, binding_setup_frame],
             nlu_index: 0,
         };
 

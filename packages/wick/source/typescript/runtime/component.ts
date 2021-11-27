@@ -122,7 +122,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.call_depth = 0;
         this.affinity = element_affinity;
 
-        this.ALLOW_UPDATE = false;
+        this.ALLOW_UPDATE = true;
         this.CONNECTED = false;
         this.INITIALIZED = false;
         this.TRANSITIONED_IN = false;
@@ -165,7 +165,11 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
 
         this.ele.setAttribute("wrt:c", this.name);
+
+        this.init_interfaces(this);
     }
+
+    init_interfaces() { }
 
     initialize(model: any = this.model) {
 
@@ -173,14 +177,13 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             return this;
 
         this.INITIALIZED = true;
-        this.ALLOW_UPDATE = true;
-
-        for (const child of this.ch)
-            child.initialize();
 
         this.model = model;
 
         this.init(this);
+
+        for (const child of this.ch)
+            child.initialize();
 
         this.async_init();
 
