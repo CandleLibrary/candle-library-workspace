@@ -1,4 +1,4 @@
-import { Animation } from "./animation.js";
+import { Animation } from "./anim.js";
 import { TransformTo } from "./transformto.js";
 import common_methods from "./common_methods.js";
 import { AnimationMethods } from "./types.js";

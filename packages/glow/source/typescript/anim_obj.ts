@@ -4,7 +4,6 @@ import CB from "@candlelib/css/build/types/cubic_bezier.js";
 export interface KeyArg {
     val: any,
     dur?: number,
-    del?: number;
     eas?: CB;
 }
 
