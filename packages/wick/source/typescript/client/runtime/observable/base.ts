@@ -1,9 +1,11 @@
 import spark, { Sparky } from "@candlelib/spark";
 
-import { ObservableModel, ObservableWatcher } from "../../types/model.js";
+import { ObservableModel, ObservableWatcher } from "../../../types/model.js";
 
-export const _SealedProperty_ = (object, name, value) => Object.defineProperty(object, name, { value, configurable: false, enumerable: false, writable: true });
-export const _FrozenProperty_ = (object, name, value) => Object.defineProperty(object, name, { value, configurable: false, enumerable: false, writable: false });
+export const _SealedProperty_ = (object: any, name: string, value: any) =>
+    Object.defineProperty(object, name, { value, configurable: false, enumerable: false, writable: true });
+export const _FrozenProperty_ = (object: any, name: string, value: any) =>
+    Object.defineProperty(object, name, { value, configurable: false, enumerable: false, writable: false });
 
 /**
  * The base class which all Model classes extend.
@@ -54,12 +56,12 @@ class ObservableBase implements ObservableModel, Sparky {
             view = nx;
         }
 
-        this._cv_ = null;
+        this._cv_.length = 0;
     }
 
-    setHook(prop_name, data) { return data; }
+    setHook(prop_name: string, data: any) { return data; }
 
-    getHook(prop_name, data) { return data; }
+    getHook(prop_name: string, data: any) { return data; }
 
 
     /**
@@ -102,7 +104,7 @@ class ObservableBase implements ObservableModel, Sparky {
      * Removes view from set of views if the passed in view is a member of model. 
      * @param {View} view - The view to unbind from ModelBase
      */
-    unsubscribe(view): boolean {
+    unsubscribe(view: any): boolean {
 
         if (this.observers.indexOf(view) >= 0) {
             this.observers.splice(this.observers.indexOf(view), 1);
@@ -117,7 +119,7 @@ class ObservableBase implements ObservableModel, Sparky {
      * Called by the {@link spark} when if the ModelBase is scheduled for an update
      * @param      {number}  step    The step
      */
-    scheduledUpdate(step) { this.updateViews(); }
+    scheduledUpdate(step: number) { this.updateViews(); }
 
 
 

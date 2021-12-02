@@ -1,7 +1,7 @@
 import URI from '@candlelib/uri';
 import { Transition } from '@candlelib/glow';
-import { ComponentElement, WickRTComponent } from '../runtime/component.js';
-import { hydrateComponentElements } from '../runtime/html.js';
+import { ComponentElement, WickRTComponent } from '../runtime/component/component.js';
+import { hydrateComponentElements } from '../runtime/component/html.js';
 import { Element } from './element.js';
 
 export const enum PageType {
@@ -138,7 +138,7 @@ export class PageView {
                 let contemporary = (prev_page && element.ele.id)
                     ? prev_page.getElement(element.id)
                     : null;
-
+                
                 element.loadComponents(wurl, contemporary);
             }
         }
@@ -159,7 +159,7 @@ export class PageView {
             this.component.transitionIn(0, 0, false, transition);
     }
 
-    setType(type: PageType, router) {
+    setType(type: PageType, router: any) {
 
         this.type = type || PageType.STANDARD;
 

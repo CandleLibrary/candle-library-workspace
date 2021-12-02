@@ -62,7 +62,7 @@ export interface PluginSpec {
      * is acceptable for use within the plugin type's
      * syntax. 
      */
-    validateSpecifier: (string) => boolean;
+    validateSpecifier: (arg: string) => boolean;
 
     /**
      * Specifies what types of handler functions the 
@@ -75,6 +75,6 @@ export interface PluginSpec {
      * producing a default return value when an error is 
      * encountered in the plugins handler function
      */
-    defaultRecover: (plugin_fn_type: "serverHandler" | "clientHandler", selector: string, ...any) => Promise<any>;
+    defaultRecover: (plugin_fn_type: "serverHandler" | "clientHandler", selector: string, ...args: any[]) => Promise<any>;
 
 }

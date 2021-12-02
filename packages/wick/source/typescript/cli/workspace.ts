@@ -9,7 +9,7 @@ import { mkdirSync, promises } from 'fs';
 
 const writeFile = promises.writeFile;
 
-import { RenderPage } from "../compiler/ast-render/webpage.js";
+import { RenderPage } from "../workspace/server/webpage.js";
 import { ComponentData } from '../compiler/common/component.js';
 import { Context } from "../compiler/common/context.js";
 import { createComponent } from '../compiler/create_component.js';

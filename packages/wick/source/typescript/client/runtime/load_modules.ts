@@ -1,5 +1,5 @@
 import URI from '@candlelib/uri';
-import { Context, UserPresets } from '../compiler/common/context.js';
+import { Context, UserPresets } from '../../compiler/common/context.js';
 
 /**
  * Loads ES6 modules from a source path. 

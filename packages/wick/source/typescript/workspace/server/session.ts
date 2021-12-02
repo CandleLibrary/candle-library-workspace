@@ -3,7 +3,7 @@ import {
     ComponentData
 } from "@candlelib/wick";
 import { WebSocket } from "ws";
-import { Session } from '../../common/session.js';
+import { Session } from '../common/session.js';
 import { getComponentDependencies } from './component_tools.js';
 import { getPageWatcher } from './file_watcher.js';
 import { addReference, __sessions__ } from './store.js';
@@ -32,7 +32,12 @@ export class ServerSession extends Session {
     constructor(
         connection: WebSocket,
     ) {
+
         super(connection, logger);
+
+        this.active_component_path = "";
+
+        this.last_update = -Infinity;
 
         this.nonce = 5000000;
 
@@ -56,7 +61,7 @@ export class ServerSession extends Session {
     error_handler(error: Error) {
         logger.error(error);
     }
-    get_message_string(msg) {
+    get_message_string(msg: any) {
         return msg.toString();
     }
 
@@ -66,7 +71,11 @@ export class ServerSession extends Session {
             = getComponentDependencies(component);
 
         for (const comp of component_dependencies) {
-            getPageWatcher(comp.location.toString()).addSession(<any>this);
+            const pw = getPageWatcher(comp.location.toString());
+
+            if (pw)
+                pw.addSession(<any>this);
+
             addReference(comp);
         }
     }

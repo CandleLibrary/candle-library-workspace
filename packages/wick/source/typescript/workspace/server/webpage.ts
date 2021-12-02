@@ -1,15 +1,15 @@
 //Target actual package file to prevent recursive references
 import { getPackageJsonObject } from "@candlelib/paraffin";
 import URL from "@candlelib/uri";
-import { rt } from "../../runtime/global.js";
-import { createCompiledComponentClass } from "../ast-build/build.js";
-import { ComponentData } from '../common/component.js';
-import { Context } from '../common/context.js';
-import { metrics } from '../metrics.js';
-import { renderCompressed } from "../source-code-render/render.js";
-import { componentDataToCSS } from "./css.js";
-import { componentDataToHTML, htmlTemplateToString } from "./html.js";
-import { createClassStringObject } from "./js.js";
+import { rt } from "../../client/runtime/global.js";
+import { createCompiledComponentClass } from "../../compiler/ast-build/build.js";
+import { ComponentData } from '../../compiler/common/component.js';
+import { Context } from '../../compiler/common/context.js';
+import { metrics } from '../../compiler/metrics.js';
+import { renderCompressed } from "../../compiler/source-code-render/render.js";
+import { componentDataToCSS } from "../../compiler/ast-render/css.js";
+import { componentDataToHTML, htmlTemplateToString } from "../../compiler/ast-render/html.js";
+import { createClassStringObject } from "../../compiler/ast-render/js.js";
 
 
 await URL.server();
@@ -33,7 +33,7 @@ type PageRenderHooks = {
 };
 
 
-function renderBasicWickPageInit(component_class_declarations, context) {
+function renderBasicWickPageInit(component_class_declarations: string, context: Context) {
     return `
     import w from "/@cl/wick-rt/";
 
@@ -41,7 +41,7 @@ function renderBasicWickPageInit(component_class_declarations, context) {
 `;
 }
 
-function renderRadiatePageInit(component_class_declarations, context) {
+function renderRadiatePageInit(component_class_declarations: string, context: Context) {
     return `
     import init_router from "/@cl/wick-radiate/";
 
@@ -49,7 +49,7 @@ function renderRadiatePageInit(component_class_declarations, context) {
 `;
 }
 
-function renderComponentInit(component_class_declarations, context) {
+function renderComponentInit(component_class_declarations: string, context: Context) {
     return `
     const w = wick;
 
@@ -177,10 +177,9 @@ export async function RenderPage(
      * A deploy ready page string
      */
     page: string;
-}> {
+} | null> {
 
     if (!comp) return null;
-
 
 
     // Identify all components that are directly or 
@@ -260,7 +259,9 @@ export function getDependentComponents(comp: ComponentData, context: Context) {
 
                     applicable_components.add(comp_name);
 
-                    candidate_components.push(context.components.get(comp_name));
+                    const comp = context.components.get(comp_name);
+
+                    if (comp) candidate_components.push(comp);
                 }
             }
         }

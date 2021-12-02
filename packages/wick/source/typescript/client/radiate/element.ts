@@ -1,5 +1,6 @@
 import URI from '@candlelib/uri';
-import { ComponentElement, WickRTComponent } from '../runtime/component.js';
+import { Transition } from '@candlelib/glow';
+import { ComponentElement, WickRTComponent } from '../runtime/component/component.js';
 import { PageView } from './page.js';
 
 /**
@@ -56,11 +57,6 @@ export class Element {
         this.setComponents();
     }
 
-
-    up(data, src) {
-        //  this.page.up(data, src);
-    }
-
     down(data: any, src: any) {
         this.component.update(data);
     }
@@ -81,7 +77,7 @@ export class Element {
 
     }
 
-    loadComponents(url: URI, outgoing_element: Element) {
+    loadComponents(url: URI, outgoing_element: Element | null) {
 
         //for (let i = 0; i < this.interior_components.length; i++)
         //    this.interior_components[i].update({ mounted: true });
@@ -92,7 +88,7 @@ export class Element {
         for (let i = 0; i < this.wraps.length; i++) {
             const wrap = this.wraps[i];
             if (wrap.parentElement) {
-                const comp = this.interior_components[i];
+                const comp = this.interior_components.get(i);
                 wrap.parentElement.replaceChild(wrap, comp.ele);
             }
         }
@@ -123,39 +119,46 @@ export class Element {
 
                         incoming_parent = incoming_comp.par,
 
-                        outgoing_parent = outgoing_comp.par,
+                        outgoing_parent = outgoing_comp.par;
 
-                        outgoing_index = outgoing_parent.ch.indexOf(outgoing_comp),
-
-                        incoming_index = incoming_parent.ch.indexOf(incoming_comp),
-
-                        incoming_par_ele = incoming_comp.ele?.parentElement,
-
-                        outgoing_par_ele = outgoing_comp.ele?.parentElement;
-
-                    //Primary parent ele will be removed from document as it belongs to the
-                    //outgoing `contemporary` Element
-                    outgoing_par_ele.replaceChild(temp_ele, outgoing_comp.ele);
-
-                    //Secondary parent ele will be removed from document as it belongs to the
-                    //outgoing `contemporary` Element
-                    incoming_par_ele.replaceChild(outgoing_comp.ele, incoming_comp.ele);
-
-                    outgoing_par_ele.replaceChild(incoming_comp.ele, temp_ele);
-
-                    outgoing_element.interior_components.set(id_hash, incoming_comp);
-
-                    this.interior_components.set(id_hash, outgoing_comp);
-
-                    incoming_parent.ch[incoming_index] = outgoing_comp;
-
-                    outgoing_parent.ch[outgoing_index] = incoming_comp;
-
-                    incoming_comp.par = incoming_parent;
-
-                    outgoing_comp.par = outgoing_parent;
+                    if (outgoing_parent && incoming_parent) {
 
 
+                        const
+
+                            outgoing_index = outgoing_parent.ch.indexOf(outgoing_comp),
+
+                            incoming_index = incoming_parent.ch.indexOf(incoming_comp),
+
+                            incoming_par_ele = incoming_comp.ele?.parentElement,
+
+                            outgoing_par_ele = outgoing_comp.ele?.parentElement;
+
+                        if (incoming_par_ele && outgoing_par_ele) {
+
+                            //Primary parent ele will be removed from document as it belongs to the
+                            //outgoing `contemporary` Element
+                            outgoing_par_ele.replaceChild(temp_ele, outgoing_comp.ele);
+
+                            //Secondary parent ele will be removed from document as it belongs to the
+                            //outgoing `contemporary` Element
+                            incoming_par_ele.replaceChild(outgoing_comp.ele, incoming_comp.ele);
+
+                            outgoing_par_ele.replaceChild(incoming_comp.ele, temp_ele);
+
+                            outgoing_element.interior_components.set(id_hash, incoming_comp);
+
+                            this.interior_components.set(id_hash, outgoing_comp);
+
+                            incoming_parent.ch[incoming_index] = outgoing_comp;
+
+                            outgoing_parent.ch[outgoing_index] = incoming_comp;
+
+                            incoming_comp.par = incoming_parent;
+
+                            outgoing_comp.par = outgoing_parent;
+                        }
+                    }
                     //TODO: Do Something to update component elements
                 }
             }
@@ -163,27 +166,29 @@ export class Element {
         //* /;
     }
 
-    transitionOut(transition) {
+    transitionOut(transition: Transition) {
         this.component.transitionOut(0, 0, true, transition);
     }
 
-    transitionIn(transition) {
+    transitionIn(transition: Transition) {
         this.component.transitionIn(0, 0, true, transition);
     }
 
-    bubbleLink(link_url, child, trs_ele = {}) {
+    bubbleLink(link_url: string, child: any, trs_ele = {}) {
 
         this.bubbled_elements = trs_ele;
 
         history.pushState({}, "ignored title", link_url);
 
+        //@ts-ignore
         window.onpopstate(new PopStateEvent("wick-bubble"));
     }
 
     setComponents() {
         //if there is a component inside the element, register that component if it has not already been registered
 
-        var component_elements: ComponentElement[] = Array.prototype.map.call(this.ele.querySelectorAll(`[w\\:c]`), (a) => a);
+        var component_elements: any[] = Array.prototype.map.call(this.ele.querySelectorAll(`[w\\:c]`), (a) => a);
+
         for (const component_element of component_elements) {
 
             //const

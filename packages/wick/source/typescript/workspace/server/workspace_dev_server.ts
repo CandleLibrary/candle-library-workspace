@@ -13,12 +13,16 @@ import lantern, {
 } from "@candlelib/lantern";
 import { Logger } from "@candlelib/log";
 import URI from '@candlelib/uri';
-import wick, { ComponentData } from "@candlelib/wick";
-import { WickCompileConfig } from '@candlelib/wick/build/types/types/all';
 import { WebSocketServer } from "ws";
+import { WickCompileConfig } from '../../types/config.js';
+import { rt } from '../../client/runtime/global.js';
+import { ComponentData } from '../../compiler/common/component.js';
+import { Context } from '../../compiler/common/context';
+import { createComponent } from '../../compiler/create_component.js';
 import { ServerSession } from './session.js';
 import { initializeDefualtSessionDispatchHandlers } from './session_handlers.js';
 import { loadComponents, store } from './store.js';
+import { default_radiate_hooks, default_wick_hooks, RenderPage } from './webpage.js';
 const logger = Logger.get("flame");
 Logger.get("lantern");
 Logger.get("wick");
@@ -64,8 +68,8 @@ async function renderPage(
     try {
         const hooks = Object.assign({},
             component.RADIATE
-                ? wick.utils.default_radiate_hooks
-                : wick.utils.default_wick_hooks
+                ? default_radiate_hooks
+                : default_wick_hooks
         );
 
         if (component.RADIATE)
@@ -123,7 +127,7 @@ const flaming_wick_dispatch = <Dispatcher>{
                 return tools.redirect(new_path.path + "/");
             }
 
-            if (store.endpoints.has(tools.dir)) {
+            if (store.endpoints?.has(tools.dir)) {
 
                 const { comp } = store.endpoints.get(tools.dir);
 
@@ -150,17 +154,17 @@ const flame_editor_dispatch = <Dispatcher>{
         dispatcher.keys = [{ ext: ext_map.none, dir: "/flame-editor" }];
     },
     respond: async function (tools) {
-        const flame_editor_presets = new wick.objects.Context();
+        const flame_editor_presets = new Context();
 
-        const editor_path = URI.resolveRelative("@candlelib/flame/source/components/editor.wick");
+        const editor_path = <URI>URI.resolveRelative("@candlelib/flame/source/components/editor.wick");
 
-        const comp = await wick(editor_path, flame_editor_presets);
+        const comp = await createComponent(editor_path, flame_editor_presets);
 
         if (comp.HAS_ERRORS)
             for (const error of comp.errors)
                 Logger.get("flame").get("editor-dispatch").log(error);
 
-        const { page } = await wick.utils.RenderPage(comp, flame_editor_presets);
+        const { page } = await RenderPage(comp, flame_editor_presets);
 
         return tools.sendUTF8String(page);
     }
@@ -170,13 +174,13 @@ export async function initDevServer(
     config: WickCompileConfig
 ) {
 
-    wick.rt.setPresets();
+    rt.setPresets();
 
     const working_directory = new URI(process.cwd());
 
     await loadComponents(
         working_directory,
-        wick.rt.context,
+        rt.context,
         config
     );
 

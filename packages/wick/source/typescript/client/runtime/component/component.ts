@@ -1,9 +1,9 @@
 import { Transition } from '@candlelib/glow';
 import spark, { Sparky } from "@candlelib/spark";
-import { Context } from '../compiler/common/context.js';
-import { BINDING_FLAG, ObservableModel, ObservableWatcher } from "../types/all";
+import { Context } from '../../../compiler/common/context.js';
+import { BINDING_FLAG, ObservableModel, ObservableWatcher } from "../../../types/all";
 import { WickContainer } from "./container.js";
-import { rt } from "./global.js";
+import { rt } from "../global.js";
 import {
     hydrateComponentElement, hydrateContainerElement
 } from "./html.js";

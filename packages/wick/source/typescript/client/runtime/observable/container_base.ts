@@ -1,5 +1,5 @@
 import { ObservableBase, _SealedProperty_ } from "./base.js";
-import { SchemeConstructor } from './scheme_constructor.js';
+import { SchemeConstructor } from './scheme/scheme_constructor.js';
 
 
 export class MCArray<T> extends Array {

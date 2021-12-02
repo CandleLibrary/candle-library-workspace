@@ -1,11 +1,11 @@
 import { Logger } from '@candlelib/log';
 import { traverseFilesFromRoot } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
-import { ComponentData } from '../compiler/common/component.js';
-import { Context } from '../compiler/common/context.js';
-import wick from '../index.js';
-import { rt } from '../runtime/global.js';
-import { EndpointMapper } from "../types/config.js";
+import { ComponentData } from '../../compiler/common/component.js';
+import { Context } from '../../compiler/common/context.js';
+import { rt } from '../../client/runtime/global.js';
+import { EndpointMapper } from "../../types/config.js";
+import { createComponent } from '../../compiler/create_component.js';
 
 export function mapEndpoints(uri: URI, working_directory: URI) {
 
@@ -66,9 +66,9 @@ export async function loadComponentsFromDirectory(
 	page_criteria: EndpointMapper = mapEndpoints
 ): Promise<{
 	make?: void,
-	endpoints: EndPoints;
-	page_components: PageComponents;
-	components: Components;
+	endpoints: EndPoints | null;
+	page_components: PageComponents | null;
+	components: Components | null;
 }> {
 	const endpoints: EndPoints = new Map();
 
@@ -110,7 +110,7 @@ export async function loadComponentsFromDirectory(
 
 				try {
 
-					const comp: ComponentData = await wick(file_uri, context);
+					const comp: ComponentData = await createComponent(file_uri, context);
 
 					// Use link analysis to include other components that may serve as
 					// endpoints
@@ -119,7 +119,7 @@ export async function loadComponentsFromDirectory(
 
 					if (comp.TEMPLATE) {
 						let i = 0;
-						for (const data of context.template_data.get(comp)) {
+						for (const data of context.template_data?.get(comp) ?? []) {
 							if (data.endpoint) {
 								const template_endpoint = URI.resolveRelative(data.endpoint, endpoint).toString();
 								endpoints.set(template_endpoint, { comp, template_data: data });

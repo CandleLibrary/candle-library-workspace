@@ -48,9 +48,11 @@ export class ObservableArray<T> extends ObservableContainerBase<T> {
 
     key: string;
 
-    constructor(data = []) {
+    constructor(data: any[] = []) {
 
         super();
+
+        this.key = "";
 
         if (data[0] && data[0].model) {
 
@@ -69,7 +71,7 @@ export class ObservableArray<T> extends ObservableContainerBase<T> {
 
     destroy() {
 
-        this.data = null;
+        this.data.length = 0;
 
         super.destroy();
     }
@@ -103,11 +105,11 @@ export class ObservableArray<T> extends ObservableContainerBase<T> {
         return true; // Model added to Container.
     }
 
-    getByIndex(i) {
+    getByIndex(i: number) {
         return this.data[i];
     }
 
-    setByIndex(i, m) {
+    setByIndex(i: number, m: any) {
         this.data[i] = m;
     }
 

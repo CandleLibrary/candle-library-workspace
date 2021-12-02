@@ -55,7 +55,7 @@ support components edited within a code editor.
             .activate(log_level_arg.value)
             .debug(`Using local network port [ ${port} ]`);
 
-        (await import('../server/development/flame_dev_server.js.js'))
+        (await import('../server/development/flame_dev_server.js'))
             .initDevServer(port, config_arg.value);
     };
 
@@ -71,7 +71,7 @@ Visual Studio Code.
 }
 ).callback =
     async (args) =>
-        await import("../server/language/vscode.js.js");
+        await import("../server/language/vscode.js");
 
 
 processCLIConfig();

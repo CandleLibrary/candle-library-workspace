@@ -9,12 +9,12 @@ class StringSchemeConstructor extends SchemeConstructor {
 
         this.start_value = "";
     }
-    parse(value) {
+    parse(value: any) {
 
         return value + "";
     }
 
-    verify(value, result) {
+    verify(value: any, result: any) {
         result.valid = true;
 
         if (value === undefined) {
@@ -26,7 +26,7 @@ class StringSchemeConstructor extends SchemeConstructor {
         }
     }
 
-    filter(identifier, filters) {
+    filter(identifier: any, filters: any[]) {
 
         for (let i = 0, l = filters.length; i < l; i++)
             if (identifier.match(filters[i] + ""))

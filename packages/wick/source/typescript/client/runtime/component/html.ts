@@ -1,6 +1,6 @@
 import { WickRTComponent } from "./component.js";
 import { WickContainer } from "./container.js";
-import { rt } from "./global.js";
+import { rt } from "../global.js";
 
 //
 // https://www.w3.org/TR/2011/WD-html5-20110525/namespaces.html
@@ -65,7 +65,7 @@ export function* getComponentNames(ele: HTMLElement): Generator<string, void, vo
 }
 
 const comp_name_regex = /W[_\$a-zA-Z0-9]+/;
-export function String_Is_Wick_Hash_ID(str): boolean {
+export function String_Is_Wick_Hash_ID(str: string): boolean {
     return !!str.match(comp_name_regex);
 }
 
@@ -106,8 +106,8 @@ export function hydrateComponentElements(pending_component_elements: HTMLElement
          */
         components.push(hydrateComponentElement(hydrate_candidate));
     }
-
-    return components;
+    //@ts-ignore
+    return components.filter(i => i !== null);
 }
 
 
@@ -135,7 +135,7 @@ export function hydrateComponentElement(
                 affinity++;
             } else {
 
-                let comp = new (comp_class)(hydrate_candidate, u, parent_chain, u, u, affinity++);
+                let comp = new (comp_class)(<any>hydrate_candidate, u, parent_chain, u, u, affinity++);
 
                 comp.hydrate();
 
@@ -155,7 +155,7 @@ export function hydrateComponentElement(
 
 export function hydrateContainerElement(ele: HTMLElement, parent: WickRTComponent, null_elements: HTMLElement[] = []) {
     const
-        comp_constructors = ele.getAttribute("w:ctr")
+        comp_constructors = (<string>ele.getAttribute("w:ctr"))
             .split(" ")
             .map(name => parent.context.component_class.get(name)),
 

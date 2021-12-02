@@ -2,7 +2,7 @@ import { NumberSchemeConstructor } from "./number.js";
 
 class TimeSchemeConstructor extends NumberSchemeConstructor {
 
-    parse(value) {
+    parse(value: any) {
         if (!isNaN(value))
             return parseFloat(value);
         try {
@@ -21,16 +21,16 @@ class TimeSchemeConstructor extends NumberSchemeConstructor {
         return (hour + ((half) ? 12 : 0) + (min / 60));
     }
 
-    verify(value, result) {
+    verify(value: any, result: number) {
         this.parse(value);
         super.verify(value, result);
     }
 
-    filter(identifier, filters) {
+    filter(identifier: any, filters: any) {
         return true;
     }
 
-    string(value) {
+    string(value: any) {
         return (new Date(value)) + "";
     }
 }

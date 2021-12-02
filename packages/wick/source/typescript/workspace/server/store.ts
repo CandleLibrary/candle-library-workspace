@@ -1,22 +1,20 @@
 import { Logger } from '@candlelib/log';
 import URI from '@candlelib/uri';
-import wick, { ComponentData, Context, loadComponentsFromDirectory } from '@candlelib/wick';
-import {
-    Components,
-    EndPoints,
-    PageComponents
-} from "@candlelib/wick/build/types/entry/wick-server";
-import { WickCompileConfig } from '@candlelib/wick/build/types/types/all';
-import { Session } from '../../common/session';
-import { Transition } from '../../types/transition';
+import { rt } from '../../client/runtime/global.js';
+import { ComponentData } from '../../compiler/common/component.js';
+import { Context } from '../../compiler/common/context.js';
+import { WickCompileConfig } from '../../types/all';
+import { Transition } from '../../types/transition.js';
+import { Session } from '../common/session.js';
 import { createNewComponentFromSourceString } from './component_tools.js';
+import { Components, EndPoints, loadComponentsFromDirectory, PageComponents } from "./load_directory.js";
 
 const logger = Logger.createLogger("Flame");
 
 export const store: {
-    components: Components;
-    endpoints: EndPoints;
-    page_components: PageComponents;
+    components: Components | null;
+    endpoints: EndPoints | null;
+    page_components: PageComponents | null;
     transitions: Map<string, Map<string, Transition>>;
     updated_components: Map<string, ComponentData>;
     component_ref_map: Map<string, {
@@ -24,7 +22,7 @@ export const store: {
         update_time: number,
         refs: number,
         source: string,
-        component: ComponentData;
+        component: ComponentData | null;
     }>;
 } = {
     components: null,
@@ -41,16 +39,19 @@ export function removeReference(name: string) {
 
         const data = store.component_ref_map.get(name);
 
-        const refs = --data.refs;
+        if (data) {
 
-        if (refs == 0) {
-            // We can safely drop our reference to the component data 
-            // to allow garbage collection. If we need to reload the 
-            // component then we can load it from the source string.
-            data.component = null;
+            const refs = --data.refs;
+
+            if (refs == 0) {
+                // We can safely drop our reference to the component data 
+                // to allow garbage collection. If we need to reload the 
+                // component then we can load it from the source string.
+                data.component = null;
+            }
+
+            data.update_time = performance.now();
         }
-
-        data.update_time = performance.now();
     }
 }
 
@@ -64,9 +65,12 @@ export function addReference(component: ComponentData) {
 
     const data = store.component_ref_map.get(name);
 
-    data.refs += 1;
+    if (data) {
 
-    data.update_time = performance.now();
+        data.refs += 1;
+
+        data.update_time = performance.now();
+    }
 }
 
 export async function addComponent(component: ComponentData) {
@@ -108,16 +112,19 @@ export async function getComponent(name: string) {
 
         const data = store.component_ref_map.get(name);
 
-        if (!data.component) {
+        if (data) {
 
-            data.component = await createNewComponentFromSourceString(
-                data.source,
-                wick.rt.context,
-                new URI(data.location)
-            );
+            if (!data.component) {
+
+                data.component = await createNewComponentFromSourceString(
+                    data.source,
+                    rt.context,
+                    new URI(data.location)
+                );
+            }
+
+            return data.component;
         }
-
-        return data.component;
     }
 
     return null;
@@ -127,7 +134,7 @@ export function getComponentLocation(name: string) {
 
     if (store.component_ref_map.has(name))
 
-        return store.component_ref_map.get(name).location;
+        return store.component_ref_map.get(name)?.location ?? null;
 
     return null;
 }
@@ -143,7 +150,7 @@ export function addTransition(transition: Transition) {
             store.transitions.set(from, new Map);
         }
 
-        store.transitions.get(from).set(to, transition);
+        store.transitions.get(from)?.set(to, transition);
     }
 }
 

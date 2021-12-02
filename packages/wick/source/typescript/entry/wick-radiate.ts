@@ -24,7 +24,7 @@ export default function radiate() {
                 //@ts-ignore
                 wick.rt.router = router;
 
-                const page = await router.loadNewPage(document.location + "", document, false);
+                const page = await router.loadNewPage(document.location + "", document);
 
                 router.loadPage(page, location.href + "", true);
 
@@ -41,4 +41,5 @@ export default function radiate() {
 }
 
 //Register wick as a global variable
+//@ts-ignore
 globalThis["wick"] = wick;

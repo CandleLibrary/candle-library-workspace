@@ -1,4 +1,4 @@
-import { WickRTComponent } from "./component";
+import { WickRTComponent } from "./component.js";
 
 export function takeParentAddChild(parent: WickRTComponent, child: WickRTComponent) {
     //@ts-ignore

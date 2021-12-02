@@ -5,6 +5,9 @@
  * through calls to the  subscriber's `onModelUpdate`.
  */
 export interface ObservableModel {
+
+    data: any,
+
     OBSERVABLE: true,
     subscribe: (arg1: ObservableWatcher) => boolean;
     unsubscribe: (arg1: ObservableWatcher) => boolean;

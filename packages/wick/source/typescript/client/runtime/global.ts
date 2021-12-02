@@ -1,8 +1,8 @@
 
 import GlowAnimation from '@candlelib/glow';
-import { Context, UserPresets } from "../compiler/common/context.js";
+import { Context, UserPresets } from "../../compiler/common/context.js";
 
-import { WickRTComponent } from "./component.js";
+import { WickRTComponent } from "./component/component.js";
 
 export const global_object = (typeof global !== "undefined") ? global : window;
 
@@ -61,7 +61,7 @@ export interface WickRuntime {
 
 const rt: WickRuntime = (() => {
 
-    let glow = null;
+    let glow = <any>null;
 
     return <WickRuntime>{
 
@@ -80,9 +80,9 @@ const rt: WickRuntime = (() => {
 
         get C() { return WickRTComponent; },
 
-        router: null,
+        router: <any>null,
 
-        context: null,
+        context: <any>null,
         /**
          * Registers component
          * @param component - A WickTt
@@ -119,12 +119,12 @@ const rt: WickRuntime = (() => {
             return <Context>rt.context;
         },
 
-        init: null,
+        init: <any>null,
 
-        addAPI(obj) {
-
-            for (const name in obj)
-                rt.context.api[name] = { default: obj[name] };
+        addAPI(obj: { [key: string]: any; }) {
+            if (rt.context.api)
+                for (const name in obj)
+                    rt.context.api[name] = { default: obj[name] };
         }
     };
 })();

@@ -1,11 +1,12 @@
 import { Logger } from '@candlelib/log';
 import spark, { Sparky } from '@candlelib/spark';
 import URI from '@candlelib/uri';
-import wick from "@candlelib/wick";
-import fs from "fs";
-import { Session } from '../../common/session.js';
-import { getSourceHash, swap_component_data } from './component_tools.js';
-import { addBareComponent, addComponent, store } from './store.js';
+import { FSWatcher, watch } from "fs";
+import { rt } from '../../client/runtime/global.js';
+import { createComponent } from '../../compiler/create_component.js';
+import { Session } from '../common/session.js';
+import { swap_component_data } from './component_tools.js';
+import { addComponent, store } from './store.js';
 export const logger = Logger.createLogger("flame");
 let watchers: Map<string, FileWatcherHandler> = new Map();
 
@@ -21,18 +22,21 @@ export function getPageWatcher(location: string) {
 export class FileWatcherHandler implements Sparky {
 
     _SCHD_: number;
-    watcher: fs.FSWatcher;
+    watcher: FSWatcher | null;
     path: string;
     type: "change" | string;
     sessions: Set<Session>;
 
-    constructor(path) {
+    constructor(path: string) {
+
+        this._SCHD_ = 0;
 
         this.sessions = new Set;
 
         this.path = path;
 
         this.type = "";
+
         this.watcher = null;
     }
 
@@ -42,7 +46,7 @@ export class FileWatcherHandler implements Sparky {
         if (!this.watcher) {
 
             logger.log(`Creating watcher for file [ ${this.path} ]`);
-            this.watcher = fs.watch(this.path, (r) => (this.type = r, spark.queueUpdate(this)));
+            this.watcher = watch(this.path, (r: any) => (this.type = r, spark.queueUpdate(this)));
         }
     }
 
@@ -55,7 +59,7 @@ export class FileWatcherHandler implements Sparky {
         }
     }
 
-    close() { this.watcher.close(); this.watcher = null; };
+    close() { if (this.watcher) this.watcher.close(); this.watcher = null; };
 
     async scheduledUpdate() {
 
@@ -63,26 +67,29 @@ export class FileWatcherHandler implements Sparky {
 
         const location = new URI(this.path);
 
-        const comp = await wick(location, wick.rt.context);
+        const comp = await createComponent(location, rt.context);
 
         if (comp.HAS_ERRORS) {
 
 
-            for (const error of comp.errors)
-                logger.log(error);
 
             // Though shalt remove this offending component from 
             // the system
-            wick.rt.context.components.delete(comp.name);
+            rt.context.components.delete(comp.name);
 
         } else {
 
             addComponent(comp);
 
-            const { comp: existing } = store.components.get(this.path);
+            const cmp = store.components?.get(this.path);
 
-            if (existing.name != comp.name) {
-                swap_component_data(comp, existing, this.sessions);
+            if (cmp) {
+
+                const { comp: existing } = cmp;
+
+                if (existing.name != comp.name) {
+                    swap_component_data(comp, existing, this.sessions);
+                }
             }
         }
     }

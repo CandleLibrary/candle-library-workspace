@@ -131,7 +131,7 @@ export class Session {
 
             return callback(data);
         } else if (this.dispatches.has(data.command)) {
-
+            //@ts-ignore
             const reply = await this.dispatches.get(data.command)(data, this);
 
             if (reply) {
@@ -143,7 +143,9 @@ export class Session {
     }
 
     applyDefault(data: EditMessage["data"]) {
-        if (this.dispatches.has(data.command))
+        if (this.dispatches.has(data.command)) {
+            //@ts-ignore
             this.dispatches.get(data.command)(data, this);
+        }
     }
 }

@@ -1,18 +1,18 @@
 import { Logger } from '@candlelib/log';
 import URI from '@candlelib/uri';
-import wick, { ComponentData, componentDataToCSS, Context } from '@candlelib/wick';
-import { ComponentHash } from '@candlelib/wick/build/library//compiler/common/hash_name.js';
-import { createCompiledComponentClass } from '@candlelib/wick/build/library/compiler/ast-build/build.js';
-import { createClassStringObject } from '@candlelib/wick/build/library/compiler/ast-render/js.js';
-import { createComponent } from '@candlelib/wick/build/library/compiler/create_component.js';
-import fs from "fs";
-import { ChangeType } from '../../types/transition.js';
-import { Session } from '../../common/session.js';
+import { promises as fsp } from "fs";
+import { rt } from '../../client/runtime/global.js';
+import { createCompiledComponentClass } from '../../compiler/ast-build/build.js';
+import { createClassStringObject } from '../../compiler/ast-render/js.js';
+import { ComponentData } from '../../compiler/common/component.js';
+import { Context } from '../../compiler/common/context';
+import { createComponent } from '../../compiler/create_component.js';
 import { EditorCommand } from '../../types/editor_types.js';
 import { Patch, PatchType } from "../../types/patch";
+import { ChangeType } from '../../types/transition.js';
+import { Session } from '../common/session.js';
 import { addTransition, getComponent, getTransition, store, __sessions__ } from './store.js';
 
-const fsp = fs.promises;
 export const logger = Logger.createLogger("flame");
 
 export async function createNewComponentFromSourceString(new_source: string, context: Context, location: URI) {
@@ -83,10 +83,10 @@ location ${old_comp.location + ""}
         }
 
 
-        for (const endpoint of store.page_components.get(path)?.endpoints ?? [])
-            store.endpoints.set(endpoint, { comp: new_comp });
+        for (const endpoint of store.page_components?.get(path)?.endpoints ?? [])
+            store.endpoints?.set(endpoint, { comp: new_comp });
 
-        store.components.set(path, { comp: new_comp });
+        store.components?.set(path, { comp: new_comp });
 
         logger.log(`Created new component [ ${new_comp.name} ] from path [ ${path} ] `);
 
@@ -277,7 +277,7 @@ async function createRPPatchScript(
  */
 export function getComponentDependencies(
     root_component: ComponentData,
-    context: Context = wick.rt.context
+    context: Context = rt.context
 ): Array<ComponentData> {
 
     const seen_components: Set<string> = new Set();

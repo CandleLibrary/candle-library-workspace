@@ -1,21 +1,19 @@
 import spark from '@candlelib/spark';
 import URI from '@candlelib/uri';
-import wick, {
-    ComponentData, componentDataToCSS
-} from '@candlelib/wick';
-import { getCSSStringFromComponentStyle } from '@candlelib/wick/build/library/compiler/ast-render/css.js';
-import fs from "fs";
-import { CommandHandler } from '../../common/session.js';
+import { promises as fsp } from "fs";
+import { ComponentData } from '../../compiler/common/component.js';
+import { Context } from '../../compiler/common/context';
+import { rt } from '../../client/runtime/global.js';
 import { EditorCommand, StyleSourceType } from '../../types/editor_types.js';
-import { PatchType } from "../../types/patch";
 import { Change, ChangeType } from '../../types/transition.js';
+import { CommandHandler } from '../common/session.js';
 import { ChangeToken, getAttributeChangeToken, getCSSChangeToken } from './change_token.js';
 import {
     alertSessionsOfComponentTransition, getPatch, getSourceHash
 } from './component_tools.js';
 import { ServerSession } from './session.js';
 import { addBareComponent, addTransition, getComponent, getComponentLocation, getTransition, store, __sessions__ } from './store.js';
-const fsp = fs.promises;
+
 
 export function initializeDefualtSessionDispatchHandlers(session: ServerSession) {
     session.setHandler(EditorCommand.REGISTER_CLIENT_ENDPOINT, REGISTER_CLIENT_ENDPOINT);
@@ -205,7 +203,7 @@ const GET_COMPONENT_STYLE: CommandHandler<EditorCommand.GET_COMPONENT_STYLE>
     };
 
 const GET_COMPONENT_PATCH: CommandHandler<EditorCommand.GET_COMPONENT_PATCH>
-    = async function (command, session: ServerSession) {
+    = async function (command: any, session: ServerSession) {
 
         // Need to receive the class data necessary to 
         // do an in place replacement of component data
@@ -228,7 +226,7 @@ const GET_COMPONENT_PATCH: CommandHandler<EditorCommand.GET_COMPONENT_PATCH>
         const patch = await getPatch(
             from,
             to,
-            wick.rt.context
+            rt.context
         );
 
         return {
@@ -237,7 +235,23 @@ const GET_COMPONENT_PATCH: CommandHandler<EditorCommand.GET_COMPONENT_PATCH>
         };
     };
 
-function getChangeLocation(change: { component: string; type: ChangeType.CSSRule; location: string; CSS_index?: number; old_rule_path: string; new_rule_path: string; new_selectors: string; old_selectors: string; old_properties?: { name: string; val: string; }[]; new_properties?: { name: string; val: string; }[]; } | { type: ChangeType.Attribute; component: string; ele_id: number; name: string; attribute_index: number; old_value: string; new_value: string; }) {
+function getChangeLocation(change: {
+    component: string; type: ChangeType.CSSRule;
+    location: string;
+    CSS_index?: number;
+    old_rule_path: string;
+    new_rule_path: string;
+    new_selectors: string;
+    old_selectors: string;
+    old_properties?: {
+        name: string;
+        val: string;
+    }[];
+    new_properties?: {
+        name: string;
+        val: string;
+    }[];
+} | { type: ChangeType.Attribute; component: string; ele_id: number; name: string; attribute_index: number; old_value: string; new_value: string; }) {
     let location = "";
 
     if (change.type == ChangeType.CSSRule) {

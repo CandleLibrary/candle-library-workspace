@@ -1,9 +1,9 @@
 import { Transition } from "@candlelib/glow";
 import spark, { Sparky } from "@candlelib/spark";
 import { WickRTComponent } from "./component.js";
-import { ObservableModel, ObservableWatcher } from "../types/model";
+import { ObservableModel, ObservableWatcher } from "../../../types/model";
 import { hydrateComponentElements } from "./html.js";
-import { rt } from "./global.js";
+import { rt } from "../global.js";
 
 function getColumnRow(index: number, offset: number, set_size: number) {
     const adjusted_index = index - offset * set_size;
@@ -15,10 +15,10 @@ function getColumnRow(index: number, offset: number, set_size: number) {
 //Poly fill for transitions if glow is not included
 function createTransition(val?: boolean): Transition {
     if (!rt.glow) {
-        const trs = { add: () => null, addEventListener: (n, v) => v() };
+        const trs = { add: () => null, addEventListener: (n: any, v: any) => v() };
 
         return <any>{
-            in: trs, out: trs, play: () => null, addEventListener: (<any>((n, v) => { v(); }))
+            in: trs, out: trs, play: () => null, addEventListener: (<any>((n: any, v: any) => { v(); }))
         };
     }
     else return rt.glow.createTransition(val);

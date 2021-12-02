@@ -3,7 +3,7 @@ import glow from '@candlelib/glow';
 import URI from '@candlelib/uri';
 import { Logger } from "@candlelib/log";
 import Wick, { gatherWickElements } from '../../entry/wick-runtime.js';
-import { ComponentElement } from '../runtime/component.js';
+import { ComponentElement } from '../runtime/component/component.js';
 import { Element } from "./element.js";
 import { PageType, PageView } from "./page.js";
 

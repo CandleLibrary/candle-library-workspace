@@ -5,10 +5,9 @@ export class ObservableData extends ObservableBase {
 
     prop_array: any[];
     prop_offset: number;
-    look_up: {};
+    look_up: { [key: string]: any; };
 
-
-    constructor(data) {
+    constructor(data: any) {
 
         super();
 
@@ -25,7 +24,7 @@ export class ObservableData extends ObservableBase {
 
     get proxy() { return this; }
 
-    set(data, prop_name: string = "") {
+    set(data: any, prop_name: string = "") {
 
 
 
@@ -62,7 +61,7 @@ export class ObservableData extends ObservableBase {
 
         return out;
     }
-    createProp(name, value) {
+    createProp(name: string, value: any) {
 
         let index = this.prop_offset++;
 
@@ -133,7 +132,7 @@ export class ObservableData extends ObservableBase {
     }
 
     toJSON(HOST = true) {
-        let data = {};
+        let data: { [key: string]: any; } = {};
 
         for (let name in this.look_up) {
             let index = this.look_up[name];

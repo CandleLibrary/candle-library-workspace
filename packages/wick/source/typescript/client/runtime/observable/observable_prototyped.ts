@@ -1,6 +1,6 @@
 import { ObservableArray } from "./observable_array.js";
 import { ObservableContainerBase } from "./container_base.js";
-import { SchemeConstructor } from "./scheme_constructor.js";
+import { SchemeConstructor } from "./scheme/scheme_constructor.js";
 import { ObservableData } from "./observable.js";
 import { ObservableBase, _FrozenProperty_, _SealedProperty_ } from "./base.js";
 

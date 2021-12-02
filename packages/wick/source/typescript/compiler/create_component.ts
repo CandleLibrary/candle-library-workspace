@@ -3,7 +3,7 @@ import { parseSource } from "./ast-parse/source.js";
 import * as b_sys from "./build_system.js";
 import { ComponentData } from "./common/component.js";
 import { Context } from './common/context.js';
-import { rt } from "../runtime/global.js";
+import { rt } from "../client/runtime/global.js";
 
 /**
  * Creates an ExtendedComponentData object from a string or 

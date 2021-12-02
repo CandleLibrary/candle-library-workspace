@@ -1,7 +1,5 @@
-import { ComponentData } from '../compiler/common/component';
-import { Context } from '../compiler/common/context';
-
-
+import { ComponentData } from '../../compiler/common/component.js';
+import { Context } from '../../compiler/common/context';
 export async function processTemplateComponent(
     component: ComponentData,
     context: Context
@@ -11,10 +9,10 @@ export async function processTemplateComponent(
 
         let data = context.template_data.get(component);
 
-        for (const template_data of data) {
+        if (data) for (const template_data of data) {
 
             if (!template_data.page_name)
-                component.root_frame.ast.pos.throw(
+                component.root_frame.ast.pos?.throw(
                     "Expected [page_name] for template",
                     component.location.toString()
                 );

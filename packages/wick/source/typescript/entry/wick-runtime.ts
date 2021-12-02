@@ -1,17 +1,17 @@
 import { Context, UserPresets } from '../compiler/common/context.js';
-import { WickRTComponent } from '../client/runtime/component.js';
+import { WickRTComponent } from '../client/runtime/component/component.js';
 import { rt } from "../client/runtime/global.js";
 import {
     Element_Is_Wick_Component,
     Element_Is_Wick_Template, hydrateComponentElements
-} from "../client/runtime/html.js";
+} from "../client/runtime/component/html.js";
 import { loadModules } from "../client/runtime/load_modules.js";
 import { Observable } from '../client/runtime/observable/observable.js';
 import { ObservableArray } from '../client/runtime/observable/observable_array.js';
 import { ObservableScheme__ } from '../client/runtime/observable/observable_prototyped.js';
 
 let
-    nop = _ => !0,
+    nop = (_: any) => !0,
     wick_root = function () {
 
         console.warn("Wick.rt is incapable of compiling components. Use the full Wick library instead." +
@@ -21,7 +21,9 @@ let
             mount: nop,
             get pending() { return d; },
             class: function () {
+                //@ts-ignore
                 this.ele = document.createElement("div");
+                //@ts-ignore
                 this.ele.innerHTML = "Wick.rt is incapable of compiling components, a dummy component has been generated instead.";
             },
             createInstance: nop,
@@ -36,7 +38,7 @@ const wick = Object.assign(wick_root, {
 
     setWrapper: nop,
 
-    init_module_promise: null,
+    init_module_promise: <Promise<any> | null>null,
 
     objects: {
         WickRTComponent: WickRTComponent,
@@ -124,7 +126,7 @@ export function gatherWickElements(dom: HTMLElement = window.document.body) {
 
     while (pending_elements_queue.length > 0)
 
-        for (const element of (Array.from(pending_elements_queue.shift().children ?? [])))
+        for (const element of (Array.from(pending_elements_queue.shift()?.children ?? [])))
 
             if (element.nodeType == Node.ELEMENT_NODE)
 

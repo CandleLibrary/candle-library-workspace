@@ -1,7 +1,7 @@
 import { Logger } from "@candlelib/log";
 import { addCLIConfig, getPackageJsonObject } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
-import { default_radiate_hooks, default_wick_hooks, RenderPage } from '../compiler/ast-render/webpage.js';
+import { default_radiate_hooks, default_wick_hooks, RenderPage } from '../workspace/server/webpage.js';
 import { ComponentData } from '../compiler/common/component.js';
 import { Context } from "../compiler/common/context.js";
 import { getAttribute } from "../compiler/common/html.js";
