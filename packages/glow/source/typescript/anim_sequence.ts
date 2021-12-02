@@ -1,7 +1,7 @@
 import { AnimationArgs } from "./anim_obj.js";
-import { AnimProp } from './anim_prop.js';
+import { AnimProp } from './props/anim_prop.js';
 import { getComputedCSS, getValueType, typeIsArray, setType, TransformType } from './common.js';
-import { VectorAnimProp } from './vector_anim_prop.js';
+import { VectorAnimProp } from './props/vector_anim_prop.js';
 import { Animation } from "./anim.js";
 
 // Stores animation data for a group of properties. Defines delay and repeat.

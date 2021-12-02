@@ -13,6 +13,8 @@ export interface AnimationMethods {
 
     duration: number;
 
+    PLAY: boolean;
+
 
     /**
      * Pass `true` as first argument to cause

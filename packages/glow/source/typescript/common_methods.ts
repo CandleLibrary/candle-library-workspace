@@ -3,7 +3,7 @@ import spark from "@candlelib/spark";
 import { AnimationMethods } from "./types";
 
 let i = 0;
-export default <AnimationMethods>{
+export default <AnimationMethods><any>{
 
     duration: 0,
 

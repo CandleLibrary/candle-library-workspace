@@ -1,8 +1,8 @@
-import { KeyArg } from "./anim_obj.js";
+import { KeyArg } from "../anim_obj.js";
 import {
-    Animatable, CSS_Length, CSS_Number, CSS_Path, getComputedCSS, typeIsArray, TransformType, valueIsArray, lerpNumber, AnimTransform
-} from "./common.js";
-import { Key, NumericKey } from './key.js';
+    Animatable, AnimTransform, CSS_Path, getComputedCSS, TransformType, typeIsArray, valueIsArray
+} from "../common.js";
+import { NumericKey } from '../key.js';
 
 
 /**
@@ -135,7 +135,7 @@ export class VectorAnimProp<T extends Animatable<T> & Array<any>> {
             p3 = easing[4];
             p4 = easing[5];
         }
-        this.duration += <number>key.dur;
+        this.duration = Math.max(this.duration, <number>key.tic);
 
         const item = new this.type(key.val);
 
@@ -150,7 +150,7 @@ export class VectorAnimProp<T extends Animatable<T> & Array<any>> {
         for (const val of item) {
             if (val < Infinity) {
                 const own_key = new NumericKey(
-                    this.duration,
+                    <number>key.tic,
                     val,
                     p1,
                     p2,
@@ -164,18 +164,24 @@ export class VectorAnimProp<T extends Animatable<T> & Array<any>> {
 
     }
 
-    updateKeys() {
+    updateKeys(scalar_index: number = -1) {
 
         let max_duration = 0;
 
-        for (const sv of this.scalar_keys) {
+        if (scalar_index >= 0 && this.scalar_keys[scalar_index]) {
+            const sv = this.scalar_keys[scalar_index];
+            if (sv.length > 0) {
+                sv.sort((a, b) => a.t_off - b.t_off);
+
+                max_duration = Math.max(sv[sv.length - 1].t_off, max_duration);
+            }
+        } else for (const sv of this.scalar_keys) {
             if (sv.length > 0) {
                 sv.sort((a, b) => a.t_off - b.t_off);
 
                 max_duration = Math.max(sv[sv.length - 1].t_off, max_duration);
             }
         }
-
         this.duration = max_duration;
     }
 

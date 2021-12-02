@@ -17,6 +17,10 @@ function point(t: number, p2: number, p3: number) {
     return /* ti * ti2 * p1(=0) + */ 3 * ti2 * t * p2 + t2 * 3 * ti * p3 + t2 * t /* * p4(=1) */;
 }
 export function getYatXCubic(x: number, p1X: number, p1Y: number, p2X: number, p2Y: number) {
+    //Clamp p1X and p2X
+    p1X = Math.max(0, Math.min(p1X, 1));
+    p2X = Math.max(0, Math.min(p2X, 1));
+
     var x1 = -x,
         x2 = p1X - x,
         x3 = p2X - x,

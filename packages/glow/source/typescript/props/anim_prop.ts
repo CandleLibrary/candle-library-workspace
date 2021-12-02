@@ -1,18 +1,10 @@
 
-import { KeyArg } from "./anim_obj.js";
-import { Key } from './key.js';
+import { KeyArg } from "../anim_obj.js";
 import {
-    Animatable,
-    TransformType,
-    getComputedCSS,
-    CSS_Transform2D,
-    CSS_Path,
-    CSS_Percentage,
-    lerpNumber,
-    CSS_Length,
-    CSS_Color,
-    lerpNonNumeric
-} from "./common.js";
+    Animatable, CSS_Length, CSS_Path,
+    CSS_Percentage, getComputedCSS, TransformType
+} from "../common.js";
+import { Key } from '../key.js';
 
 
 
@@ -130,7 +122,7 @@ export class AnimProp<T extends Animatable<T>> {
             p4 = easing[5];
         }
 
-        this.duration += <number>key.dur;
+        this.duration = Math.max(this.duration, <number>key.tic);
 
         const own_key = new Key(
             this.duration,
