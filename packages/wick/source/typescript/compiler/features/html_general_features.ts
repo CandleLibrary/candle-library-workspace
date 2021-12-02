@@ -384,8 +384,6 @@ registerFeature(
 
                         }
 
-                        node.tag = "div";
-
                         return node;
                     }
                 }

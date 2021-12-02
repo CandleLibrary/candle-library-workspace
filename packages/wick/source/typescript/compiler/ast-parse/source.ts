@@ -290,9 +290,7 @@ export async function fetchASTFromRemote(url: URL, origin: URL = URI.GLOBAL) {
 
         const error = new Error(`Could not retrieve component data from ${url} as requested from ${origin}`);
 
-        console.error(error);
-
-        return { ast: null, string, resolved_url: url.toString(), errors: [error], comments };
+        return { ast: null, string, resolved_url: url.toString(), errors: [], comments };
     }
 
     try {

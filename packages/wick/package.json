@@ -65,6 +65,8 @@
         "@candlelib/spark": "*",
         "@candlelib/uri": "*",
         "@candlelib/wind": "*",
+        "ws": "^8.2.3",
+        "@types/ws": "^8.2.0",
         "esbuild": "^0.13.15"
     }
 }

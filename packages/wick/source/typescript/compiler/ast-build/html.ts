@@ -161,6 +161,7 @@ export async function __componentDataToCompiledHTML__(
             if (tag_name == "SLOT" && extern_children.length > 0 && slot_name) {
 
                 let r_ = await processSlot(
+                    html,
                     static_data_pack,
                     template_map,
                     slot_name,
@@ -262,8 +263,19 @@ function setScopeAssignment(state: htmlState, node: TemplateHTMLNode, html: HTML
     if (state & htmlState.IS_SLOT_REPLACEMENT)
         node.attributes.set("w:r", (html.host_component_index * 50 + html.id) + "");
 }
-
+/**
+ * Process a slot element, merging the contents of an external element
+ * with the slot if an element has a `slot=*` attribute that matches the
+ * slot name.
+ * 
+ * @param static_data_pack 
+ * @param template_map 
+ * @param slot_name 
+ * @param extern_children 
+ * @returns 
+ */
 async function processSlot(
+    slot: HTMLNode,
     static_data_pack: StaticDataPack,
     template_map: TemplatePackage["templates"],
     slot_name: string,

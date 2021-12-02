@@ -1,14 +1,14 @@
 import { Context, UserPresets } from '../compiler/common/context.js';
-import { WickRTComponent } from '../runtime/component.js';
-import { rt } from "../runtime/global.js";
+import { WickRTComponent } from '../client/runtime/component.js';
+import { rt } from "../client/runtime/global.js";
 import {
     Element_Is_Wick_Component,
     Element_Is_Wick_Template, hydrateComponentElements
-} from "../runtime/html.js";
-import { loadModules } from "../runtime/load_modules.js";
-import { Observable } from '../runtime/observable/observable.js';
-import { ObservableArray } from '../runtime/observable/observable_array.js';
-import { ObservableScheme__ } from '../runtime/observable/observable_prototyped.js';
+} from "../client/runtime/html.js";
+import { loadModules } from "../client/runtime/load_modules.js";
+import { Observable } from '../client/runtime/observable/observable.js';
+import { ObservableArray } from '../client/runtime/observable/observable_array.js';
+import { ObservableScheme__ } from '../client/runtime/observable/observable_prototyped.js';
 
 let
     nop = _ => !0,
@@ -107,8 +107,6 @@ const wick = Object.assign(wick_root, {
     }
 });
 
-//Register wick as a global variable
-globalThis["wick"] = wick;
 
 /**
  * Returns an array of Wick Components identifier from a traversal 
@@ -141,3 +139,7 @@ export function gatherWickElements(dom: HTMLElement = window.document.body) {
 }
 
 export default wick;
+
+//Register wick as a global variable
+//@ts-ignore
+globalThis["wick"] = wick;

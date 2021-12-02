@@ -51,11 +51,16 @@ registerFeature(
 
                             // Process the primary expression for Binding Refs and static
                             // data
-                            const ast = await build_system.processBindingAsync(node.value, component, context);
+                            const primary = await build_system.processBindingAsync(node.value, component, context);
+
+                            const secondary = await build_system.processSecondaryBindingAsync(node.value, component, context);
 
                             // Create an indirect hook for container data attribute
 
-                            build_system.addIndirectHook(component, GeneralInputValueHook, ast, index);
+                            build_system.addIndirectHook(component, GeneralInputValueHook, {
+                                primary,
+                                secondary
+                            }, index);
 
                             // Remove the attribute from the container element
 
@@ -83,7 +88,10 @@ registerFeature(
             }, HTMLNodeType.HTMLAttribute
         );
 
-        build_system.registerHookHandler<IndirectHook<JSNode>, JSNode | void>({
+        build_system.registerHookHandler<IndirectHook<[{
+            primary: JSNode,
+            secondary: JSNode | null;
+        }]>, JSNode | void>({
 
             name: "Text Input Value Handler",
 
@@ -96,7 +104,8 @@ registerFeature(
                 const { expr, stmt } = build_system.js;
 
                 const
-                    expression = node.value[0],
+                    expression = node.value[0].primary,
+                    secondary_expression = node.value[0].secondary,
                     root_type = expression.type,
                     READONLY = getElementAtIndex<HTMLElementNode>(sdp.self, element_index)
                         ?.attributes
@@ -117,13 +126,16 @@ registerFeature(
                 // The expression will at least produce an output that will be assigned
 
                 const s = stmt(`this.sa(${element_index}, "value", b)`);
+                //@ts-ignore
                 s.nodes[0].nodes[1].nodes[2] = (expression);
                 addOnBindingUpdate(s);
 
+                const update_expression = secondary_expression || expression;
+
                 if (
                     (
-                        root_type == BindingIdentifierBinding ||
-                        root_type == BindingIdentifierReference
+                        update_expression.type == BindingIdentifierBinding ||
+                        update_expression.type == BindingIdentifierReference
                     ) && !READONLY
 
                 ) {
@@ -134,7 +146,8 @@ registerFeature(
                     // - INTERNAL_VARIABLE
                     // - METHOD_VARIABLE (The method will be called with value of the input)
 
-                    const binding = build_system.getComponentBinding(expression.value, sdp.self);
+
+                    const binding = build_system.getComponentBinding(update_expression.value, sdp.self);
 
                     if (
                         binding.type == BINDING_VARIABLE_TYPE.UNDECLARED
@@ -146,14 +159,17 @@ registerFeature(
                         binding.type == BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE
                     ) {
                         const e = expr(`a=_.target.value`);
-                        e.nodes[0] = expression;
+                        e.nodes[0] = update_expression;
                         const s = stmt(`this.al(${element_index}, "input",  _=>a)`);
+                        //@ts-ignore
                         s.nodes[0].nodes[1].nodes[2].nodes[1] = e;
                         addInitBindingInit(s);
                     } else if (binding.type == BINDING_VARIABLE_TYPE.METHOD_VARIABLE) {
                         const e = expr(`this.${binding.internal_name}(v)`);
-                        e.nodes[1].nodes[0] = expression;
+                        //@ts-ignore
+                        e.nodes[1].nodes[0] = update_expression;
                         const s = stmt(`this.al(${element_index}, "input",  _=>a)`);
+                        //@ts-ignore
                         s.nodes[0].nodes[1].nodes[2].nodes[1] = e;
                         addInitBindingInit(s);
                     }

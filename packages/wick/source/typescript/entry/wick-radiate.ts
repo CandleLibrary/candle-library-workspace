@@ -1,8 +1,5 @@
-import { Router } from "../radiate/radiate.js";
+import { Router } from "../client/radiate/radiate.js";
 import wick from './wick-runtime.js';
-
-//Register wick as a global variable
-globalThis["wick"] = wick;
 
 let LINKER_LOADED = false;
 
@@ -43,3 +40,5 @@ export default function radiate() {
     return wick;
 }
 
+//Register wick as a global variable
+globalThis["wick"] = wick;

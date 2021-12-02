@@ -69,7 +69,8 @@ export async function importComponentData(
             if (first >= 0)
                 uri = candidates[first];
             else
-                throw new Error(`Could not locate a component at ${new_component_url}`);
+                //throw new Error(`Could not locate a component at ${new_component_url}`);
+                return false;
 
         }
 
@@ -178,6 +179,10 @@ export async function importResource(
                     frame
                 ))
             ) {
+                if (!(await uri.DOES_THIS_EXIST())) {
+                    throw `Could not resolve resource \n${uri} \nimported from \n[${component.location}]`;
+                }
+
                 module_name = getModuleName(context, new URI(from_value.trim()), component.location);
 
                 for (const name of names) {

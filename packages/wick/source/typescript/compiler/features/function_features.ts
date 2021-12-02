@@ -116,7 +116,7 @@ registerFeature(
 
 
                             //@ts-ignore
-                            call.nodes[1].nodes.push(...call_ids.map(copy).map(i => (i.type = BindingIdentifierReference, i)));
+                            call.nodes[1].nodes.push(...copy(call_ids).map(i => (i.type = BindingIdentifierReference, i)));
 
                             build_system.addIndirectHook(component, BindingFunction, [call], 0, false);
 

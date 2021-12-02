@@ -1,5 +1,6 @@
 import { tools } from "@candlelib/css";
 import { HTMLNode } from '../../types/wick_ast';
+import { getAttributeValue, hasAttribute } from './html.js';
 export const css_selector_helpers: tools.selectors.SelectionHelpers<HTMLNode> = {
 
     getIndexFigures: (ele, tag) => ({ ele_index: 0, tag_index: 0 }),
@@ -34,7 +35,14 @@ export const css_selector_helpers: tools.selectors.SelectionHelpers<HTMLNode> = 
         if (type == "root")
             return ele.id == 0;
 
-        return ele.tag &&
-            ele.tag.toUpperCase() == type.toUpperCase();
+        if (hasAttribute("comp-tag", ele)) {
+            const tag = getAttributeValue("comp-tag", ele);
+            if (typeof tag == "string") {
+                if (tag.toUpperCase() == type.toUpperCase())
+                    return true;
+            }
+        }
+
+        return !!ele.tag && ele.tag.toUpperCase() == type.toUpperCase();
     }
 };
