@@ -1,6 +1,6 @@
-import wind from "@candlelib/wind";
+import wind, { Lexer } from "@candlelib/wind";
 
-function getValue(lex, attribute?) {
+function getValue(lex: Lexer, attribute?: any) {
     let v = lex.tx,
         mult = 1;
 
@@ -52,12 +52,13 @@ function getValue(lex, attribute?) {
     return n;
 }
 
-function ParseString(string, transform) {
-    let lex = null;
-    lex = string;
+function ParseString(str: string | Lexer, transform: CSS_Transform2D | CSS_Transform3D)
+    : CSS_Transform2D | CSS_Transform3D {
 
-    if (typeof (string) == "string")
-        lex = wind(string);
+    let lex: string | Lexer = str;
+
+    if (!(lex instanceof Lexer))
+        lex = wind(lex);
 
     while (!lex.END) {
         let tx = lex.tx;
@@ -169,11 +170,11 @@ function ParseString(string, transform) {
 // A 2D transform composition of 2D position, 2D scale, and 1D rotation.
 const cos = Math.cos, sin = Math.sin;
 
-const smooth_float = i => Math.round(i * 100000) * 0.00001;
+const smooth_float = (i: number) => Math.round(i * 100000) * 0.00001;
 
 export class CSS_Transform2D extends Float64Array {
 
-    static parse(lex) {
+    static parse(lex: Lexer) {
         return ParseString(lex, new CSS_Transform2D());
     }
 
@@ -228,8 +229,8 @@ export class CSS_Transform2D extends Float64Array {
             else {
                 this[TAttrib.px] = px || 0;
                 this[TAttrib.py] = py || 0;
-                this[TAttrib.sx] = sx || 0;
-                this[TAttrib.sy] = sy || 0;
+                this[TAttrib.sx] = sx || 1;
+                this[TAttrib.sy] = sy || 1;
                 this[TAttrib.rz] = r || 0;
             }
         }
@@ -277,7 +278,7 @@ export class CSS_Transform2D extends Float64Array {
         return this.sx;
     }
 
-    lerp(to, t) {
+    lerp(to: CSS_Transform2D | CSS_Transform3D, t: number) {
         let out = new CSS_Transform2D();
         for (let i = 0; i < 5; i++) out[i] = this[i] + (to[i] - this[i]) * t;
         return out;
@@ -287,12 +288,20 @@ export class CSS_Transform2D extends Float64Array {
         return CSS_Transform2D.ToString(this);
     }
 
-    copy(v: string) {
-        let copy = new CSS_Transform2D(this);
+    copy() {
+        let out = new CSS_Transform2D();
+        for (let i = 0; i < 5; i++) out[i] = this[i];
+        return out;
+    }
+
+    from(v: any) {
+        let copy = new CSS_Transform2D();
 
 
         if (typeof (v) == "string")
-            return ParseString(v, copy);
+            ParseString(v, copy);
+
+        return copy;
     }
 
     /**
@@ -460,14 +469,19 @@ export class CSS_Transform3D extends Float64Array {
         return this.sx;
     }
 
-    constructor(px: CSS_Transform2D | string | number = 0, py = 0, pz = 0, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) {
+    constructor(
+        input: CSS_Transform2D | string | void,
+        px: number = 0,
+        py: number = 0,
+        pz: number = 0,
+        sx: number = 1,
+        sy: number = 1,
+        sz: number = 1,
+        rx: number = 0,
+        ry: number = 0,
+        rz: number = 0,
+    ) {
         super(9);
-
-        if (px instanceof CSS_Transform2D) {
-            const transform = px;
-            px = transform.px;
-            py = transform.py;
-        } else if (typeof (px) == "string") return ParseString(px, this);
 
         this[0] = px;
         this[1] = py;
@@ -478,9 +492,19 @@ export class CSS_Transform3D extends Float64Array {
         this[6] = ry;
         this[7] = pz;
         this[8] = sz;
+
+        if (input !== undefined)
+            if (input instanceof CSS_Transform2D) {
+                const transform = input;
+                this.px = transform.px;
+                this.py = transform.py;
+                this.r = transform.r;
+                this.sx = transform.sx;
+                this.sy = transform.sy;
+            } else if (typeof (input) == "string") ParseString(input, this);
     }
 
-    lerp(to, t) {
+    lerp(to: CSS_Transform3D, t: number) {
         let out = new CSS_Transform3D();
         for (let i = 0; i < 9; i++) out[i] = this[i] + (to[i] - this[i]) * t;
         return out;
@@ -491,7 +515,13 @@ export class CSS_Transform3D extends Float64Array {
         return CSS_Transform3D.ToString(this);
     }
 
-    copy(v) {
+    copy() {
+        let out = new CSS_Transform3D();
+        for (let i = 0; i < 9; i++) out[i] = this[i];
+        return out;
+    }
+
+    from(v: any) {
         let copy = new CSS_Transform3D();
 
 

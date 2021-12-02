@@ -1,4 +1,4 @@
-export default  class CSS_Id extends String {
+export default class CSS_Id extends String {
     static parse(l) {
         if (l.ty == l.types.id) {
             let tx = l.tx;

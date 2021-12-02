@@ -1,6 +1,5 @@
 import wind, { Lexer } from "@candlelib/wind";
 import { consumeComma } from "./consume_comma.js";
-import { CSS_Gradient } from './gradient.js';
 
 /*
     BODY {color: black; background: white }
@@ -518,7 +517,7 @@ export default class CSS_Color extends Float64Array {
         return this.add(to.sub(this).mult(t));
     }
 
-    copy(other) { return new CSS_Color(other); }
+    from(other: any) { return new CSS_Color(other); }
 
     toString() {
 
