@@ -15,6 +15,7 @@ import { Context } from "../compiler/common/context.js";
 import { createComponent } from '../compiler/create_component.js';
 import { compile_module, compile_pack } from '../workspace/server/compile_module.js';
 import { create_config_arg_properties } from "./config_arg_properties.js";
+import { init_build_system } from '../compiler/init_build_system.js';
 
 const run_logger = Logger.get("wick").get("run").activate().deactivate(LogLevel.DEBUG);
 
@@ -47,10 +48,13 @@ Host a single component on a local server.
     accepted_values: <(typeof URI)[]>[URI]
 }).callback = (
         async (input_path, args) => {
-
+            Logger.get("wick").deactivate().activate(log_level_arg.value);
             run_logger.deactivate().activate(log_level_arg.value);
-
             run_logger.activate(log_level_arg.value);
+
+            await init_build_system();
+
+
 
             //const input_path = URI.resolveRelative(args.trailing_arguments.pop() ?? "./");
             const root_path = URI.resolveRelative(input_path);
@@ -104,13 +108,14 @@ Host a single component on a local server.
                                 context.assignGlobals(config?.globals ?? {});
                                 const component = await createComponent(root_path, context);
 
-                                if (context.errors.length > 0) {
-                                    for (const { comp: name, error } of context.errors) {
-                                        const comp = <ComponentData>context.components.get(name);
-                                        const location = root_path.getRelativeTo(comp.location);
-                                        run_logger.warn(`
-Error encountered in component ${comp.name} (${location}):`);
-                                        run_logger.error(error);
+                                if (context.errors.size > 0) {
+                                    for (const [name, errors] of context.errors) {
+                                        for (const error of errors) {
+                                            const comp = <ComponentData>context.components.get(name);
+                                            const location = root_path.getRelativeTo(comp.location);
+                                            run_logger.warn(`\nError encountered in component ${comp.name} (${location}):`);
+                                            run_logger.error(error);
+                                        }
                                     }
 
                                     return false;

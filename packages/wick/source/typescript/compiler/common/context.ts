@@ -122,7 +122,7 @@ export class Context {
      * Any objects or functions that should be accessible to all components
      * through the `"@api"` import path.
      */
-    api?: {
+    api: {
         [key: string]: {
             /**
              * The API object or default export of a module
@@ -190,7 +190,7 @@ export class Context {
     active_template_data?: any;
     static global = { get v() { return CachedPresets; }, set v(e) { } };
 
-    errors: { comp: string, error: Error; }[];
+    errors: Map<string, Error[]>;
 
     /**
      * Constructs a Context object that can be passed to the Wick compiler.
@@ -246,7 +246,7 @@ export class Context {
 
         this.active_template_data = null;
 
-        this.errors = [];
+        this.errors = new Map;
 
         this.processLink = _ => _;
 
@@ -255,7 +255,7 @@ export class Context {
 
     integrate_new_options(user_presets: UserPresets | Context) {
 
-        this.verifyOptions(user_presets);
+        this.verifyOptions(<UserPresets>user_presets);
 
         this.addRepoData(<UserPresets>user_presets);
 
@@ -266,6 +266,22 @@ export class Context {
         this.loadAPIObjects(<UserPresets>user_presets);
     }
 
+    addError(comp: ComponentData, e: Error) {
+        if (!this.errors.has(comp.name))
+            this.errors.set(comp.name, []);
+        //@ts-ignore
+        this.errors.get(comp.name).push(e);
+    }
+
+    getErrors(comp: ComponentData): Error[] {
+        return this.errors.get(comp.name) ?? [];
+    }
+
+    clearErrors(comp: ComponentData) {
+        if (this.errors.has(comp.name))
+            this.errors.delete(comp.name);
+    }
+
     private loadAPIObjects(user_presets: UserPresets | Context) {
         if (user_presets.api) {
             for (const name in user_presets.api)
@@ -273,7 +289,7 @@ export class Context {
         }
     }
 
-    private verifyOptions(user_presets) {
+    private verifyOptions(user_presets: UserPresets) {
 
         const options = user_presets.options;
 
@@ -307,39 +323,46 @@ export class Context {
             });
     }
 
-    async getDataSource(uri: URI) {
+    async getDataSource(uri: URI): Promise<any> {
 
         const uri_str = uri + "";
 
-        if (uri_str in this.api)
-            return this.api[uri_str].default;
+        if (this.api) {
 
-        let value = undefined;
+            if (uri_str in this.api)
+                return this.api[uri_str].default;
 
-        if (await uri.DOES_THIS_EXIST()) {
-            switch (uri.ext) {
-                case "json":
-                    value = uri.fetchJSON();
-                    break;
+            let value = undefined;
+
+            if (await uri.DOES_THIS_EXIST()) {
+                switch (uri.ext) {
+                    case "json":
+                        value = uri.fetchJSON();
+                        break;
+                }
             }
-        }
 
-        this.api[uri_str] = {
-            hash: uri_str,
-            default: value,
-        };
+            this.api[uri_str] = {
+                hash: uri_str,
+                default: value,
+            };
+        }
 
         return this.getDataSource(uri);
     }
 
     addAPIObject(name: string, obj: any) {
-        if (name in this.api)
-            return;
 
-        this.api[name] = {
-            hash: name,
-            default: obj,
-        };
+        if (this.api) {
+
+            if (name in this.api)
+                return;
+
+            this.api[name] = {
+                hash: name,
+                default: obj,
+            };
+        }
     }
 
     /**

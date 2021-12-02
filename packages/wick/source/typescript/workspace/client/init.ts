@@ -68,11 +68,11 @@ export function init() {
 
             await spark.sleep(300);
 
-            system.action_bar.setModel(system.active_selection);
+            //  system.action_bar.setModel(system.active_selection);
 
-            initializeEvents(system, window);
+            // initializeEvents(system, window);
 
-            editor_frame.style.display = "block";
+            // editor_frame.style.display = "block";
 
             res(true);
         });

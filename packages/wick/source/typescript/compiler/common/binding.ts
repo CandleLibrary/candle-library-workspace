@@ -327,12 +327,16 @@ export function getCompiledBindingVariableName(
         switch (binding.type) {
 
             case BINDING_VARIABLE_TYPE.MODULE_VARIABLE:
+                if (!module_name) binding.pos.throw("Unable to locate module name");
                 return `${comp_name}.context.api.${module_name}.default`;
 
             case BINDING_VARIABLE_TYPE.MODULE_NAMESPACE_VARIABLE:
+                if (!module_name) binding.pos.throw("Unable to locate module name");
                 return `${comp_name}.context.api.${module_name}.module`;
 
             case BINDING_VARIABLE_TYPE.MODULE_MEMBER_VARIABLE:
+                if (!module_name)
+                    return `${comp_name}.context.api.${external_name}`;
                 return `${comp_name}.context.api.${module_name}.module.${external_name}`;
 
             case BINDING_VARIABLE_TYPE.UNDECLARED:

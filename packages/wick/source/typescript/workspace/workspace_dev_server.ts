@@ -17,13 +17,13 @@ import { WebSocketServer } from "ws";
 import { WickCompileConfig } from '../types/config.js';
 import { rt } from '../client/runtime/global.js';
 import { ComponentData } from '../compiler/common/component.js';
-import { Context } from '../compiler/common/context';
+import { Context } from '../compiler/common/context.js';
 import { createComponent } from '../compiler/create_component.js';
 import { ServerSession } from './server/session.js';
 import { initializeDefualtSessionDispatchHandlers } from './server/session_handlers.js';
 import { loadComponents, store } from './server/store.js';
 import { default_radiate_hooks, default_wick_hooks, RenderPage } from './server/webpage.js';
-const logger = Logger.get("flame");
+const logger = Logger.get("wick");
 Logger.get("lantern");
 Logger.get("wick");
 URI.server();
@@ -77,7 +77,7 @@ async function renderPage(
                 return `
     import init_router from "/@cl/wick-radiate/";
     init_router();
-    import "/@cl/flame/";
+    import "/@cl/wick/workspace/client/index.js";
                 `;
             };
 
@@ -87,7 +87,7 @@ async function renderPage(
                 return `
     import w from "/@cl/wick-rt/";
     w.hydrate();
-    import "/@cl/flame/";
+    import "/@cl/wick/workspace/client/index.js";
                 `;
             };
 
@@ -107,8 +107,8 @@ async function renderPage(
         throw e;
     }
 };
-const flaming_wick_dispatch = <Dispatcher>{
-    name: "Flaming Wick",
+const workspace_component_dispatch = <Dispatcher>{
+    name: "Workspace Component",
     MIME: "text/html",
     keys: [],
     init(lantern, dispatcher) {
@@ -131,45 +131,48 @@ const flaming_wick_dispatch = <Dispatcher>{
                 //@ts-ignore
                 const { comp } = store.endpoints.get(tools.dir);
 
-                for (const error of comp.errors)
-                    logger.error(error);
+                if (comp.HAS_ERRORS) {
+                    Logger.get("wick").get(`comp error`).warn(`Component ${comp} (${comp.location}) produced compilation errors:`);
+                    for (const error of rt.context.getErrors(comp))
+                        Logger.get("wick").get(`comp error`).warn(error);
+                }
 
                 const page = await renderPage(comp);
 
-                if (page) {
-
+                if (page)
                     return tools.sendUTF8String(page);
-                }
-
-
             }
         }
-
 
         return false;
     }
 };
 
 
-const flame_editor_dispatch = <Dispatcher>{
-    name: "Flame Editor",
+const workspace_editor_dispatch = <Dispatcher>{
+    name: "Workspace Editor",
     MIME: "text/html",
     keys: [],
     init(lantern, dispatcher) {
         dispatcher.keys = [{ ext: ext_map.none, dir: "/flame-editor" }];
     },
     respond: async function (tools) {
-        const flame_editor_presets = new Context();
+        const ws_context = new Context();
 
-        const editor_path = <URI>URI.resolveRelative("@candlelib/flame/source/components/editor.wick");
+        const editor_path = <URI>URI.resolveRelative("@candlelib/wick/source/components/editor.wick", URI.getEXEURL(import.meta));
 
-        const comp = await createComponent(editor_path, flame_editor_presets);
 
-        if (comp.HAS_ERRORS)
-            for (const error of comp.errors)
-                Logger.get("flame").get("editor-dispatch").log(error);
+        const comp = await createComponent(editor_path, ws_context);
 
-        const result = await RenderPage(comp, flame_editor_presets);
+        for (const [name, comp] of ws_context.components) {
+            if (comp.HAS_ERRORS) {
+                Logger.get("wick").get(`comp error`).warn(`Component ${comp} (${comp.location}) produced compilation errors:`);
+                for (const error of ws_context.getErrors(comp))
+                    Logger.get("wick").get(`comp error`).warn(error);
+            }
+        }
+
+        const result = await RenderPage(comp, ws_context);
 
         if (result)
             return tools.sendUTF8String(result.page);
@@ -177,12 +180,11 @@ const flame_editor_dispatch = <Dispatcher>{
 };
 export async function initDevServer(
     port: number = 8082,
-    config: WickCompileConfig
+    config: WickCompileConfig,
+    working_directory: URI,
 ) {
-
     rt.setPresets();
 
-    const working_directory = new URI(process.cwd());
 
     await loadComponents(
         working_directory,
@@ -196,16 +198,16 @@ export async function initDevServer(
         port,
         host: "0.0.0.0",
         secure: lantern.mock_certificate,
-        log: lantern.null_logger
+        log: lantern.null_logger,
+        cwd: working_directory + ""
     });
 
-    server.addDispatch(flame_editor_dispatch);
-    server.addDispatch(flaming_wick_dispatch);
+    server.addDispatch(workspace_editor_dispatch);
+    server.addDispatch(workspace_component_dispatch);
     server.addDispatch(candle_library_dispatch);
     server.addDispatch(filesystem_dispatch);
     server.addDispatch(candle_favicon_dispatch);
     server.addDispatch($404_dispatch);
-
 
     logger.log(`HTTP Server initialized and listening at [ ${port} ] `);
 

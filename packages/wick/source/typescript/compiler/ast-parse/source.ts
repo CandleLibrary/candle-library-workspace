@@ -175,11 +175,8 @@ export async function parseComponentAST(
     if (parent)
         integrateParentComponentScope(parent, component);
 
-
-    context.errors.push(...parse_errors.map(e => ({
-        comp: component.name,
-        error: e
-    })));
+    for (const e of parse_errors)
+        context.addError(component, e);
 
     if (ast)
         try {
@@ -204,10 +201,7 @@ export async function parseComponentAST(
         } catch (e) {
             HAS_ERRORS = true;
             if (e instanceof Error)
-                context.errors.push({
-                    comp: component.name,
-                    error: e
-                });
+                context.addError(component, e);
         }
 
     metrics.endRun(run_tag);

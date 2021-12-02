@@ -6,7 +6,9 @@ import { createCompiledComponentClass } from '../../compiler/ast-build/build.js'
 import { createClassStringObject } from '../../compiler/ast-render/js.js';
 import { ComponentData } from '../../compiler/common/component.js';
 import { Context } from '../../compiler/common/context';
+import { ComponentHash } from '../../compiler/common/hash_name.js';
 import { createComponent } from '../../compiler/create_component.js';
+import { componentDataToCSS } from '../../compiler/ast-render/css.js';
 import { EditorCommand } from '../../types/editor_types.js';
 import { Patch, PatchType } from "../../types/patch";
 import { ChangeType } from '../../types/transition.js';
@@ -218,13 +220,16 @@ export async function getPatch(
 }
 
 async function createCSSPatch(patch: any, from: string, to: string) {
-    patch = {
-        type: PatchType.CSS,
-        from: from,
-        to: to,
-        style: componentDataToCSS(await getComponent(to))
-    };
-    return patch;
+    const comp = await getComponent(to);
+    if (comp) {
+
+        return {
+            type: PatchType.CSS,
+            from: from,
+            to: to,
+            style: componentDataToCSS(comp)
+        };
+    } else return null;
 }
 
 async function createReplacePatch(
@@ -290,6 +295,7 @@ export function getComponentDependencies(
 
         for (const [, comp_name] of component.local_component_names)
             if (!seen_components.has(comp_name))
+                //@ts-ignore
                 output.push(context.components.get(comp_name));
     }
 

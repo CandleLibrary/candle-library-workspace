@@ -242,7 +242,7 @@ export function createClassInfoObject(): CompiledComponentClass {
 
     const
         binding_setup_frame = createBuildFrame("c", ""),
-    init_interface_frame = createBuildFrame("init_interfaces", "c"),
+        init_interface_frame = createBuildFrame("init_interfaces", "c"),
         init_frame = createBuildFrame("init", "c"),
         async_init_frame = createBuildFrame("async_init"),
         terminate_frame = createBuildFrame("terminate"),
@@ -370,7 +370,6 @@ export async function finalizeBindingExpression(
         prev: null,
         root_element: component.HTML
     };
-
     const lz = { ast: null };
     let NEED_ASYNC = false;
     for (const { node, meta: { mutate, skip } } of traverse(mutated_node, "nodes")
@@ -452,7 +451,6 @@ export async function finalizeBindingExpression(
                     skip();
                 }
 
-
                 break;
 
             case JST.AwaitExpression:
@@ -490,9 +488,11 @@ export async function finalizeBindingExpression(
 
                     new_node = setPos(id, node.pos);
 
-                    if (!component.root_frame.binding_variables.has(<string>name))
-
-                        node.pos.throw(`Undefined reference to ${name}`);
+                    if (!component.root_frame.binding_variables?.has(<string>name)) {
+                        if (node.pos)
+                            node.pos.throw(`Undefined reference to ${name}`);
+                        else throw new Error(`Undefined reference to ${name}`);
+                    }
                 }
 
                 mutate(<any>new_node);

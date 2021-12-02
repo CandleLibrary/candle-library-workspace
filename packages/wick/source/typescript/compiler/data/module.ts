@@ -243,7 +243,7 @@ export async function importResource(
             break;
 
         case "@api":
-            ref_type = BINDING_VARIABLE_TYPE.MODULE_VARIABLE; flag = BINDING_FLAG.FROM_OUTSIDE;
+            ref_type = BINDING_VARIABLE_TYPE.MODULE_MEMBER_VARIABLE; flag = BINDING_FLAG.FROM_OUTSIDE;
             break;
 
         /* case "@global":

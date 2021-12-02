@@ -28,6 +28,7 @@ URI.server();
 import "./cli/test.js";
 import "./cli/create.js";
 import "./cli/compile.js";
+import "./cli/workspace.js";
 import "./cli/workspace_old.js";
 
 

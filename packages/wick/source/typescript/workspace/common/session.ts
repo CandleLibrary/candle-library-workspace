@@ -108,7 +108,7 @@ export class Session {
 
     close_handler() { this.ACTIVE = false; };
 
-    error_handler(error: Error) {
+    error_handler(error: Error, ...rest: any[]) {
 
         this.logger.error(error);
     }

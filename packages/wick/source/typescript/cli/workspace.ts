@@ -9,11 +9,13 @@ import {
     getPackageJsonObject,
 } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
+import { init_build_system } from '../compiler/init_build_system.js';
+import { create_config_arg_properties } from './config_arg_properties.js';
 
 const
     command_name = "workspace",
     log_level_arg = addCLIConfig(command_name, paraffin_args.log_level_properties),
-    config_arg = addCLIConfig(command_name, wick_args.create_config_arg_properties("Flame")),
+    config_arg = addCLIConfig(command_name, create_config_arg_properties("Flame")),
     port_arg = addCLIConfig(command_name, args.create_port_arg_properties("Wick", "WICK_DEV_PORT", "8080")),
     browser_arg = addCLIConfig<string>(command_name, {
         key: "browser",
@@ -30,6 +32,8 @@ const
 
 addCLIConfig<URI>(command_name, {
     key: command_name,
+    default: <URI>URI.resolveRelative(process.cwd()),
+    transform: (arg: URI, _: any) => <URI>URI.resolveRelative(arg),
     accepted_values: <(typeof URI)[]>[URI],
     help_arg_name: "Workspace Directory",
     REQUIRES_VALUE: true,
@@ -44,18 +48,18 @@ support components edited within a code editor.
 
 
 ).callback =
-    async () => {
+    async (arg) => {
 
         const port = port_arg.value;
 
         Logger.get("lantern").deactivate()
             .activate(log_level_arg.value);
         Logger.get("wick").deactivate()
-            .activate(log_level_arg.value);
-        Logger.get("flame").deactivate()
             .activate(log_level_arg.value)
             .debug(`Using local network port [ ${port} ]`);
 
+        await init_build_system();
+
         (await import('../workspace/workspace_dev_server.js'))
-            .initDevServer(port, config_arg.value);
+            .initDevServer(port, config_arg.value, new URI(arg + '/'));
     };

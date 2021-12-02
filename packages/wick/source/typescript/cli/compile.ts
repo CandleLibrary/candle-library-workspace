@@ -19,11 +19,11 @@ const
 
 const config_arg = addCLIConfig("compile", create_config_arg_properties());
 
-const output_arg = addCLIConfig<URI>("compile", {
+const output_arg = addCLIConfig<URI, URI>("compile", {
     key: "output",
     REQUIRES_VALUE: true,
-    default: URI.resolveRelative("./www"),
-    transform: (arg) => URI.resolveRelative(arg),
+    default: <URI>URI.resolveRelative("./www"),
+    transform: (arg: URI, _: any) => <URI>URI.resolveRelative(arg),
     help_brief: `
 A path to the root directory in which rendered files will be 
 placed. Defaults to $CWD/www.
@@ -54,7 +54,7 @@ static site that can be optionally hydrated with associated support scripts.`
     }
 ).callback = (
         async (arg, args) => {
-            const input_path = URI.resolveRelative(args.trailing_arguments.pop() ?? "./");
+            const input_path = <URI>URI.resolveRelative(args.trailing_arguments.pop() ?? "./");
             const root_directory = URI.resolveRelative(input_path);
             const output_directory = output_arg.value;
             const config = config_arg.value;
