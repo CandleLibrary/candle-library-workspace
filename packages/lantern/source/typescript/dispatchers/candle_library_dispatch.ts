@@ -57,7 +57,7 @@ Available libraries: (@cl can be freely replaced with @candlelib)
     ____________________________________________
 
     WICK                :   /@cl/wick
-                            /@cl/wickrt
+    -                   :   /@cl/wickrt
                             
     WICK-Radiate        :   /@cl/wick-radiate
 
@@ -73,15 +73,10 @@ Available libraries: (@cl can be freely replaced with @candlelib)
 
     JS                  :   /@cl/js
 
-    FLAME               :   /@cl/flame
-
     LOG                 :   /@cl/log
 
     HYDROCARBON-RUNTIME :   /@cl/hc
-                        :   /@cl/hydrocarbon 
-
-    HYDROCARBON-FULL    :   /@cl/hc-full
-                        :   /@cl/hydrocarbon-full
+    -                   :   /@cl/hydrocarbon 
 `,
     respond: async (tools) => {
         await Set();
@@ -104,7 +99,6 @@ Available libraries: (@cl can be freely replaced with @candlelib)
                 "wick": "wick/entry/wick-runtime",
                 "wick-full": "wick/entry/wick-runtime",
                 "wick-radiate": "wick/entry/wick-radiate",
-                "flame": "flame/entry/client",
                 "log": "log/logger",
                 "uri": "uri/uri",
                 "glow": "glow/glow",
@@ -132,7 +126,6 @@ Available libraries: (@cl can be freely replaced with @candlelib)
                 "wind",
                 "spark",
                 "js",
-                "flame",
                 "log",
             ].includes(pkg)
                 ? path.join(CFW_DIR, pkg, "build", file_path || (source_name + ".js"))
@@ -187,7 +180,7 @@ Available libraries: (@cl can be freely replaced with @candlelib)
                                 console.log(path_str, dest);
 
                             if (dest.IS_RELATIVE) {
-                                dest = URL.resolveRelative(dest, tools.url);
+                                dest = <URL>URL.resolveRelative(dest, tools.url);
                             }
 
                             return `\nimport ${import_clause} from \"${dest.path}\"`;
