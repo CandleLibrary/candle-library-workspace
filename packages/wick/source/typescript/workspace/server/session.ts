@@ -1,12 +1,10 @@
 import { Logger } from '@candlelib/log';
-import {
-    ComponentData
-} from "@candlelib/wick";
 import { WebSocket } from "ws";
 import { Session } from '../common/session.js';
 import { getComponentDependencies } from './component_tools.js';
 import { getPageWatcher } from './file_watcher.js';
 import { addReference, __sessions__ } from './store.js';
+import { ComponentData } from '../../compiler/common/component.js';
 
 export const logger = Logger.createLogger("flame");
 

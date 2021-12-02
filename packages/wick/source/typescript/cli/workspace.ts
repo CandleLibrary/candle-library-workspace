@@ -1,185 +1,61 @@
-import lantern, {
-    $404_dispatch, args, candle_favicon_dispatch, candle_library_dispatch, Dispatcher,
-    ext_map, filesystem_dispatch
-} from "@candlelib/lantern";
-import { Logger, LogLevel } from "@candlelib/log";
-import { addCLIConfig, args as para_args } from "@candlelib/paraffin";
+/**
+ * Copyright (C) 2021 Anthony Weathersby - Flame Language Server & Dev Server
+ */
+import { args } from "@candlelib/lantern";
+import { Logger } from "@candlelib/log";
+import {
+    addCLIConfig,
+    args as paraffin_args,
+    getPackageJsonObject,
+} from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
-import { mkdirSync, promises } from 'fs';
 
-const writeFile = promises.writeFile;
+const
+    command_name = "workspace",
+    log_level_arg = addCLIConfig(command_name, paraffin_args.log_level_properties),
+    config_arg = addCLIConfig(command_name, wick_args.create_config_arg_properties("Flame")),
+    port_arg = addCLIConfig(command_name, args.create_port_arg_properties("Wick", "WICK_DEV_PORT", "8080")),
+    browser_arg = addCLIConfig<string>(command_name, {
+        key: "browser",
+        REQUIRES_VALUE: true,
+        default: "none",
+        help_arg_name: "browser-name",
+        accepted_values: ["chrome", "opera", "safari", "edge", "firefox"],
+        help_brief: "Open a web browser after component has been compiled and server has started"
+    }),
+    { package: pkg, package_dir }
+        //@ts-ignore
+        = await getPackageJsonObject(new URI(import.meta.url).path);
 
-import { RenderPage } from "../workspace/server/webpage.js";
-import { ComponentData } from '../compiler/common/component.js';
-import { Context } from "../compiler/common/context.js";
-import { createComponent } from '../compiler/create_component.js';
-import { compile_module, compile_pack } from '../workspace/server/compile_module.js';
-import { create_config_arg_properties } from "./config_arg_properties.js";
 
-const run_logger = Logger.get("wick").get("run").activate().deactivate(LogLevel.DEBUG);
-
-const log_level_arg = addCLIConfig("run", para_args.log_level_properties);
-const config_arg = addCLIConfig("run", create_config_arg_properties());
-const port_arg = addCLIConfig("run", args.create_port_arg_properties("Wick", "WICK_DEV_PORT", "8080"));
-const browser_arg = addCLIConfig<string>("run", {
-    key: "browser",
+addCLIConfig<URI>(command_name, {
+    key: command_name,
+    accepted_values: <(typeof URI)[]>[URI],
+    help_arg_name: "Workspace Directory",
     REQUIRES_VALUE: true,
-    default: "none",
-    help_arg_name: "browser-name",
-    accepted_values: ["chrome", "opera", "safari", "edge", "firefox"],
-    help_brief: "Open a web browser after component has been compiled and server has started"
-});
+    help_brief:
+        `
+Starts Wick in Component Editing Mode.
 
-const watch = addCLIConfig<string>("run", {
-    key: "watch",
-    REQUIRES_VALUE: false,
-    help_arg_name: "browser-name",
-    help_brief: "Watch source files for changes and opened pages."
-});
-
-addCLIConfig<URI>("run", {
-    key: "run",
-    help_arg_name: "component_path",
-    help_brief: `
-Host a single component on a local server. 
-`,
-    REQUIRES_VALUE: true,
-    accepted_values: <(typeof URI)[]>[URI]
-}).callback = (
-        async (input_path, args) => {
-
-            run_logger.deactivate().activate(log_level_arg.value);
-
-            run_logger.activate(log_level_arg.value);
-
-            //const input_path = URI.resolveRelative(args.trailing_arguments.pop() ?? "./");
-            const root_path = URI.resolveRelative(input_path);
-            const config = config_arg.value;
-
-            const output_dir = <URI>URI.resolveRelative("./.wick-temp/");
-
-            if (!await output_dir.DOES_THIS_EXIST())
-                mkdirSync(output_dir + "", { recursive: true });
-
-            if (root_path) {
-
-                run_logger
-                    .debug(`Input root path:\n[ ${input_path + ""} ]`);
-
-                //Find all components
-                //Build wick and radiate files 
-                //Compile a list of entry components
-                const context = new Context();
-
-                context.assignGlobals(config?.globals ?? {});
-
-                run_logger
-                    .log(`Loading resources from:\n[ ${root_path + ""} ]`);
-
-                if (root_path.ext == "wick" || root_path.ext == "md" || root_path.ext == "html") {
-                    //Initialize component
-                    const comp = await createComponent(root_path, context);
-
-                    const server = await lantern({
-                        port: port_arg.value,
-                        cwd: root_path.dir
-                    });
-
-                    server.addDispatch(
-                        <Dispatcher>{
-                            name: "Wick Hosted Modules",
-                            MIME: "application/javascript",
-                            keys: [{ ext: ext_map.js, dir: "/pack/*" }],
-                            async respond(tools) {
-                                tools.setMIME();
-                                return tools.sendUTF8FromFile("" + URI.resolveRelative("./" + tools.url.file, output_dir));
-                            }
-                        },
-                        <Dispatcher>{
-                            name: "Wick Hosted Component",
-                            MIME: "text/html",
-                            keys: [{ ext: ext_map.none, dir: "/" }],
-                            async respond(tools) {
-                                const context = new Context();
-                                context.assignGlobals(config?.globals ?? {});
-                                const component = await createComponent(root_path, context);
-
-                                if (context.errors.length > 0) {
-                                    for (const { comp: name, error } of context.errors) {
-                                        const comp = <ComponentData>context.components.get(name);
-                                        const location = root_path.getRelativeTo(comp.location);
-                                        run_logger.warn(`
-Error encountered in component ${comp.name} (${location}):`);
-                                        run_logger.error(error);
-                                    }
-
-                                    return false;
-                                } else {
-                                    run_logger.log("Component rebuilt");
-                                }
-
-                                try {
-                                    const source_file_path = URI.resolveRelative("./pack_source.js", output_dir + "/") + "";
-                                    const pack_file_path = URI.resolveRelative("./pack.js", output_dir + "/") + "";
-                                    //Build module interface 
-                                    const root = `
-${[...context.repo].map(([name, value]) =>
-                                        `export * as ${value.hash} from "${value.url}";`
-                                    ).join("\n")}
-`;
-                                    await writeFile(source_file_path, root, { encoding: "utf8" });
-
-                                    const module_packs = [];
-
-                                    //Resolve module paths
-
-                                    for (const [, m] of context.repo) {
-                                        const url = new URI(m.url);
-
-                                        if (!url.IS_RELATIVE && !url.host) {
-                                            //Resolve the URI to a path relative to CWD
-                                            module_packs.push(m.url);
-                                            m.url = "/pack/pack.js";
-                                        }
-                                    }
-
-                                    await compile_module(source_file_path, pack_file_path);
-
-                                    const { page } = await RenderPage(component, context);
-
-                                    return tools.sendUTF8String(page);
-                                } catch (e) {
-                                    run_logger.error(e);
-                                    return false;
-                                }
-                            }
-                        },
-                        filesystem_dispatch,
-                        candle_favicon_dispatch,
-                        candle_library_dispatch,
-                        $404_dispatch,
-                    );
+This starts integrated editing systems for WYSIWYG
+development of components within a browser and HMR
+support components edited within a code editor. 
+`}
 
 
+).callback =
+    async () => {
 
-                    run_logger.log(`Component running at: [ http://localhost:${port_arg.value}/ ]`);
+        const port = port_arg.value;
 
-                    const { spawn } = await import("child_process");
+        Logger.get("lantern").deactivate()
+            .activate(log_level_arg.value);
+        Logger.get("wick").deactivate()
+            .activate(log_level_arg.value);
+        Logger.get("flame").deactivate()
+            .activate(log_level_arg.value)
+            .debug(`Using local network port [ ${port} ]`);
 
-                    (<any>({
-                        chrome: (site: string) => spawn("google-chrome", [site]),
-                        firefox: (site: string) => spawn("firefox", [site]),
-                        edge: (site: string) => spawn("msedge", [site]),
-                        opera: (site: string) => spawn("opera", [site]),
-
-                    }))?.[browser_arg.value]?.(`http://localhost:${port_arg.value}/`);
-
-                } else {
-
-                    run_logger.warn(`Unable to resolve a component from : [ ${root_path} ]`);
-                }
-            } else {
-                throw new Error("Unable to locate a component at " + input_path);
-            }
-        }
-    );
+        (await import('../workspace/workspace_dev_server.js'))
+            .initDevServer(port, config_arg.value);
+    };

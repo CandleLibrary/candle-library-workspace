@@ -1,5 +1,3 @@
-import { ObservableModel } from '@candlelib/wick';
-import { ObservableScheme } from '../../../../../wick/build/types/runtime/observable/observable_prototyped';
 import { CSSCache } from '../cache/css_cache';
 
 /**

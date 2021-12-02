@@ -6,7 +6,7 @@ import { GlowAnimation } from "./types.js";
 import { AnimGroup } from './anim_group.js';
 
 
-export const Animation = (function anim() {
+export const Animation = ((function anim() {
 
     var USE_TRANSFORM = false;
 
@@ -72,4 +72,4 @@ export const Animation = (function anim() {
     });
 
     return GlowFunction;
-})();
+})());

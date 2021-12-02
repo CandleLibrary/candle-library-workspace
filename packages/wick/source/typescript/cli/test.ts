@@ -14,7 +14,7 @@ import { ComponentData } from '../compiler/common/component.js';
 import { Context } from "../compiler/common/context.js";
 import { createComponent } from '../compiler/create_component.js';
 import { parse_component } from '../compiler/source-code-parse/parse.js';
-import { loadComponentsFromDirectory } from '../server/load_directory.js';
+import { loadComponentsFromDirectory } from '../workspace/server/load_directory.js';
 import { create_config_arg_properties } from "./config_arg_properties.js";
 
 export const test_logger = Logger.get("wick").get("test");

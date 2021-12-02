@@ -1,7 +1,7 @@
 import { createSourceMap, createSourceMapJSON } from "@candlelib/conflagrate";
 import { stmt } from "@candlelib/js";
 import { ComponentData } from '../common/component.js';
-import { WickRTComponent } from "../../runtime/component.js";
+import { WickRTComponent } from "../../client/runtime/component/component.js";
 import { CompiledComponentClass, ComponentClassStrings } from "../../types/all.js";
 import { createCompiledComponentClass } from "../ast-build/build.js";
 import { renderWithFormatting } from "../source-code-render/render.js";
@@ -12,7 +12,7 @@ const
 
     StrToBase64 = (typeof btoa != "undefined")
         ? btoa
-        : str => Buffer.from(str, 'binary').toString('base64');
+        : (str: string) => Buffer.from(str, 'binary').toString('base64');
 
 function componentStringToJS({ class_string: cls, source_map }: ComponentClassStrings, component: ComponentData, context: Context) {
     //Ensure WickRTComponent is inside closure
@@ -20,7 +20,7 @@ function componentStringToJS({ class_string: cls, source_map }: ComponentClassSt
 
     return (
         eval(
-            "c=>" + cls + (context.options.GENERATE_SOURCE_MAPS ? `\n${source_map}` : "")
+            "c=>" + cls + (context.options?.GENERATE_SOURCE_MAPS ? `\n${source_map}` : "")
         )
     )(component);
 }
@@ -46,8 +46,10 @@ export async function componentDataToJSCached(
         context.component_class.set(name, comp);
 
         for (const comp of component.local_component_names.values()) {
-            if (!context.component_class_string.has(comp) && context.components.has(comp))
+            if (!context.component_class_string.has(comp) && context.components.has(comp)) {
+                //@ts-ignore
                 await componentDataToJSCached(context.components.get(comp), context, INCLUDE_HTML, INCLUDE_CSS);
+            }
         }
     }
 
@@ -117,10 +119,10 @@ export function createClassStringObject(
     //@ts-ignore
     component_class.nodes.push(...class_info.methods.filter(m => m.nodes[2].nodes.length > 0));
 
-    if (context.options.GENERATE_SOURCE_MAPS) {
+    if (context.options?.GENERATE_SOURCE_MAPS) {
 
         const
-            map = [],
+            map: any[] = [],
             names = new Map();
 
         cl = renderWithFormatting(component_class, undefined);

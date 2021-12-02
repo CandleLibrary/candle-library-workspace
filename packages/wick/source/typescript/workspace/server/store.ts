@@ -175,10 +175,11 @@ export async function loadComponents(
     store.page_components = page_components;
     store.components = components;
 
-    for (const [component, { endpoints }] of page_components) {
-        for (const endpoint of endpoints)
-            logger.debug(`Registered endpoint [ ${endpoint} ] with component [ ${component} ]`);
-    }
+    if (page_components)
+        for (const [component, { endpoints }] of page_components) {
+            for (const endpoint of endpoints)
+                logger.debug(`Registered endpoint [ ${endpoint} ] with component [ ${component} ]`);
+        }
 }
 
 

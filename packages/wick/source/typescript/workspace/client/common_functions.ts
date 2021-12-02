@@ -6,7 +6,6 @@ import {
     PrecedenceFlags,
     tools
 } from "@candlelib/css";
-import { WickLibrary, WickRTComponent } from "@candlelib/wick";
 import { releaseCSSCache } from './cache/css_cache.js';
 import { FlameSystem, StyleData } from "./types/flame_system";
 import { EditorSelection } from "./types/selection";

@@ -1,4 +1,3 @@
-import { WickLibrary, WickRTComponent } from "@candlelib/wick";
 import * as ACTIONS from "./actions/action.js";
 import { EditorSelection } from "./types/selection.js";
 

@@ -1,12 +1,13 @@
-import { Context, WickLibrary, WickRTComponent } from "@candlelib/wick";
+
 import { Logger } from '@candlelib/log';
 import { EditorCommand } from "../../types/editor_types.js";
-import { PatchType } from "../types/patch";
+import { PatchType } from "../../types/patch";
 import ActionQueueRunner from './action_initiators.js';
 import { createSelection, getRuntimeComponentsFromName, updateActiveSelections } from './common_functions.js';
 import { EditorModel } from "./editor_model.js";
 import { Session } from '../common/session.js';
 import { EditedComponent, FlameSystem } from "./types/flame_system.js";
+import { WickLibrary } from '../../index.js';
 
 const patch_logger = Logger.get("flame").get("patcher").activate();
 export function revealEventIntercept(sys: FlameSystem) {

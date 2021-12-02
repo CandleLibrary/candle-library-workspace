@@ -18,15 +18,18 @@ export function setState(FORWARD = true, history_state: HistoryState, sys: Flame
 
         const handler = action_seal_cache.get(state.type);
 
-        let comp = null;
+        if (handler) {
 
-        if (FORWARD)
-            comp = handler.progress(sys, state, FORWARD);
-        else
-            comp = handler.regress(sys, state, FORWARD);
+            let comp = null;
 
-        for (const name of comp || [])
-            update_components.add(name);
+            if (FORWARD)
+                comp = handler.progress(sys, state, FORWARD);
+            else
+                comp = handler.regress(sys, state, FORWARD);
+
+            for (const name of comp || [])
+                update_components.add(name);
+        }
     }
 
     //** APPLY CSS CHANGES
@@ -197,10 +200,10 @@ export async function sealAction(sys: FlameSystem, crates: ObjectCrate[]) {
         /*  if (crate.css_cache) { crate.css_cache.clearChanges(sys); }; */
     }
 
-/*  setState(true, sys.pending_history_state, sys, true); */
+    /*  setState(true, sys.pending_history_state, sys, true); */
 
-/* sys.pending_history_state = null;
-} */
+    /* sys.pending_history_state = null;*/
+}
 
 /**
  *- nth-child()

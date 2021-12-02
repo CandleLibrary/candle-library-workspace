@@ -1,9 +1,8 @@
 import spark from '@candlelib/spark';
 import URI from '@candlelib/uri';
 import { promises as fsp } from "fs";
-import { ComponentData } from '../../compiler/common/component.js';
-import { Context } from '../../compiler/common/context';
 import { rt } from '../../client/runtime/global.js';
+import { ComponentData } from '../../compiler/common/component.js';
 import { EditorCommand, StyleSourceType } from '../../types/editor_types.js';
 import { Change, ChangeType } from '../../types/transition.js';
 import { CommandHandler } from '../common/session.js';

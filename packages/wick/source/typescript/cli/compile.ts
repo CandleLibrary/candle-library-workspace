@@ -6,7 +6,7 @@ import { ComponentData } from '../compiler/common/component.js';
 import { Context } from "../compiler/common/context.js";
 import { getAttribute } from "../compiler/common/html.js";
 import { compile_module } from '../workspace/server/compile_module.js';
-import { loadComponentsFromDirectory } from '../server/load_directory.js';
+import { loadComponentsFromDirectory } from '../workspace/server/load_directory.js';
 import { create_config_arg_properties } from "./config_arg_properties.js";
 import { Token } from "@candlelib/hydrocarbon";
 

@@ -14,15 +14,15 @@ import lantern, {
 import { Logger } from "@candlelib/log";
 import URI from '@candlelib/uri';
 import { WebSocketServer } from "ws";
-import { WickCompileConfig } from '../../types/config.js';
-import { rt } from '../../client/runtime/global.js';
-import { ComponentData } from '../../compiler/common/component.js';
-import { Context } from '../../compiler/common/context';
-import { createComponent } from '../../compiler/create_component.js';
-import { ServerSession } from './session.js';
-import { initializeDefualtSessionDispatchHandlers } from './session_handlers.js';
-import { loadComponents, store } from './store.js';
-import { default_radiate_hooks, default_wick_hooks, RenderPage } from './webpage.js';
+import { WickCompileConfig } from '../types/config.js';
+import { rt } from '../client/runtime/global.js';
+import { ComponentData } from '../compiler/common/component.js';
+import { Context } from '../compiler/common/context';
+import { createComponent } from '../compiler/create_component.js';
+import { ServerSession } from './server/session.js';
+import { initializeDefualtSessionDispatchHandlers } from './server/session_handlers.js';
+import { loadComponents, store } from './server/store.js';
+import { default_radiate_hooks, default_wick_hooks, RenderPage } from './server/webpage.js';
 const logger = Logger.get("flame");
 Logger.get("lantern");
 Logger.get("wick");
@@ -63,7 +63,7 @@ async function renderPage(
 
     component: ComponentData
 
-): Promise<string> {
+): Promise<string | null> {
 
     try {
         const hooks = Object.assign({},
@@ -92,15 +92,15 @@ async function renderPage(
             };
 
 
-        return (await wick.utils.RenderPage(
+        return (await RenderPage(
             component,
-            wick.rt.context,
+            rt.context,
             {
                 VERBOSE_ANNOTATION_ATTRIBUTES: true,
                 INTEGRATED_CSS: true,
             },
             hooks
-        )).page;
+        ))?.page ?? null;
 
     } catch (e) {
         logger.error(e);
@@ -128,7 +128,7 @@ const flaming_wick_dispatch = <Dispatcher>{
             }
 
             if (store.endpoints?.has(tools.dir)) {
-
+                //@ts-ignore
                 const { comp } = store.endpoints.get(tools.dir);
 
                 for (const error of comp.errors)
@@ -136,7 +136,12 @@ const flaming_wick_dispatch = <Dispatcher>{
 
                 const page = await renderPage(comp);
 
-                return tools.sendUTF8String(page);
+                if (page) {
+
+                    return tools.sendUTF8String(page);
+                }
+
+
             }
         }
 
@@ -164,9 +169,10 @@ const flame_editor_dispatch = <Dispatcher>{
             for (const error of comp.errors)
                 Logger.get("flame").get("editor-dispatch").log(error);
 
-        const { page } = await RenderPage(comp, flame_editor_presets);
+        const result = await RenderPage(comp, flame_editor_presets);
 
-        return tools.sendUTF8String(page);
+        if (result)
+            return tools.sendUTF8String(result.page);
     }
 };
 export async function initDevServer(

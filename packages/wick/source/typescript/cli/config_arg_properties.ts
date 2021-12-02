@@ -1,7 +1,7 @@
 import { Argument } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
 import { WickCompileConfig } from "../types/config";
-import { mapEndpoints } from '../server/load_directory.js';
+import { mapEndpoints } from '../workspace/server/load_directory.js';
 import { Logger } from "@candlelib/log";
 
 export const compile_logger = Logger.get("wick").get("config");
@@ -12,25 +12,25 @@ export const default_config: WickCompileConfig = {
     endpoint_mapper: mapEndpoints
 };
 
-const transformCLI = async (arg, args) => {
+const transformCLI = async (arg: any, args: any[]) => {
 
-    const input_path = URI.resolveRelative(args.trailing_arguments.slice(-1)[0]);
+    const input_path = <URI>URI.resolveRelative(args.slice(-1)[0]);
 
-    let js_path: URI = URI.resolveRelative("./wickonfig.js");
-    let json_path: URI = URI.resolveRelative("./wickonfig.json");
+    let js_path: URI = <URI>URI.resolveRelative("./wickonfig.js");
+    let json_path: URI = <URI>URI.resolveRelative("./wickonfig.json");
 
 
     if (!input_path.host && await input_path.DOES_THIS_EXIST()) {
-        js_path = URI.resolveRelative("./wickonfig.js", input_path);
-        json_path = URI.resolveRelative("./wickonfig.json", input_path);
+        js_path = <URI>URI.resolveRelative("./wickonfig.js", input_path);
+        json_path = <URI>URI.resolveRelative("./wickonfig.json", input_path);
     }
 
     if (arg instanceof URI) {
         if (arg.ext == "json")
-            json_path = URI.resolveRelative(arg);
+            json_path = <URI>URI.resolveRelative(arg);
 
         else
-            js_path = URI.resolveRelative(arg);
+            js_path = <URI>URI.resolveRelative(arg);
     }
 
     let config = default_config;

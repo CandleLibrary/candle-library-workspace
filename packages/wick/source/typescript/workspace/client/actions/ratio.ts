@@ -1,4 +1,4 @@
-import { RuntimeComponent } from "@candlelib/wick";
+
 import { FlameSystem } from "../types/flame_system.js";
 import { ObjectCrate } from "../types/object_crate.js";
 

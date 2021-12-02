@@ -13,10 +13,9 @@ import {
 } from "@candlelib/css";
 import { Logger } from '@candlelib/log';
 import URI from '@candlelib/uri';
-import { ObservableModel, ObservableWatcher } from '@candlelib/wick';
 import { Lexer } from "@candlelib/wind";
 import { EditorCommand } from '../../../types/editor_types.js';
-import { Change, ChangeType } from '../../types/transition.js';
+import { Change, ChangeType } from '../../../types/transition.js';
 import {
     getComponentNameFromElement, getElementWIndex, getRuntimeComponentsFromName, updateActiveSelections
 } from "../common_functions.js";

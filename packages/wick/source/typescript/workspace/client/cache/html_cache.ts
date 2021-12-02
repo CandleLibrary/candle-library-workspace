@@ -1,6 +1,6 @@
 /* Cache collects info about the CSS state of an element and provides methods to create new properties. */
 
-import { WickRTComponent } from "@candlelib/wick";
+
 import { FlameSystem } from "../types/flame_system";
 import { getIndexOfElementInRTInstance } from "../common_functions.js";
 

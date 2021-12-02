@@ -28,7 +28,7 @@ URI.server();
 import "./cli/test.js";
 import "./cli/create.js";
 import "./cli/compile.js";
-import "./cli/workspace.js";
+import "./cli/workspace_old.js";
 
 
 const
@@ -38,7 +38,7 @@ const
     HELP_MESSAGE = `
 ****          CANDLELIB::Wick v${pkg.version}        ****
 
-**** Candle Library's Web Component Compiler ****
+**** The Candle Library Web Component Compiler ****
 `;
 
 addCLIConfig("root", {

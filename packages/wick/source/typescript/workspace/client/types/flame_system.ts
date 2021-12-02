@@ -1,6 +1,5 @@
 import { CSSNode, CSS_Transform2D } from "@candlelib/css";
 import URI from '@candlelib/uri';
-import { WickLibrary, WickRTComponent } from "@candlelib/wick";
 import { Session } from '../../common/session.js';
 import ActionQueueRunner from '../action_initiators';
 import { EditorModel } from "../editor_model";
