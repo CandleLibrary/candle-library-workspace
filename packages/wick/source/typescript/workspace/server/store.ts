@@ -143,14 +143,28 @@ export function addTransition(transition: Transition) {
 
     const from = transition.old_id;
     const to = transition.new_id;
-    const steps = [[from, to], [to, from]];
+    const steps: [string, string, Transition][]
+        = [[from, to, transition],
+        [to, from, <Transition>{
+            changes: [],
+            new_id: transition.old_id,
+            old_id: transition.new_id,
+            new_location: transition.old_location,
+            old_location: transition.new_location,
+            new_source: transition.old_source,
+            old_source: transition.new_source,
+            patch: undefined
+        }]];
 
-    for (const [to, from] of steps) {
+    for (const [to, from, trs] of steps) {
+
         if (!store.transitions.has(from)) {
             store.transitions.set(from, new Map);
         }
 
-        store.transitions.get(from)?.set(to, transition);
+        if (!store.transitions.get(from)?.has(to)) {
+            store.transitions.get(from)?.set(to, trs);
+        }
     }
 }
 

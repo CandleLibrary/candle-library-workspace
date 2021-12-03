@@ -199,6 +199,7 @@ export async function parseComponentAST(
             }
 
         } catch (e) {
+            console.log({ e });
             HAS_ERRORS = true;
             if (e instanceof Error)
                 context.addError(component, e);

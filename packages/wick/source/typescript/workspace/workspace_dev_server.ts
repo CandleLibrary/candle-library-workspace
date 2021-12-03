@@ -132,7 +132,8 @@ const workspace_component_dispatch = <Dispatcher>{
                 const { comp } = store.endpoints.get(tools.dir);
 
                 if (comp.HAS_ERRORS) {
-                    Logger.get("wick").get(`comp error`).warn(`Component ${comp} (${comp.location}) produced compilation errors:`);
+
+                    Logger.get("wick").get(`comp error`).warn(`Component ${comp.name} (${comp.location}) produced compilation errors:`);
                     for (const error of rt.context.getErrors(comp))
                         Logger.get("wick").get(`comp error`).warn(error);
                 }

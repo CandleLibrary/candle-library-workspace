@@ -192,6 +192,8 @@ export class Context {
 
     errors: Map<string, Error[]>;
 
+    warnings: Map<string, string[]>;
+
     /**
      * Constructs a Context object that can be passed to the Wick compiler.
      * @param user_presets - An object of optional configurations.
@@ -248,6 +250,8 @@ export class Context {
 
         this.errors = new Map;
 
+        this.warnings = new Map;
+
         this.processLink = _ => _;
 
         CachedPresets = this;
@@ -280,6 +284,22 @@ export class Context {
     clearErrors(comp: ComponentData) {
         if (this.errors.has(comp.name))
             this.errors.delete(comp.name);
+    }
+
+    addWarning(comp: ComponentData, e: string) {
+        if (!this.warnings.has(comp.name))
+            this.warnings.set(comp.name, []);
+        //@ts-ignore
+        this.warnings.get(comp.name).push(e);
+    }
+
+    getWarnings(comp: ComponentData): string[] {
+        return this.warnings.get(comp.name) ?? [];
+    }
+
+    clearWarnings(comp: ComponentData) {
+        if (this.warnings.has(comp.name))
+            this.warnings.delete(comp.name);
     }
 
     private loadAPIObjects(user_presets: UserPresets | Context) {

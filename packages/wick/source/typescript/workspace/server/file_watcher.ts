@@ -68,29 +68,32 @@ export class FileWatcherHandler implements Sparky {
         const location = new URI(this.path);
 
         const comp = await createComponent(location, rt.context);
+        if (comp)
+            if (comp.HAS_ERRORS) {
 
-        if (comp.HAS_ERRORS) {
+                logger.warn(`Component ${comp.name} [${comp.location}] has the following problems: `);
 
+                for (const error of rt.context.getErrors(comp) ?? [])
+                    logger.warn(error);
 
+                rt.context.clearWarnings(comp);
+                rt.context.clearErrors(comp);
+                rt.context.components.delete(comp.name);
 
-            // Though shalt remove this offending component from 
-            // the system
-            rt.context.components.delete(comp.name);
+            } else {
 
-        } else {
+                addComponent(comp);
 
-            addComponent(comp);
+                const cmp = store.components?.get(this.path);
 
-            const cmp = store.components?.get(this.path);
+                if (cmp) {
 
-            if (cmp) {
+                    const { comp: existing } = cmp;
 
-                const { comp: existing } = cmp;
-
-                if (existing.name != comp.name) {
-                    swap_component_data(comp, existing, this.sessions);
+                    if (existing.name != comp.name) {
+                        swap_component_data(comp, existing, this.sessions);
+                    }
                 }
             }
-        }
     }
 }

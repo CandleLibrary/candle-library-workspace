@@ -2,6 +2,7 @@ import spark from '@candlelib/spark';
 import URI from '@candlelib/uri';
 import { promises as fsp } from "fs";
 import { rt } from '../../client/runtime/global.js';
+import { getCSSStringFromComponentStyle } from '../../compiler/ast-render/css.js';
 import { ComponentData } from '../../compiler/common/component.js';
 import { EditorCommand, StyleSourceType } from '../../types/editor_types.js';
 import { Change, ChangeType } from '../../types/transition.js';
@@ -37,7 +38,7 @@ async function overwriteSourceFile(source: string, location: string) {
     await fsp.writeFile(location + "", source, { encoding: "utf8" });
 }
 
-const APPLY_COMPONENT_CHANGES: CommandHandler<EditorCommand.APPLY_COMPONENT_CHANGES>
+const APPLY_COMPONENT_CHANGES: CommandHandler<ServerSession, EditorCommand.APPLY_COMPONENT_CHANGES>
     = async function ({ changes }, session: ServerSession) {
 
         const location_changes: Map<string, Change[ChangeType][]> = new Map;
@@ -62,7 +63,7 @@ const APPLY_COMPONENT_CHANGES: CommandHandler<EditorCommand.APPLY_COMPONENT_CHAN
             const change_tokens = [];
 
             for (const change of changes) {
-                let token: ChangeToken = null;
+                let token: ChangeToken | null = null;
                 if (change.type == ChangeType.CSSRule) {
                     token = await getCSSChangeToken(change);
                 } else if (change.type == ChangeType.Attribute) {
@@ -86,12 +87,18 @@ const APPLY_COMPONENT_CHANGES: CommandHandler<EditorCommand.APPLY_COMPONENT_CHAN
 
                 let comp = await getComponent(change.component);
 
-                if (
-                    !old_to_new_source.has(comp.name)
-                    &&
-                    location == comp.location + ""
-                ) {
-                    old_to_new_source.set(comp.name, new_source);
+                if (comp) {
+
+
+                    if (
+                        !old_to_new_source.has(comp.name)
+                        &&
+                        location == comp.location + ""
+                    ) {
+                        old_to_new_source.set(comp.name, new_source);
+                    }
+                } else {
+                    throw new Error("Could not retrieve component");
                 }
 
                 addObjectToMapArray(component_changes, change, change.component);
@@ -102,30 +109,36 @@ const APPLY_COMPONENT_CHANGES: CommandHandler<EditorCommand.APPLY_COMPONENT_CHAN
 
             let comp = await getComponent(old_component);
 
-            let new_source = old_to_new_source.get(old_component) ?? comp.source;
+            if (comp) {
 
-            let new_component = old_to_new_source.has(old_component)
-                ? getSourceHash(new_source)
-                : old_component;
+                let new_source = old_to_new_source.get(old_component) ?? comp.source;
 
-            if (old_to_new_source.has(old_component))
-                addBareComponent(new_component, new_source, comp.location);
+                let new_component = old_to_new_source.has(old_component)
+                    ? getSourceHash(new_source)
+                    : old_component;
 
-            alertSessionsOfComponentTransition(
-                __sessions__,
-                new_component,
-                old_component,
-                comp.location
-            );
+                if (old_to_new_source.has(old_component))
+                    addBareComponent(new_component, new_source, comp.location);
 
-            addTransition({
-                new_id: new_component,
-                old_id: old_component,
-                new_location: comp.location + "",
-                old_location: comp.location + "",
-                changes: changes,
-                source: new_source
-            });
+                alertSessionsOfComponentTransition(
+                    __sessions__,
+                    new_component,
+                    old_component,
+                    comp.location
+                );
+
+                addTransition({
+                    new_id: new_component,
+                    old_id: old_component,
+                    new_location: comp.location + "",
+                    old_location: comp.location + "",
+                    changes: changes,
+                    old_source: comp.source,
+                    new_source: new_source
+                });
+            } else {
+                throw new Error("Could not retrieve component");
+            }
         }
 
         await spark.sleep(100);
@@ -133,12 +146,12 @@ const APPLY_COMPONENT_CHANGES: CommandHandler<EditorCommand.APPLY_COMPONENT_CHAN
         return { command: EditorCommand.OK };
     };
 
-const REGISTER_CLIENT_ENDPOINT: CommandHandler<EditorCommand.REGISTER_CLIENT_ENDPOINT>
+const REGISTER_CLIENT_ENDPOINT: CommandHandler<ServerSession, EditorCommand.REGISTER_CLIENT_ENDPOINT>
     = async function (command, session: ServerSession) {
 
         const { endpoint } = command;
 
-        const { comp } = store.endpoints.get(endpoint) ?? {};
+        const { comp } = store.endpoints?.get(endpoint) ?? {};
 
         if (comp) {
             session.logger.log(`Registering client with endpoint [ ${endpoint} ]`);
@@ -150,7 +163,7 @@ const REGISTER_CLIENT_ENDPOINT: CommandHandler<EditorCommand.REGISTER_CLIENT_END
     };
 
 
-const GET_COMPONENT_SOURCE: CommandHandler<EditorCommand.GET_COMPONENT_SOURCE>
+const GET_COMPONENT_SOURCE: CommandHandler<ServerSession, EditorCommand.GET_COMPONENT_SOURCE>
     = async function (command, session: ServerSession) {
         const { component_name } = command;
 
@@ -169,7 +182,7 @@ const GET_COMPONENT_SOURCE: CommandHandler<EditorCommand.GET_COMPONENT_SOURCE>
         }
     };
 
-const GET_COMPONENT_STYLE: CommandHandler<EditorCommand.GET_COMPONENT_STYLE>
+const GET_COMPONENT_STYLE: CommandHandler<ServerSession, EditorCommand.GET_COMPONENT_STYLE>
     = async function (command, session: ServerSession) {
 
         const { component_name } = command;
@@ -201,7 +214,7 @@ const GET_COMPONENT_STYLE: CommandHandler<EditorCommand.GET_COMPONENT_STYLE>
         }
     };
 
-const GET_COMPONENT_PATCH: CommandHandler<EditorCommand.GET_COMPONENT_PATCH>
+const GET_COMPONENT_PATCH: CommandHandler<ServerSession, EditorCommand.GET_COMPONENT_PATCH>
     = async function (command: any, session: ServerSession) {
 
         // Need to receive the class data necessary to 
@@ -227,6 +240,10 @@ const GET_COMPONENT_PATCH: CommandHandler<EditorCommand.GET_COMPONENT_PATCH>
             to,
             rt.context
         );
+
+        if (!patch) {
+            throw new Error(`Patch not created for transition [${from}] to [${to}]`);
+        }
 
         return {
             command: EditorCommand.APPLY_COMPONENT_PATCH,

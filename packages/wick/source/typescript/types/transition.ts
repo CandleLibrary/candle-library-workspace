@@ -35,7 +35,13 @@ export interface Transition {
     /**
      * The source string of the old component.
      */
-    source?: string;
+    old_source?: string;
+
+    /**
+     * The source string of the new component.
+     */
+    new_source?: string;
+
 
     patch?: Patch[PatchType];
 }

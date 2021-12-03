@@ -2,8 +2,8 @@ import { Logger } from '@candlelib/log';
 import { WebSocket as WS } from "ws";
 import { Commands, CommandsMap, EditMessage, EditorCommand } from "../../types/editor_types.js";
 
-export interface CommandHandler<T extends keyof CommandsMap = Commands> {
-    (command: CommandsMap[T], session: Session): (void | CommandsMap[EditorCommand]) | Promise<(void | CommandsMap[EditorCommand])>;
+export interface CommandHandler<S extends Session, T extends keyof CommandsMap = Commands> {
+    (command: CommandsMap[T], session: S): (void | CommandsMap[EditorCommand]) | Promise<(void | CommandsMap[EditorCommand])>;
 }
 
 /**
@@ -22,13 +22,13 @@ export class Session {
      */
     ACTIVE: boolean;
 
-    awaitable_callback: Map<number, (any) => void>;
+    awaitable_callback: Map<number, (any: any) => void>;
 
     nonce: number;
 
     logger: Logger;
 
-    dispatches: Map<EditorCommand, CommandHandler>;
+    dispatches: Map<EditorCommand, CommandHandler<any>>;
 
     constructor(ws: WS | string, logger: Logger = Logger.get("flame-client").get("session").activate()) {
 
@@ -54,18 +54,18 @@ export class Session {
         this.opened = Date.now();
     }
 
-    setHandler<T extends keyof CommandsMap = Commands>(command: T, handler: CommandHandler<T>) {
+    setHandler<T extends keyof CommandsMap = Commands>(command: T, handler: CommandHandler<any, T>) {
         this.dispatches.set(command, handler);
     }
 
     set_callbacks() {
-
+        //@ts-ignore
         this.connection.addEventListener("message", this.command_handler.bind(this));
-
+        //@ts-ignore
         this.connection.addEventListener("close", this.close_handler.bind(this));
-
+        //@ts-ignore
         this.connection.addEventListener("error", this.error_handler.bind(this));
-
+        //@ts-ignore
         this.connection.addEventListener("open", this.open_handler.bind(this));
     }
 

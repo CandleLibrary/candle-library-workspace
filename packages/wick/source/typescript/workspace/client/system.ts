@@ -8,6 +8,7 @@ import { EditorModel } from "./editor_model.js";
 import { Session } from '../common/session.js';
 import { EditedComponent, FlameSystem } from "./types/flame_system.js";
 import { WickLibrary } from '../../index.js';
+import { WickRTComponent } from "../../client/runtime/component/component.js";
 
 const patch_logger = Logger.get("flame").get("patcher").activate();
 export function revealEventIntercept(sys: FlameSystem) {
@@ -19,7 +20,7 @@ export function hideEventIntercept(sys: FlameSystem) {
     const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
     event_intercept_ele.style.zIndex = "";
 }
-export var active_system: FlameSystem = null;
+export var active_system: FlameSystem | null = null;
 export function activeSys() { return active_system; }
 
 export function CreateTimeStamp(): number { return window.performance.now(); }
@@ -144,6 +145,7 @@ function initializeDefualtSessionDispatchHandlers(
     session.setHandler(EditorCommand.UPDATED_COMPONENT, (command, session) => {
         const { new_name, old_name, path } = command;
 
+
         // Identify all top_level components that need to be update. 
         const matches = getRuntimeComponentsFromName(old_name, page_wick);
 
@@ -239,16 +241,15 @@ function initializeDefualtSessionDispatchHandlers(
 
                     const { to, from, patch_scripts } = patch;
 
-
                     //Install the patches
                     const classes: typeof WickRTComponent[] = patch_scripts.map(
-                        patch => Function("wick", patch)(page_wick)
+                        patch => Function("wick", "logger", patch)(page_wick, patch_logger)
                     );
 
                     const class_ = classes[0];
                     const matches = getRuntimeComponentsFromName(from, page_wick);
 
-                    patch_logger.debug(`Replacing [ ${from} ]->[ ${to} ]. ${matches.length} component${matches.length == 1 ? "" : "s"} will be replaced.`);
+                    patch_logger.debug(`Transitioning [ ${from} ] to [ ${to} ]. ${matches.length} component${matches.length == 1 ? "" : "s"} will be replaced.`);
 
 
                     for (const match of matches) {
@@ -260,11 +261,10 @@ function initializeDefualtSessionDispatchHandlers(
                         const par_comp = match.par;
 
                         const new_component = new class_(
-                            match.model,
-                            undefined,
+                            null,
                             undefined,
                             [],
-                            undefined,
+                            "",
                             page_wick.rt.context
                         );
 
@@ -288,9 +288,8 @@ function initializeDefualtSessionDispatchHandlers(
                         match.disconnect();
                         match.destructor();
 
-                        if (removeRootComponent(match, page_wick)) {
+                        if (removeRootComponent(match, page_wick))
                             addRootComponent(new_component, page_wick);
-                        }
                     }
                 }
             }

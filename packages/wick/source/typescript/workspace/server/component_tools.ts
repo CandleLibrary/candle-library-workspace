@@ -68,8 +68,8 @@ location ${old_comp.location + ""}
         if (!transition) {
             //Create a general transition for this component 
             addTransition({
-                new_id: new_comp.name,
                 old_id: old_comp.name,
+                new_id: new_comp.name,
                 new_location: old_comp.location + "",
                 old_location: old_comp.location + "",
                 changes: [
@@ -80,7 +80,8 @@ location ${old_comp.location + ""}
                         location: old_comp.location + ""
                     }
                 ],
-                source: new_comp.source
+                old_source: old_comp.source,
+                new_source: new_comp.source,
             });
         }
 
@@ -144,6 +145,10 @@ export async function getPatch(
 
     const transition = getTransition(from, to);
 
+    if (!transition) {
+        throw new Error("Transition not defined");
+    }
+
     if (transition.patch)
         return transition.patch;
 
@@ -151,24 +156,24 @@ export async function getPatch(
 
     const changes = transition.changes;
 
-    if (changes.some(
+    if (true/* changes.some(
         g => g.type == ChangeType.General
             ||
             g.type == ChangeType.Attribute
-    )) {
+    ) */) {
         const component_from = await getComponent(from);
         const component_to = await getComponent(to);
 
-        if (component_to.code_hash != component_from.code_hash) {
+        if (!component_from) throw new Error("Could not retrieve from component");
+        if (!component_to) throw new Error("Could not retrieve to component");
 
-            patch = {
-                type: PatchType.REPLACE,
-                to: component_to.name,
-                from: component_from.name,
-                patch_scripts: await createReplacePatch(component_to, context)
-            };
-
-        } else if (component_to.ele_hash != component_from.ele_hash) {
+        if (
+            component_to.code_hash != component_from.code_hash
+            ||
+            component_to.ele_hash != component_from.ele_hash
+            ||
+            component_to.text_hash != component_from.text_hash
+        ) {
 
             patch = {
                 type: PatchType.REPLACE,
@@ -192,8 +197,8 @@ export async function getPatch(
             for (const [to, from] of elements) {
 
                 if (!("IS_BINDING" in to) && !("tag" in to) && "data" in to) {
-                    if (to.data != from.data)
-                        patches.push({ index: 0, to: to.data, from: from.data });
+                    if (to.data != from?.data)
+                        patches.push({ index: 0, to: to.data, from: from?.data ?? "" });
                 } else if (to.nodes)
                     for (let i = 0; i < to?.nodes.length; i++) {
                         elements.push([
@@ -262,10 +267,12 @@ async function createRPPatchScript(
         const WickRTComponent = wick.rt.C;
         const components= wick.rt.context.component_class;
         
-        if(!components.has(name)){
-            const class_ = ${createClassStringObject(comp, comp_class, context).class_string};
-            components.set(name, class_);
-        }
+        if(components.has(name))
+            logger.log(\`Replacing component class [${comp.name}] \`)
+        
+        const class_ = ${createClassStringObject(comp, comp_class, context).class_string};
+        
+        components.set(name, class_);
 
         return components.get(name);
         `;

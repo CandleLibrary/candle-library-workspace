@@ -475,7 +475,7 @@ export async function finalizeBindingExpression(
                         bindingIsConstStatic(binding, static_data_pack)
                     )
                 ) {
-                    const { value } = await getStaticValue(node, static_data_pack);
+                    const { value } = await getStaticValue(<any>node, static_data_pack);
 
                     new_node = convertObjectToJSNode(value);
                 } else {

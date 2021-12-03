@@ -43,8 +43,7 @@ registerFeature(
 
                     if (!alt) {
 
-                        node.pos.throw("Missing alt attribute [a11y alt attribute]");
-                        //Warn about accesibility
+                        context.addWarning(node.pos.blameDiagram("Missing alt attribute [a11y alt attribute]"));
                     }
 
                     return node;
