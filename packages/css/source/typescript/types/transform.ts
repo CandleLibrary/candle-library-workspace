@@ -394,7 +394,19 @@ export class CSS_Transform3D extends Float64Array {
         sr6 = r8 * sz;
         sr9 = r9 * sz;
 
-        return `matrix3d(${[sr1, sr4, sr7, 0, sr2, sr5, sr8, 0, sr3, sr6, sr9, 0, px, py, pz, 1].map(smooth_float).join(",")})`;
+        /*    return `matrix3d(${[
+               sr1, sr4, sr7, 0,
+               sr2, sr5, sr8, 0,
+               sr3, sr6, sr9, 0,
+               px, py, pz, 1
+           ].map(smooth_float).join(",")})`; */
+
+        return `matrix3d(${[
+            sr1, sr2, sr3, 0,
+            sr4, sr5, sr6, 0,
+            sr7, sr8, sr9, 0,
+            px, py, pz, 1
+        ].map(smooth_float).join(",")})`;
     }
 
     get px(): number {
