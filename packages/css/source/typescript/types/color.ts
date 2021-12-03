@@ -232,7 +232,7 @@ export default class CSS_Color extends Float64Array {
     }
 
 
-    static parse(l) {
+    static parse(l: Lexer) {
 
         let c = CSS_Color._fs_(l);
 
@@ -248,7 +248,7 @@ export default class CSS_Color extends Float64Array {
         return null;
     }
 
-    static _verify_(l) {
+    static _verify_(l: Lexer) {
         let c = CSS_Color._fs_(l, true);
         if (c)
             return true;
@@ -292,7 +292,7 @@ export default class CSS_Color extends Float64Array {
 
                     if (value.length == 4) {
                         const a = (num >> 8) & 0xF;
-                        out.a = a | a << 4;
+                        out.a = (a | a << 4) / 256;
                         num >>= 4;
                     }
 
@@ -308,7 +308,7 @@ export default class CSS_Color extends Float64Array {
                 } else {
 
                     if (value.length == 8) {
-                        out.a = num & 0xFF;
+                        out.a = (num & 0xFF) / 256;
                         num >>= 8;
                     }
 
@@ -395,7 +395,6 @@ export default class CSS_Color extends Float64Array {
                     if (l.ch == "%") {
                         l.next();
                     }
-
 
                     s = parseInt(l.next().tx);
 
