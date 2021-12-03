@@ -1,0 +1,1 @@
+export default <div component="default" class="default"> DEFAULT COMPONENT </div>

@@ -1,0 +1,203 @@
+import { sys } from "@api";
+import { css } from "@model:active-selecton";
+import f_input from "./input.wick";
+
+let selectors = null;
+let rule = '.test { }';
+let err = null;
+
+function onload(){
+    sys.action_bar = this;
+    
+}
+
+async function $styleHandle(css){
+    if(!css) return;
+    
+    await css.load;
+
+    selectors = css.getRuleList();
+}
+
+export default <div>
+    
+    <div class="tool-box">
+        <component class="positional-tools" model={css}>
+            <div class="basic-dimension-section">
+            <f_input class="w" label="w" model={width}/>
+            <f_input class="h" label="h" model={width}/>
+            </div>
+            <div class="basic-posiiton-section">
+            <f_input class="t" label="t" value={top}/>
+            <f_input class="b" label="b" value={bottom}/>
+            <f_input class="l" label="l" value={left}/>
+            <f_input class="r" label="r" value={right}/>
+            </div>
+        </component>
+    </div>
+
+    <div class="selector-field">
+        <div class="selected-selector">
+            <container data={selectors} filter={ m.SELECTED } limit=1 >
+                <div class="css_selector" 
+                    title={source_location}
+
+                onclick={ ()=> {
+                    this.par.model.css.setTargetRule(this.model);
+                    selectors = this.par.model.css.getRuleList(); 
+                } }>
+
+                    { SELECTED ? "!" : "" } {id}
+
+                    <style>
+                    
+                        root {
+                            font-size:12px;
+                            font-weight:bold;
+                            margin:10px auto;
+                            width:90%;
+                            color:#606060;
+                            background-color:#E7B3A2;
+                            padding:1px 10px;
+                            border-radius:2px;
+                            cursor:pointer;
+                        }
+
+                        root:hover{
+                            background-color:#E0B0A0;
+                        }
+                    </style>
+                </div>
+            </container>
+        </div>
+        <container data={selectors}>
+            <div class="css_selector" 
+
+                title={source_location}
+
+            onclick={ ()=> {
+                this.par.model.css.setTargetRule(this.model);
+                selectors = this.par.model.css.getRuleList(); } }>
+
+                { SELECTED ? "!" : "" } {id}
+
+                <style>
+                
+                    root {
+                        font-size:12px;
+                        font-weight:bold;
+                        margin:10px auto;
+                        width:90%;
+                        color:#606060;
+                        background-color:#E7B3A2;
+                        padding:1px 10px;
+                        border-radius:2px;
+                        cursor:pointer;
+                    }
+
+                    root:hover{
+                        background-color:#E0B0A0;
+                    }
+                </style>
+            </div>
+        </container>
+    </div>
+</div>;
+
+<style>
+
+    root{
+        position:absolute;
+        width:250px;
+        height:100vh;
+        z-index:8000000;
+        top:0;
+        left:0;
+        background-color: #E1E1E1;
+        border-right:1px solid #E0E0E0;
+        pointer-events:all;
+    }
+
+    .selector-field {
+        position:absolute;
+        top:10px;
+        left:10px;
+        right:10px;
+        height:50px;
+        background-color: #DBDBDB;
+        border-radius: 2px;
+        overflow:hidden;
+        transition: height 300ms;
+    }
+
+    .selected-selector {
+        height:30px;
+        color:green;
+    }
+
+    .selector-field:hover {
+        height: 60%;
+    }
+
+
+    .tool-box {
+        position:absolute;
+        bottom: 0px;
+        top:70px;
+        left:10px;
+        right:10px;
+        bottom: 10px;
+    }
+
+    .positional-tools {
+        display:flex;
+        flex-direction:row;
+        position:relative;
+        top:50px;
+        height:60px;
+    }
+
+    .basic-dimension-section{
+        position:relative;
+        width:30%;
+    }
+
+    .basic-posiiton-section{
+        position:relative;
+        width:70%;
+    }
+
+    .w {
+        position:absolute;
+        top: 10px;
+    }
+
+    .h {
+        position:absolute;
+        bottom: 10px;
+    }
+
+    .t {
+        position:absolute;
+        top: 0px;
+        left:25%;
+    }
+
+    .b {
+        position:absolute;
+        bottom: 0px;
+        left:25%;
+    }
+
+    .r {
+        position:absolute;
+        bottom:35%;
+        right:0px;
+    }
+
+    .l {
+        position:absolute;
+        bottom: 35%;
+    }
+
+</style>

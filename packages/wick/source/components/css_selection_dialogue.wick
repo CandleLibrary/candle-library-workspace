@@ -1,0 +1,35 @@
+<md element=div>
+
+<style>
+     root{
+          font-family: arial;
+          font-size: 14px;
+          padding:absolute;
+          background-color: white;
+          border-radius: 5px;
+          padding: 10px;
+          margin:10px;
+          width:fit-content;
+          color:#555;
+          box-shadow: 2px 2px  2px rgba(0,0,0,0.05);
+     }
+
+     p {
+          color:#555
+     }
+
+     h4 {
+          color:#3333BB
+     }
+</style>
+
+#### Style Target
+
+Select a component or style file <br>
+to add or update rules.
+
+- Component A (path)
+- Component B (path)
+- Component C (path)
+
+</md>
