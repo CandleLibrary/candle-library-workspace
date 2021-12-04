@@ -142,15 +142,17 @@ export async function getPatch(
     to: string,
     context: Context
 ): Promise<Patch[PatchType]> {
-
+    logger.debug("Retrieving patch");
     const transition = getTransition(from, to);
 
     if (!transition) {
         throw new Error("Transition not defined");
     }
 
-    if (transition.patch)
+    if (transition.patch) {
+        logger.debug("Using cached patch");
         return transition.patch;
+    }
 
     let patch = null;
 

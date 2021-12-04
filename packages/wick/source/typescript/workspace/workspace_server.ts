@@ -30,14 +30,14 @@ URI.server();
 
 function initializeWebSocketServer(lantern: LanternServer<any>) {
     const ws_logger = logger.get("web-socket");
-    ws_logger.log("Initializing WebSocket server");
+    ws_logger.debug("Initializing WebSocket server");
 
     const ws_server = new WebSocketServer({
         server: lantern.server
     });
 
     ws_server.on("listening", () => {
-        ws_logger.log(`WebSocket server initialized and listening at [ ${
+        ws_logger.debug(`WebSocket server initialized and listening at [ ${
             /**/
             //@ts-ignore
             (ws_server.address()?.address + ":" + ws_server.address()?.port)
@@ -45,16 +45,16 @@ function initializeWebSocketServer(lantern: LanternServer<any>) {
     });
 
     ws_server.on("connection", (connection) => {
-        ws_logger.log("Connection Made");
+        ws_logger.debug("Connection Made");
         initializeDefualtSessionDispatchHandlers(new ServerSession(connection));
     });
 
     ws_server.on("close", () => {
-        ws_logger.log("Websocket server closed");
+        ws_logger.debug("Websocket server closed");
     });
 
     ws_server.on("error", e => {
-        ws_logger.get("error").error(e);
+        ws_logger.debug("error").error(e);
     });
 }
 
@@ -197,7 +197,7 @@ export async function initDevServer(
         config
     );
 
-    logger.log(`Initializing HTTP server`);
+    logger.debug(`Initializing HTTP server`);
 
     const server = await lantern({
         port,
