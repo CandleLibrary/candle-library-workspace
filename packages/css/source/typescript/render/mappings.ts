@@ -77,7 +77,7 @@ export const css_mappings: NodeMappings<CSSNode, "type"> = <NodeMappings<CSSNode
         },
         {
             type: CSSNodeType.Media,
-            template: "@media @nodes[0] \\{ i:s @nodes...[m:n] i:e \\}",
+            template: "\\@media @nodes[0] \\{ i:s @nodes...[m:n] i:e \\}",
         },
         {
             type: CSSNodeType.Query,
