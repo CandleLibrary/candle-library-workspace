@@ -267,26 +267,20 @@ export async function processHookForClass(
         ) {
             const name = node.value;
 
-            const binding = component.root_frame.binding_variables.get(name);
+            const binding = component.root_frame.binding_variables?.get(name);
 
-            if (
-                false &&
-                ((binding.type == BINDING_VARIABLE_TYPE.CONST_INTERNAL_VARIABLE)
-                    &&
-                    (
-                        getBindingStaticResolutionType(binding, static_data_pack)
-                        &
-                        (STATIC_RESOLUTION_TYPE.WITH_MODEL | STATIC_RESOLUTION_TYPE.WITH_PARENT)
-                    ) == 0)
-                ||
-                //Template constants should always be resolved
-                binding.type == BINDING_VARIABLE_TYPE.TEMPLATE_CONSTANT
-            ) {
+            if (binding) {
 
-                const { value } = await getStaticValue(node, static_data_pack, true);
+                // Do not leak template bindings to runtime components
+                if (
+                    //Template constants should always be resolved
+                    binding.type == BINDING_VARIABLE_TYPE.TEMPLATE_CONSTANT
+                ) {
+                    const { value } = await getStaticValue(node, static_data_pack, true);
 
-                if (value)
-                    mutate(convertObjectToJSNode(value));
+                    if (value)
+                        mutate(convertObjectToJSNode(value));
+                }
             }
         }
 
