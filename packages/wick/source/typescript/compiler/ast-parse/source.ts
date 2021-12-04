@@ -1,4 +1,5 @@
 import { JSNode, JSNodeType } from "@candlelib/js";
+import { Logger } from '@candlelib/log';
 import { default as URI, default as URL } from "@candlelib/uri";
 import { BINDING_FLAG, BINDING_VARIABLE_TYPE, HTMLNode, HTMLNodeClass } from "../../types/all.js";
 import { addBindingVariable, processUndefinedBindingVariables } from "../common/binding.js";
@@ -62,7 +63,7 @@ export async function parseSource(
     if (typeof (window) == "undefined") await URL.server();
 
     let
-        source_url: URL = null,
+        source_url: URL | null = null,
         data: any = empty_obj,
         errors: Error[] = [];
 
@@ -73,7 +74,7 @@ export async function parseSource(
         //Sloppy tests to see if the input is A URL or not
         if (typeof input == "string") {
             if (
-                input.trim[0] == "."
+                input.trim()[0] == "."
                 ||
                 url.ext == "wick"
                 ||
@@ -89,9 +90,9 @@ export async function parseSource(
         }
 
         if (url.IS_RELATIVE)
-            url = URL.resolveRelative(url, root_url);
+            url = <URI>URL.resolveRelative(url, root_url);
 
-        data = await fetchASTFromRemote(url);
+        data = await fetchASTFromRemote(url, root_url);
 
         source_url = url;
 
@@ -99,7 +100,6 @@ export async function parseSource(
             throw data.errors.pop();
 
     } catch (e) {
-
 
         if (typeof input == "string") {
 
@@ -152,8 +152,6 @@ export async function parseComponentAST(
 
 ): Promise<{ IS_NEW: boolean, comp: ComponentData; }> {
 
-
-
     const
         run_tag = metrics.startRun("Parse Source AST"),
 
@@ -163,6 +161,8 @@ export async function parseComponentAST(
         metrics.endRun(run_tag);
         return { IS_NEW: false, comp: context.components.get(component.name) };
     }
+
+    let HAS_ERRORS = parse_errors.length > 0;
 
     context.components.set(component.name, component);
 
@@ -175,8 +175,8 @@ export async function parseComponentAST(
     if (parent)
         integrateParentComponentScope(parent, component);
 
-    component.errors.push(...parse_errors);
-
+    for (const e of parse_errors)
+        context.addError(component, e);
 
     if (ast)
         try {
@@ -199,13 +199,15 @@ export async function parseComponentAST(
             }
 
         } catch (e) {
-            console.error(e);
-            component.errors.push(e);
+            console.log({ e });
+            HAS_ERRORS = true;
+            if (e instanceof Error)
+                context.addError(component, e);
         }
 
     metrics.endRun(run_tag);
 
-    component.HAS_ERRORS = component.errors.length > 0;
+    component.HAS_ERRORS = HAS_ERRORS;
 
     return { IS_NEW: true, comp: component };
 }
@@ -236,6 +238,7 @@ function integrateParentComponentScope(
 
             case BINDING_VARIABLE_TYPE.MODULE_NAMESPACE_VARIABLE:
             case BINDING_VARIABLE_TYPE.TEMPLATE_CONSTANT:
+            case BINDING_VARIABLE_TYPE.TEMPLATE_DATA:
                 {
                     addBindingVariable(
                         component.root_frame,
@@ -246,7 +249,6 @@ function integrateParentComponentScope(
                         BINDING_FLAG.FROM_PRESETS | BINDING_FLAG.FROM_OUTSIDE
                     );
                 } break;
-
             case BINDING_VARIABLE_TYPE.INTERNAL_VARIABLE: {
                 addBindingVariable(
                     component.root_frame,
@@ -263,10 +265,10 @@ function integrateParentComponentScope(
     }
 }
 
-export async function fetchASTFromRemote(url: URL) {
+export async function fetchASTFromRemote(url: URL, origin: URL = URI.GLOBAL) {
 
     const
-        errors = [];
+        errors: Error[] = [];
 
     let ast = null,
         comments = null,
@@ -276,8 +278,17 @@ export async function fetchASTFromRemote(url: URL) {
     if (!url)
         throw new Error("Could not load URL: " + url + "");
 
+
     try {
         string = <string>await url.fetchText();
+    } catch (e) {
+
+        const error = new Error(`Could not retrieve component data from ${url} as requested from ${origin}`);
+
+        return { ast: null, string, resolved_url: url.toString(), errors: [], comments };
+    }
+
+    try {
 
         // HACK -- if the source data is a css file, then wrap the source string into a <style></style> element string to enable 
         // the wick parser to parser the data correctly. 
@@ -327,9 +338,10 @@ export default <tmpcomp>
             errors.push(error);
 
     } catch (e) {
-        console.log(e);
-
-        errors.push(e);
+        if (e instanceof Error)
+            errors.push(e);
+        else
+            Logger.get("wick").activate().error(e);
     }
 
     return { ast, string, resolved_url: url.toString(), errors, comments };

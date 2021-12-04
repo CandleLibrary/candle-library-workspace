@@ -1,6 +1,6 @@
 {
     "name": "@candlelib/css",
-    "version": "0.3.20",
+    "version": "0.3.22",
     "type": "module",
     "description": "CSS Parsing & Editing Tools",
     "main": "./build/css.js",
@@ -31,9 +31,9 @@
     },
     "homepage": "https://github.com/candlelibrary/css#readme",
     "dependencies": {
-        "@candlelib/conflagrate": "0.5.10",
+        "@candlelib/conflagrate": "0.5.12",
         "@candlelib/hydrocarbon": "*",
-        "@candlelib/uri": "0.3.4"
+        "@candlelib/uri": "0.3.6"
     },
     "devDependencies": {
         "@candlelib/cure": "*",

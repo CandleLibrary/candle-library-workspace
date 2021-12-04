@@ -18,7 +18,7 @@ class Stop {
 
     percentage: CSS_Percentage;
 
-    constructor(color, percentage) {
+    constructor(color: CSS_Color, percentage: CSS_Percentage) {
         this.color = color;
         this.percentage = percentage || null;
     }

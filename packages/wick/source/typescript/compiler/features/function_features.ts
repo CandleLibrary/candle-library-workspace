@@ -52,12 +52,15 @@ registerFeature(
                          */
                         const internal_method_name = {
                             "ontransitionin": "oTI",
+                            "onin": "oTI",
                             "ontrsin": "oTI",
+                            "onout": "oTO",
                             "ontransitionout": "oTO",
                             "ontrsout": "oTO",
                             "onarrange": "aRR",
                             "onload": "onload",
                             "onmount": "onload",
+
                         }[name.toLocaleLowerCase().replace("on_", "on")] ?? "";
 
                         if (internal_method_name != "") {
@@ -113,7 +116,7 @@ registerFeature(
 
 
                             //@ts-ignore
-                            call.nodes[1].nodes.push(...call_ids.map(copy).map(i => (i.type = BindingIdentifierReference, i)));
+                            call.nodes[1].nodes.push(...copy(call_ids).map(i => (i.type = BindingIdentifierReference, i)));
 
                             build_system.addIndirectHook(component, BindingFunction, [call], 0, false);
 

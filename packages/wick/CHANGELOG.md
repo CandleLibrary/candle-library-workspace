@@ -1,3 +1,21 @@
+## [v0.17.0] - 2021-12-04 
+
+- [2021-11-26]
+
+    Improved behavior of on* attributes when referencing function names defined within a components scope. This should work as expected and bind that function as a listener to events issued by that element.
+
+- [2021-11-25]
+
+    Added `on_out` and `on_in` as additional name targets for component transition functions.
+
+- [2021-11-24]
+
+    Added resolution for import paths to components that omit the file extension.  Wick will attempt to resolve a path like `./path/to/component` to one of the following: `./path/to/component.md` `./path/to/component.wick` `./path/to/component/index.md` `./path/to/component/index.wick`  If a path cannot be resolved like above, then an error will be thrown.
+
+- [2021-11-24]
+
+    Added a way to access a template components array data from another component by importing the default object of the template component component. This object is a an array of all data that was generated within the template component template initialization method.
+
 ## [v0.15.17] - 2021-10-09 
 
 - [2021-10-08] **breaking change** 

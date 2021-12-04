@@ -1,6 +1,6 @@
 {
     "name": "@candlelib/conflagrate",
-    "version": "0.5.10",
+    "version": "0.5.12",
     "description": "Node Tree Traversal Library",
     "main": "./build/conflagrate.js",
     "types": "./build/conflagrate.d.ts",
@@ -20,8 +20,8 @@
         "/LICENSE"
     ],
     "dependencies": {
-        "@candlelib/log": "0.3.2",
-        "@candlelib/uri": "0.3.4",
+        "@candlelib/log": "0.3.4",
+        "@candlelib/uri": "0.3.6",
         "@candlelib/wind": "0.5.6",
         "@candlelib/hydrocarbon": "*"
     },

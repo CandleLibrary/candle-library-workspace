@@ -10,16 +10,16 @@ function curvePoint(curve, t) {
     return point;
 }
 
-function posOnCurve(t, p1, p2, p3) {
+function posOnCurve(t: number, p1: number, p2: number, p3: number) {
     var ti = 1 - t;
     return ti * ti * p1 + 2 * ti * t * p2 + t * t * p3;
 }
 
-function splitCurve(bp, t) {
-    var left = [];
-    var right = [];
+function splitCurve(bp: QBezier, t: number) {
+    var left: number[] = [];
+    var right: number[] = [];
 
-    function drawCurve(bp, t) {
+    function drawCurve(bp: QBezier, t: number) {
         if (bp.length == 2) {
             left.push(bp[0], bp[1]);
             right.push(bp[0], bp[1]);
@@ -47,7 +47,7 @@ function splitCurve(bp, t) {
     };
 }
 
-function curveIntersections(p1, p2, p3) {
+function curveIntersections(p1: number, p2: number, p3: number) {
     var intersections = {
         a: Infinity,
         b: Infinity
@@ -234,7 +234,7 @@ export default class QBezier {
             };
         }
     */
-    rotate(angle, offset) {
+    rotate(angle: number, offset: number) {
         angle = (angle / 180) * Math.PI;
 
         var new_curve = this.toArray();

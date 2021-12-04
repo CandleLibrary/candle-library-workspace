@@ -414,7 +414,7 @@ function create_header(depth: number) {
     return `#`.repeat(Math.max(1, Math.min(6, depth)));
 }
 
-function renderMarkdownHelpDoc(command_block: CommandBlock<any>, cli_name: string = "", header_depth: number = 2) {
+function renderMarkdownHelpDoc(command_block: CommandBlock<any>, cli_name: string = "", header_depth: number = 2): string[] {
 
     const help_message = [];
 
@@ -640,12 +640,12 @@ function getArgRepresentationMD(
     return `[${str}]?`;
 }
 
-function accepted_values_to_string(v) {
+function accepted_values_to_string(v: any) {
     const map = [
-        [v => (v === Number), () => "num: [0-9]+"],
-        [v => (v === URI), () => "path: \\.*(\\/.+)+"],
-        [v => (v === String), () => "\"*\""],
-        [v => (v instanceof String), v => `${string_color}"${v}"${rst}`],
+        [(v: any) => (v === Number), () => "num: [0-9]+"],
+        [(v: any) => (v === URI), () => "path: \\.*(\\/.+)+"],
+        [(v: any) => (v === String), () => "\"*\""],
+        [(v: any) => (v instanceof String), (v: any) => `${string_color}"${v}"${rst}`],
         [_ => true, () => `${string_color}"${v.toString()}"${rst}`],
     ];
 
@@ -655,12 +655,12 @@ function accepted_values_to_string(v) {
     }
 }
 
-function accepted_values_to_stringMD(v) {
+function accepted_values_to_stringMD(v: any) {
     const map = [
-        [v => (v === Number), () => "num: [0-9]+"],
-        [v => (v === URI), () => "File Path"],
-        [v => (v === String), () => "\"*\""],
-        [v => (v instanceof String), v => `"${v}"`],
+        [(v: any) => (v === Number), () => "num: [0-9]+"],
+        [(v: any) => (v === URI), () => "File Path"],
+        [(v: any) => (v === String), () => "\"*\""],
+        [(v: any) => (v instanceof String), (v: any) => `"${v}"`],
         [_ => true, () => `<span style="color:green">${v.toString()}</span>`],
     ];
 

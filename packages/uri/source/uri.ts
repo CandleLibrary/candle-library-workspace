@@ -634,10 +634,17 @@ class URI {
     /**
      * Returns a new URI that has a relative
      * path from this URI to the goal location.
+     * 
+     * The paths for both URIs must be absolute
+     * otherwise the goal path is returned. 
      */
     getRelativeTo(goal: string | URI): URI {
 
+
         const to = new URI(goal);
+
+        if (to.IS_RELATIVE || this.IS_RELATIVE)
+            return to;
 
         /* Find root direct in source. This is
            this is the first directory with the 
@@ -648,26 +655,24 @@ class URI {
         const pathB = to.dir.split("/").filter(s => !!s && s !== ".");
         let indiceA = 0, indiceB = 0, max = pathA.length - 1;
 
-        for (let j = pathA.length - 1; j >= 0; j--) {
-            for (let i = pathB.length - 1; i >= 0; i--) {
-                let id = i + 1, jd = j + 1, length = 0;
-                while (--id >= 0 && --jd >= 0 && pathB[id] == pathA[jd]) length++;
-                if (length > 0 && length <= max && (j == 0 || to.IS_RELATIVE)) {
-                    max = length;
-                    indiceA = j + 1;
-                    indiceB = i + 1;
-                }
-            }
+        let out_path = [];
+        let i = 0;
+
+        while (i < pathB.length && pathA.length && pathB[i] == pathA[i]) {
+            i++;
         }
 
-        // If common name found then replace all elements in pathA with
-        // ../ that proceed this common name. Remove all elements in pathB
-        // that proceed common name. 
-        const new_path =
-            pathA.slice(indiceA).map(_ => "..")
-                .concat(pathB.slice(indiceB))
-                .concat(to.file).join("/");
-        to.path = new_path;
+        out_path.push(...pathA.slice(i).map(_ => ".."), ...pathB.slice(i));
+
+        let path = out_path.join("/");
+
+        if (path[0] !== ".")
+            path = "./" + path;
+
+        const file = to.file;
+
+        to.path = path + (file ? "/" + file : "");
+
 
 
         return to;

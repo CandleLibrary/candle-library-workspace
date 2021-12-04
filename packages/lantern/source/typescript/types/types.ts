@@ -13,9 +13,11 @@ export interface ToolSet {
     getCookie(cookie_name: string): string;
 
     /**
-     * Set the response MIME header to the MIME string value. The default mime type is
-     * `text/plain`
-     *
+     * Set the response MIME header to the MIME string value.  
+     * 
+     * The default MIME type will be the same as the dispatcher MIME attribute or 
+     * `text/html` if the MIME attribute is `undefined`.
+     * 
      * @param MIME {string} A MIME string
      *
      * Reference:

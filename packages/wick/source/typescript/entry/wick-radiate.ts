@@ -1,8 +1,5 @@
-import { Router } from "../radiate/radiate.js";
+import { Router } from "../client/radiate/radiate.js";
 import wick from './wick-runtime.js';
-
-//Register wick as a global variable
-globalThis["wick"] = wick;
 
 let LINKER_LOADED = false;
 
@@ -27,7 +24,7 @@ export default function radiate() {
                 //@ts-ignore
                 wick.rt.router = router;
 
-                const page = await router.loadNewPage(document.location + "", document, false);
+                const page = await router.loadNewPage(document.location + "", document);
 
                 router.loadPage(page, location.href + "", true);
 
@@ -36,10 +33,13 @@ export default function radiate() {
                 console.warn(e);
             }
 
-            document.body.hidden = false;
+            document.body.classList.toggle("radiate-init");
         }
     );
 
     return wick;
 }
 
+//Register wick as a global variable
+//@ts-ignore
+globalThis["wick"] = wick;

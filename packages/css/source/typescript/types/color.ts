@@ -1,6 +1,5 @@
 import wind, { Lexer } from "@candlelib/wind";
 import { consumeComma } from "./consume_comma.js";
-import { CSS_Gradient } from './gradient.js';
 
 /*
     BODY {color: black; background: white }
@@ -233,7 +232,7 @@ export default class CSS_Color extends Float64Array {
     }
 
 
-    static parse(l) {
+    static parse(l: Lexer) {
 
         let c = CSS_Color._fs_(l);
 
@@ -249,7 +248,7 @@ export default class CSS_Color extends Float64Array {
         return null;
     }
 
-    static _verify_(l) {
+    static _verify_(l: Lexer | string) {
         let c = CSS_Color._fs_(l, true);
         if (c)
             return true;
@@ -293,7 +292,7 @@ export default class CSS_Color extends Float64Array {
 
                     if (value.length == 4) {
                         const a = (num >> 8) & 0xF;
-                        out.a = a | a << 4;
+                        out.a = (a | a << 4) / 256;
                         num >>= 4;
                     }
 
@@ -309,7 +308,7 @@ export default class CSS_Color extends Float64Array {
                 } else {
 
                     if (value.length == 8) {
-                        out.a = num & 0xFF;
+                        out.a = (num & 0xFF) / 256;
                         num >>= 8;
                     }
 
@@ -396,7 +395,6 @@ export default class CSS_Color extends Float64Array {
                     if (l.ch == "%") {
                         l.next();
                     }
-
 
                     s = parseInt(l.next().tx);
 
@@ -518,7 +516,7 @@ export default class CSS_Color extends Float64Array {
         return this.add(to.sub(this).mult(t));
     }
 
-    copy(other) { return new CSS_Color(other); }
+    from(other: any) { return new CSS_Color(other); }
 
     toString() {
 

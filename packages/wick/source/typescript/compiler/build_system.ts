@@ -11,7 +11,8 @@ import { addIndirectHook } from './ast-build/hooks.js';
 import {
     loadHTMLHandler,
     loadHTMLHandlerInternal,
-    processBindingASTAsync as processBindingAsync
+    processBindingASTAsync as processBindingAsync,
+    processSecondaryBindingASTAsync as processSecondaryBindingAsync
 } from "./ast-parse/html.js";
 import {
     loadJSParseHandler,
@@ -192,6 +193,7 @@ const build_system = {
     addBindingReference: addBindingReference,
     addReadFlagToBindingVariable: addReadFlagToBindingVariable,
     processBindingAsync: processBindingAsync,
+    processSecondaryBindingAsync: processSecondaryBindingAsync,
     parseComponentAST: parseComponentAST,
     componentNodeSource: getComponentSourceString,
     /**
@@ -385,6 +387,7 @@ export function enableParserFeatures() {
     enable_feature_function("processJSNode", processJSNode);
     enable_feature_function("processHTMLNode", processHTMLNode);
     enable_feature_function("processBindingAsync", processBindingAsync);
+    enable_feature_function("processSecondaryBindingAsync", processSecondaryBindingAsync);
 }
 export function disableParserFeatures() {
     enable_feature_function("addDefaultValueToBindingVariable", () => { trace("addDefaultValueToBindingVariable is disabled outside of parsing contexts"); });
@@ -398,6 +401,7 @@ export function disableParserFeatures() {
     disable_feature_function("processJSNode", () => { trace("processJSNode is disabled outside of parsing contexts"); });
     disable_feature_function("processHTMLNode", () => { trace("processHTMLNode is disabled outside of parsing contexts"); });
     disable_feature_function("processBindingAsync", () => { trace("processBindingAsync is disabled outside of parsing contexts"); });
+    disable_feature_function("processSecondaryBindingAsync", () => { trace("processSecondaryBindingAsync is disabled outside of parsing contexts"); });
 }
 
 

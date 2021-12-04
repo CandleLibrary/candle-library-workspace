@@ -60,3 +60,5 @@ build/
 #HCG compiler backup files.
 *.hcgb*
 
+# Internal @candlelib folder link
+@candlelib 

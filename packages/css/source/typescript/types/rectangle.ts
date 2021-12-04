@@ -48,8 +48,11 @@ export default class CSS_Rectangle {
         this.bottom = bottom;
         this.left = left;
     }
+    from() {
+        return new CSS_Rectangle(this.top, this.right, this.bottom, this.left);
+    }
 
-    copy(other) {
+    copy() {
         return new CSS_Rectangle(this.top, this.right, this.bottom, this.left);
     }
 

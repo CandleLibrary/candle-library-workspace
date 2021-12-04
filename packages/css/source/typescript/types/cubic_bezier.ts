@@ -1,3 +1,5 @@
+import { Lexer } from '@candlelib/wind';
+
 const
 	pow = Math.pow,
 	sqrt = Math.sqrt,
@@ -6,19 +8,25 @@ const
 	PI = Math.PI;
 
 // A real-cuberoots-only function:
-function cuberoot(v) {
+function cuberoot(v: number) {
 	if (v < 0) return -pow(-v, 1 / 3);
 	return pow(v, 1 / 3);
 }
 
-function point(t, p1, p2, p3, p4) {
+function point(
+	t: number,
+	p1: number,
+	p2: number,
+	p3: number,
+	p4: number
+) {
 	var ti = 1 - t;
 	var ti2 = ti * ti;
 	var t2 = t * t;
 	return ti * ti2 * p1 + 3 * ti2 * t * p2 + t2 * 3 * ti * p3 + t2 * t * p4;
 }
 export default class CSS_Bezier extends Float64Array {
-	static parse(l) {
+	static parse(l: Lexer) {
 
 		let out = null;
 
@@ -71,22 +79,22 @@ export default class CSS_Bezier extends Float64Array {
 			if (arguments.length == 4) {
 				this[0] = 0;
 				this[1] = 0;
-				this[2] = x1;
-				this[3] = y1;
-				this[4] = x2;
-				this[5] = y2;
+				this[2] = <number>x1;
+				this[3] = <number>y1;
+				this[4] = <number>x2;
+				this[5] = <number>y2;
 				this[6] = 1;
 				this[7] = 1;
 				return;
 			}
 			this[0] = x1;
-			this[1] = y1;
-			this[2] = x2;
-			this[3] = y2;
-			this[4] = x3;
-			this[5] = y3;
-			this[6] = x4;
-			this[7] = y4;
+			this[1] = <number>y1;
+			this[2] = <number>x2;
+			this[3] = <number>y2;
+			this[4] = <number>x3;
+			this[5] = <number>y3;
+			this[6] = <number>x4;
+			this[7] = <number>y4;
 			return;
 		}
 
@@ -120,7 +128,7 @@ export default class CSS_Bezier extends Float64Array {
 	get y4(): number { return this[7]; }
 	set y4(v: number) { this[7] = v; }
 
-	add(x, y = 0) {
+	add(x: number, y: number = 0) {
 		return new CSS_Bezier(
 			this[0] + x,
 			this[1] + y,
@@ -133,11 +141,11 @@ export default class CSS_Bezier extends Float64Array {
 		);
 	}
 
-	valY(t) {
+	valY(t: number) {
 		return point(t, this[1], this[3], this[5], this[7]);
 	}
 
-	valX(t) {
+	valX(t: number) {
 		return point(t, this[0], this[2], this[4], this[6]);
 	}
 	/*
@@ -210,7 +218,7 @@ export default class CSS_Bezier extends Float64Array {
 		return this.roots(this[0], this[2], this[4], this[6]);
 	}
 
-	getYatX(x) {
+	getYatX(x: number) {
 		var x1 = this[0] - x, x2 = this[2] - x, x3 = this[4] - x, x4 = this[6] - x,
 			x2_3 = x2 * 3, x1_3 = x1 * 3, x3_3 = x3 * 3,
 			d = (-x1 + x2_3 - x3_3 + x4), di = 1 / d, i3 = 1 / 3,
@@ -255,7 +263,7 @@ export default class CSS_Bezier extends Float64Array {
 	/**
 		Given a Canvas 2D context object and scale value, strokes a cubic bezier curve.
 	*/
-	draw(ctx, s = 1) {
+	draw(ctx: CanvasRenderingContext2D, s = 1) {
 		ctx.beginPath();
 		ctx.moveTo(this[0] * s, this[1] * s);
 		ctx.bezierCurveTo(

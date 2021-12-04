@@ -3,7 +3,7 @@ import spark from "@candlelib/spark";
 
 import { htmlTemplateToString } from "../../build/compiler/ast-render/html.js";
 import { componentDataToCompiledHTML } from "../../build/compiler/ast-build/html.js";
-import { hydrateComponentElements } from "../../build/runtime/html.js";
+import { hydrateComponentElements } from "../../build/client/runtime/component/html.js";
 import { Context } from "../../build/compiler/common/context.js";
 import { parseSource } from "../../build/compiler/ast-parse/source.js";
 import { createCompiledComponentClass } from "../../build/compiler/ast-build/build.js";

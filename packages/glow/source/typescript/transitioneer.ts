@@ -1,11 +1,11 @@
-import { Animation } from "./animation.js";
+import { Animation } from "./anim.js";
 import { TransformTo } from "./transformto.js";
 import common_methods from "./common_methods.js";
 import { AnimationMethods } from "./types.js";
 
 let obj_map = new Map(), in_delay = 0;
 
-function $in(...data) {
+function $in(this: TransitionClass, ...data: any[]) {
 
     let
         seq = null,
@@ -51,7 +51,7 @@ function $in(...data) {
 }
 
 
-function $out(...data) {
+function $out(this: TransitionClass, ...data: any[]) {
     //Every time an animating component is added to the Animation stack delay and duration need to be calculated.
     //The highest in_delay value will determine how much time is afforded before the animations for the in portion are started.
     let
@@ -137,10 +137,14 @@ export class TransitionClass {
         this.out = $out.bind(this);
         this.out.addEventListener = this.addEventListener.bind(this);
         this.out.removeEventListener = this.removeEventListener.bind(this);
+        //@ts-ignore
+        this.out.easing = Animation.easing;
 
         this.in = $in.bind(this);
         this.in.addEventListener = this.addEventListener.bind(this);
         this.in.removeEventListener = this.removeEventListener.bind(this);
+        //@ts-ignore
+        this.in.easing = Animation.easing;
 
         Object.defineProperty(this.out, "out_duration", {
             get: () => this.out_duration
@@ -157,7 +161,7 @@ export class TransitionClass {
     removeEventListener() { }
 
     destroy() {
-        let removeProps = function (seq) {
+        let removeProps = function (seq: any) {
             if (!seq.DESTROYED) {
                 if (obj_map.get(seq.obj) == seq)
                     obj_map.delete(seq.obj);

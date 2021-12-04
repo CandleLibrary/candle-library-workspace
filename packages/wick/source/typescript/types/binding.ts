@@ -21,6 +21,8 @@ export enum BINDING_VARIABLE_TYPE {
     TEMPLATE_CONSTANT = 1024,
     TEMPLATE_INITIALIZER = 2048,
 
+    TEMPLATE_DATA = 8192,
+
     CURE_TEST = 4096,
     CONFIG_GLOBAL = 8192,
 
@@ -95,6 +97,7 @@ export const enum STATIC_RESOLUTION_TYPE {
     WITH_PARENT = 8,
     WITH_GLOBAL = 16,
     WITH_VARIABLE = 32,
+    WITH_TEMPLATE = 64,
     STATIC_WITH_PARENT = STATIC_RESOLUTION_TYPE.CONSTANT_STATIC | STATIC_RESOLUTION_TYPE.WITH_PARENT,
     STATIC_WITH_MODULE = STATIC_RESOLUTION_TYPE.CONSTANT_STATIC | STATIC_RESOLUTION_TYPE.WITH_MODULE,
     STATIC_WITH_MODEL = STATIC_RESOLUTION_TYPE.CONSTANT_STATIC | STATIC_RESOLUTION_TYPE.WITH_MODEL,
@@ -136,7 +139,7 @@ export interface BindingVariable {
     class_index: number;
     flags: BINDING_FLAG;
     pos: any | Lexer;
-    default_val?: JSNode;
+    default_val: JSNode | null;
     STATIC_STATE: STATIC_BINDING_STATE;
     static_resolution_type: STATIC_RESOLUTION_TYPE;
     /**
@@ -145,4 +148,6 @@ export interface BindingVariable {
     ref_count: number;
 
     source_location?: URI;
+
+    module_name?: string;
 }

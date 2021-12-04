@@ -1,0 +1,74 @@
+import { selected_ele as ele, selected_comp as comp, sc } from "@model:flame-editor";
+import {
+    willPropertyOnSelectorHaveAnEffect,
+    getMatchedRulesFromComponentData,
+    getListOfApplicableSelectors,
+    isSelectorCapableOfBeingUnique,
+    sys,
+    render
+} from "@api";
+
+var selector = "",
+    prop_name = "",
+    CAN_USE_PROP = false,
+    IS_UNIQUE = false,
+    styles = "test",
+    selectors = "selectors",
+    all_rules = "",
+    unique_selectors = "selectors";
+
+function elementUpdate() {
+    //Find all selector that apply to this component in the current state.
+
+    const applicable_selectors = getListOfApplicableSelectors(sys, comp, ele),
+
+        unique = applicable_selectors
+            .filter(sel => isSelectorCapableOfBeingUnique(comp, sel));
+
+
+    selectors = applicable_selectors
+        .map(render)
+        .join(",\n");
+
+    unique_selectors = unique
+        .map(render)
+        .join(",\n");
+
+    const unique_sel = unique[0];
+
+    if (unique_sel) {
+        selector = render(unique_sel);
+        IS_UNIQUE = true;
+        CAN_USE_PROP = willPropertyOnSelectorHaveAnEffect(sys, comp, ele, unique_sel, prop_name);
+    } else {
+        if (applicable_selectors.length > 0)
+            selector = render(applicable_selectors[0]);
+        else
+            selector = "";
+        IS_UNIQUE = false;
+        CAN_USE_PROP = false;
+    }
+};
+
+watch(elementUpdate, sc);
+
+<style>
+    .selector {color:#f1760e; font-weight:800 }
+</style>;
+
+export default <div class="tool">
+    <h4>style </h4>
+    <p>${prop_name} ${CAN_USE_PROP}</p>
+    <p> <input type="text" value="${prop_name}" /> </p>
+    <p>primary selector <br /><span class="selector">${selector}</span></p>
+    <p>unique selector  <br /><span class="selector">${IS_UNIQUE}</span></p>
+    <p>force unique selector <input type="checkbox" /></p>
+    <p>use global selector <input type="checkbox" /></p>
+    <p><button>choose primary selector</button></p>
+    <p><button>make unique selector</button></p>
+    <p><button>change unique selector</button></p>
+    <p>TODO - list applicable selectors <textarea readonly=true value=${selectors}></textarea></p>
+    <p>TODO - list applicable selectors <textarea readonly=true value=${unique_selectors}></textarea></p>
+    <p>TODO - list active styles <textarea readonly=true value=${styles}></textarea></p>
+    <p>${all_rules}</p>
+</div >;

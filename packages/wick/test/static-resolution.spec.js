@@ -1,10 +1,9 @@
 import HTML from "@candlelib/html";
-import { assert } from "console";
 import { componentDataToCompiledHTML } from "../build/compiler/ast-build/html.js";
 import { htmlTemplateToString } from "../build/compiler/ast-render/html.js";
 import { enableBuildFeatures } from "../build/compiler/build_system.js";
 import { Context } from "../build/compiler/common/context.js";
-import wick_server from "../build/entry/wick-server.js";
+import wick_server from "../build/index.js";
 import { assertTree } from "./test-tools/tools.js";
 
 await HTML.server();
@@ -44,7 +43,6 @@ export default <div>
 
     const { html } = await componentDataToCompiledHTML(component, context);
 
-
     assertTree({
         t: "div",
         c: [{ d: "55" }, {
@@ -79,7 +77,7 @@ export default <div>
 
 assert_group("Imported Container With Export Static Resolution", sequence, () => {
     const source_string = `
-import temp_comp from "./test/render/data/temp_prefill.wick"
+import temp_comp from "./render/data/temp_prefill.wick"
 
 var data = [
     {header:"test1"},
@@ -120,7 +118,6 @@ export default <div><temp_comp { data }/></div>`;
 
 assert_group("Binding expressions with static objects", sequence, () => {
     const source_string = `
-import temp_comp from "./test/render/data/temp_prefill.wick"
 
 var data = {
     headerA:"test1",

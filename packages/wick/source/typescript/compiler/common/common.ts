@@ -4,6 +4,7 @@ import { Node } from "../../types/all.js";
 import { ComponentData } from './component.js';
 import { ModuleHash } from "./hash_name.js";
 import { Context } from './context.js';
+import URI from '@candlelib/uri';
 
 /**
  * Set the givin Lexer as the pos val for each node
@@ -26,9 +27,21 @@ export function setPos<T>(node: T, pos: Lexer | any): T {
 }
 
 
-export function addPendingModuleToPresets(context: Context, from_value: string): string {
+export function addPendingModuleToContext(
+    context: Context,
+    resource_location: URI,
+    requesting_source: URI,
+): string {
+    let resolved_uri = resource_location;
+    let url = resolved_uri.toString();
 
-    const url = from_value.toString().trim();
+    if (resource_location.IS_RELATIVE) {
+        resolved_uri = <URI>URI.resolveRelative(resource_location, requesting_source);
+        url = resolved_uri.toString();
+    } else if (!resource_location.host) {
+        url = resolved_uri.path;
+    }
+
 
     const hash = ModuleHash(url);
 

@@ -10,7 +10,7 @@ export default class CSS_String extends String {
         return null;
     }
 
-    constructor(string) {
+    constructor(string: string) {
         //if(string[0] == "\"" || string[0] == "\'" || string[0] == "\'")
         //    string = string.slice(1,-1);
         super(string);

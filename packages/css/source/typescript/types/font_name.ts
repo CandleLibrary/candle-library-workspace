@@ -1,7 +1,8 @@
+import { Lexer } from '@candlelib/wind';
 import CSS_String from "./string.js";
 
 export default class CSS_FontName extends String {
-	static parse(l) {
+	static parse(l: Lexer) {
 
 		if (l.ty == l.types.str) {
 			let tx = l.tx;

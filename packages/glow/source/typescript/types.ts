@@ -13,6 +13,8 @@ export interface AnimationMethods {
 
     duration: number;
 
+    PLAY: boolean;
+
 
     /**
      * Pass `true` as first argument to cause
@@ -20,15 +22,15 @@ export interface AnimationMethods {
      * for each repeat.
      * @param SHUTTLE defaults to `true`.
      */
-    shuttle(SHUTTLE?: boolean);
+    shuttle(SHUTTLE?: boolean): void;
 
-    set(i: number);
+    set(i: number): void;
 
     /**
      * 
-     * @param i the the ratio of the animation play from 0. Accepts negative values
+     * @param i the the ratio of the animation play from 0 to 1. Accepts negative values
      */
-    step(i: number);
+    step(i: number): void;
 
     /**
      * Play the animation. 
@@ -54,13 +56,13 @@ export interface AnimationMethods {
     /**
      * Stops animation
      */
-    stop();
+    stop(): void;
 
     /**
      * Repeteadly play the animation for `count` times.
      * @param count number of times to repeat the animation.
      */
-    repeat(count: number);
+    repeat(count: number): void;
 
     /**
      * Remove object from the 
@@ -85,33 +87,33 @@ export interface AnimationMethods {
     /**
      * For internal use. 
      */
-    issueEvent(event: AnimationEvent);
+    issueEvent(event: AnimationEvent): void;
 
     /**
      * For internal use. 
      */
-    constructCommon();
+    constructCommon(): void;
     /**
      * For internal use. 
      */
-    destroyCommon();
+    destroyCommon(): void;
     /**
      * For internal use. 
      */
-    scheduledUpdate(a, t);
+    scheduledUpdate(a: number): void;
 
     /**
      * For internal use. 
      */
-    observeStop();
+    observeStop(): void;
 }
 
-type AnimSequence = AnimationMethods;
+export type AnimSequence = AnimationMethods;
 
-type AnimGroup = AnimationMethods;
+export type AnimGroup = AnimationMethods;
 
 export type AnimationInterpolation = {
-    getYatX: (number) => number,
+    getYatX: (number: number) => number,
     lerp: (to: number, t: number, from?: number) => number;
     copy?: () => AnimationInterpolation;
     toString?: () => string;
@@ -122,14 +124,17 @@ export interface GlowAnimation {
         obj: any,
     } & any)[]) => AnimSequence,
     createGroup: (...rest: AnimSequence[]) => AnimGroup,
-    linear: AnimationInterpolation,
-    ease: AnimationInterpolation,
-    ease_in: AnimationInterpolation,
-    ease_out: AnimationInterpolation,
-    ease_in_out: AnimationInterpolation,
-    overshoot: AnimationInterpolation,
-    anticipate: AnimationInterpolation,
-    custom: (x1: number, y1: number, x2: number, y2: number) => AnimationInterpolation;
+
+    easing: {
+        linear: AnimationInterpolation,
+        ease: AnimationInterpolation,
+        ease_in: AnimationInterpolation,
+        ease_out: AnimationInterpolation,
+        ease_in_out: AnimationInterpolation,
+        overshoot: AnimationInterpolation,
+        anticipate: AnimationInterpolation,
+        custom: (x1: number, y1: number, x2: number, y2: number) => AnimationInterpolation;
+    };
 
 
 }

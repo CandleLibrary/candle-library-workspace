@@ -78,7 +78,12 @@ export async function processIndirectHook(
     comp: ComponentData,
     context: Context,
     indirect_hook: IndirectHook<any>,
-    class_info: CompiledComponentClass
+    class_info: CompiledComponentClass,
+    /**
+     * If true, bindings that can be completely resolved server
+     * side will not have any JS code generated 
+     */
+    ALLOW_STATIC_REPLACE = false
 ) {
     await processHookForClass(
         indirect_hook,
@@ -87,6 +92,7 @@ export async function processIndirectHook(
         class_info,
         indirect_hook.ele_index,
         indirect_hook.ALLOW_STATIC_REPLACE
+        && ALLOW_STATIC_REPLACE
     );
 }
 
@@ -140,9 +146,9 @@ export async function processHookForClass(
 
     const
         extract = { ast: null },
-        pending_write_asts = [],
-        pending_init_asts = [],
-        pending_destroy_asts = [];
+        pending_write_asts: any[] = [],
+        pending_init_asts: any[] = [],
+        pending_destroy_asts: any[] = [];
 
     /**
      * Code that should execute when one or more 
@@ -244,7 +250,6 @@ export async function processHookForClass(
         // statically resolvable with constant values only
 
         if (
-            false &&
             ALLOW_STATIC_REPLACE &&
             getExpressionStaticResolutionType(ast, static_data_pack)
             ==
@@ -252,7 +257,6 @@ export async function processHookForClass(
         )
             continue;
 
-        // Do not leak template bindings to runtime components
 
 
         // Convert runtime static variables to prevent 
@@ -263,26 +267,20 @@ export async function processHookForClass(
         ) {
             const name = node.value;
 
-            const binding = component.root_frame.binding_variables.get(name);
+            const binding = component.root_frame.binding_variables?.get(name);
 
-            if (
-                false &&
-                ((binding.type == BINDING_VARIABLE_TYPE.CONST_INTERNAL_VARIABLE)
-                    &&
-                    (
-                        getBindingStaticResolutionType(binding, static_data_pack)
-                        &
-                        (STATIC_RESOLUTION_TYPE.WITH_MODEL | STATIC_RESOLUTION_TYPE.WITH_PARENT)
-                    ) == 0)
-                ||
-                //Template constants should always be resolved
-                binding.type == BINDING_VARIABLE_TYPE.TEMPLATE_CONSTANT
-            ) {
+            if (binding) {
 
-                const { value } = await getStaticValue(node, static_data_pack, true);
+                // Do not leak template bindings to runtime components
+                if (
+                    //Template constants should always be resolved
+                    binding.type == BINDING_VARIABLE_TYPE.TEMPLATE_CONSTANT
+                ) {
+                    const { value } = await getStaticValue(node, static_data_pack, true);
 
-                if (value)
-                    mutate(convertObjectToJSNode(value));
+                    if (value)
+                        mutate(convertObjectToJSNode(value));
+                }
             }
         }
 
@@ -426,8 +424,8 @@ function processBindingRecords(comp_info: CompiledComponentClass, comp: Componen
 
             if (IS_DIRECT_ACCESS)
                 // Direct access variables ( API & GLOBALS ) are assigned 
-                // at at component initialization start. This allows these 
-                // variables to to be accessed within the component initialization
+                // at component initialization start. This allows these 
+                // variables to be accessed within the component initialization
                 // function  
                 appendStmtToFrame(init_frame, ...getStatementsFromFrame(frame));
             else

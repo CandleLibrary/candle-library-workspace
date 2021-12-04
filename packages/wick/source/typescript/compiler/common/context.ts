@@ -1,12 +1,12 @@
-import { default as URI, default as URL } from "@candlelib/uri";
-import { ComponentClassStrings, ComponentStyle } from 'source/typescript/types/component.js';
-import { WickCompileConfig } from "source/typescript/types/config.js";
 import { JSNode } from '@candlelib/js';
+import { default as URI, default as URL } from "@candlelib/uri";
 import { PluginStore } from "../../plugin/plugin.js";
 import { WickRTComponent } from '../../runtime/component.js';
+import { ComponentClassStrings, ComponentStyle } from '../../types/component.js';
+import { WickCompileConfig } from "../../types/config.js";
 import { ComponentData } from './component.js';
 
-let CachedPresets = null;
+let CachedPresets: Context | null = null;
 
 /**
  * Default configuration options
@@ -109,9 +109,9 @@ export class Context {
 
     /**
      * An object of globally registered data models that
-     * components can reference directly when initialized
+     * components can be reference within runtime components
      */
-    models: any;
+    models: { [key: string]: any; };
 
     /**
      * URL of the initiating script.
@@ -122,7 +122,7 @@ export class Context {
      * Any objects or functions that should be accessible to all components
      * through the `"@api"` import path.
      */
-    api?: {
+    api: {
         [key: string]: {
             /**
              * The API object or default export of a module
@@ -174,7 +174,7 @@ export class Context {
 
     named_components: Map<string, ComponentData>;
 
-    processLink: (...any) => any;
+    processLink: (...any: any[]) => any;
 
     component_class_string: Map<string, ComponentClassStrings>;
 
@@ -190,8 +190,12 @@ export class Context {
     active_template_data?: any;
     static global = { get v() { return CachedPresets; }, set v(e) { } };
 
+    errors: Map<string, Error[]>;
+
+    warnings: Map<string, string[]>;
+
     /**
-     * Constructs a Presets object that can be passed to the Wick compiler.
+     * Constructs a Context object that can be passed to the Wick compiler.
      * @param user_presets - An object of optional configurations.
      */
     constructor(user_presets: UserPresets | Context = <UserPresets>{}) {
@@ -244,6 +248,10 @@ export class Context {
 
         this.active_template_data = null;
 
+        this.errors = new Map;
+
+        this.warnings = new Map;
+
         this.processLink = _ => _;
 
         CachedPresets = this;
@@ -251,7 +259,7 @@ export class Context {
 
     integrate_new_options(user_presets: UserPresets | Context) {
 
-        this.verifyOptions(user_presets);
+        this.verifyOptions(<UserPresets>user_presets);
 
         this.addRepoData(<UserPresets>user_presets);
 
@@ -262,6 +270,40 @@ export class Context {
         this.loadAPIObjects(<UserPresets>user_presets);
     }
 
+    hasErrors(): boolean { return this.errors.size > 0; }
+
+    addError(comp: ComponentData, e: Error) {
+        if (!this.errors.has(comp.name))
+            this.errors.set(comp.name, []);
+        //@ts-ignore
+        this.errors.get(comp.name).push(e);
+    }
+
+    getErrors(comp: ComponentData): Error[] {
+        return this.errors.get(comp.name) ?? [];
+    }
+
+    clearErrors(comp: ComponentData) {
+        if (this.errors.has(comp.name))
+            this.errors.delete(comp.name);
+    }
+
+    addWarning(comp: ComponentData, e: string) {
+        if (!this.warnings.has(comp.name))
+            this.warnings.set(comp.name, []);
+        //@ts-ignore
+        this.warnings.get(comp.name).push(e);
+    }
+
+    getWarnings(comp: ComponentData): string[] {
+        return this.warnings.get(comp.name) ?? [];
+    }
+
+    clearWarnings(comp: ComponentData) {
+        if (this.warnings.has(comp.name))
+            this.warnings.delete(comp.name);
+    }
+
     private loadAPIObjects(user_presets: UserPresets | Context) {
         if (user_presets.api) {
             for (const name in user_presets.api)
@@ -269,7 +311,7 @@ export class Context {
         }
     }
 
-    private verifyOptions(user_presets) {
+    private verifyOptions(user_presets: UserPresets) {
 
         const options = user_presets.options;
 
@@ -303,39 +345,46 @@ export class Context {
             });
     }
 
-    async getDataSource(uri: URI) {
+    async getDataSource(uri: URI): Promise<any> {
 
         const uri_str = uri + "";
 
-        if (uri_str in this.api)
-            return this.api[uri_str].default;
+        if (this.api) {
 
-        let value = undefined;
+            if (uri_str in this.api)
+                return this.api[uri_str].default;
 
-        if (await uri.DOES_THIS_EXIST()) {
-            switch (uri.ext) {
-                case "json":
-                    value = uri.fetchJSON();
-                    break;
+            let value = undefined;
+
+            if (await uri.DOES_THIS_EXIST()) {
+                switch (uri.ext) {
+                    case "json":
+                        value = uri.fetchJSON();
+                        break;
+                }
             }
-        }
 
-        this.api[uri_str] = {
-            hash: uri_str,
-            default: value,
-        };
+            this.api[uri_str] = {
+                hash: uri_str,
+                default: value,
+            };
+        }
 
         return this.getDataSource(uri);
     }
 
     addAPIObject(name: string, obj: any) {
-        if (name in this.api)
-            return;
 
-        this.api[name] = {
-            hash: name,
-            default: obj,
-        };
+        if (this.api) {
+
+            if (name in this.api)
+                return;
+
+            this.api[name] = {
+                hash: name,
+                default: obj,
+            };
+        }
     }
 
     /**

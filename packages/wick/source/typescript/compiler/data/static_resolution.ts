@@ -10,8 +10,8 @@ import {
     tools
 } from "@candlelib/js";
 import {
-    BindingVariable, BINDING_VARIABLE_TYPE, HTMLElementNode, HTMLNodeClass, Node, PLUGIN_TYPE,
-    STATIC_RESOLUTION_TYPE, HookTemplatePackage
+    BindingVariable, BINDING_VARIABLE_TYPE, HookTemplatePackage, HTMLElementNode, HTMLNodeClass, Node, PLUGIN_TYPE,
+    STATIC_RESOLUTION_TYPE
 } from "../../types/all.js";
 import {
     getBindingStaticResolutionType,
@@ -22,7 +22,7 @@ import {
 } from '../common/binding.js';
 import { ComponentData } from '../common/component.js';
 import { Context } from '../common/context.js';
-import { Is_Extend_Type, registerHookType } from '../common/extended_types.js';
+import { Is_Extend_Type } from '../common/extended_types.js';
 import { AttributeHook, getAttribute } from '../common/html.js';
 import { convertObjectToJSNode } from "../common/js.js";
 import { BindingIdentifierBinding, BindingIdentifierReference } from "../common/js_hook_types.js";
@@ -63,7 +63,6 @@ export async function getStaticValue(
     ASSUME_RUNTIME: boolean = false,
     ref: any = null
 ): Promise<HookTemplatePackage> {
-
     const input_args = new Map;
 
     const ast = await getStaticValueAstFromSourceAST(
@@ -110,7 +109,6 @@ export async function getStaticValue(
                 // Keep these errors quiet - An error here simply means
                 // That this expression will not be able to be resolved 
                 // statically.
-                // console.log(data_string);
                 // console.error(e);
             }
         }
@@ -147,6 +145,7 @@ export function getExpressionStaticResolutionType(
     m: Set<BindingVariable> | null = null,
     g: Set<BindingVariable> | null = null
 ): STATIC_RESOLUTION_TYPE {
+
 
 
     let type: number = STATIC_RESOLUTION_TYPE.CONSTANT_STATIC;
@@ -219,7 +218,23 @@ export async function getDefaultBindingValueAST(
 
     if (binding) {
 
-        if (binding.type == BINDING_VARIABLE_TYPE.CONSTANT_DATA_SOURCE) {
+        if (binding.type == BINDING_VARIABLE_TYPE.TEMPLATE_DATA) {
+            //Resolve the template component
+
+            const temp_comp_name = comp.local_component_names.get(binding.internal_name.toUpperCase());
+
+            if (temp_comp_name) {
+                const temp_comp = context.components.get(temp_comp_name);
+
+                if (temp_comp) {
+                    const data = context.template_data.get(temp_comp);
+
+                    if (data)
+                        return <any>convertObjectToJSNode(data);
+                }
+            }
+
+        } else if (binding.type == BINDING_VARIABLE_TYPE.CONSTANT_DATA_SOURCE) {
 
             if (binding.source_location?.ext == "json") {
 
@@ -337,6 +352,7 @@ export async function getStaticValueAstFromSourceAST(
     ASSUME_RUNTIME: boolean = false,
     node_lookups: Map<string, Node>
 ): Promise<Node | undefined> {
+
 
     const { context, self: comp } = static_data_pack;
 

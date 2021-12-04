@@ -9,7 +9,7 @@ import { compileTestsFromSourceAST } from "@candlelib/cure/build/compile/compile
 import URL from "@candlelib/uri";
 import { createGlobalsObject } from "./tools.js";
 
-const source = await (URL.resolveRelative("./test/data/function_test_spec.js")).fetchText();
+const source = await (URL.resolveRelative("./data/function_test_spec.js")).fetchText();
 const globals = createGlobalsObject();
 const { assertion_sites } = compileTestsFromSourceAST(globals, parser(source).ast, []);
 

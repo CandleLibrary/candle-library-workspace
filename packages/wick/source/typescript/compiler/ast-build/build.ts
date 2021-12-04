@@ -91,7 +91,12 @@ export async function createCompiledComponentClass(
     component: ComponentData,
     context: Context,
     INCLUDE_HTML: boolean = true,
-    INCLUDE_CSS: boolean = true
+    INCLUDE_CSS: boolean = true,
+    /**
+     * If true, bindings that can be completely resolved server
+     * side will not generate any JS code
+     */
+    ALLOW_STATIC_REPLACE: boolean = true
 ): Promise<CompiledComponentClass> {
 
     b_sys.enableBuildFeatures();
@@ -119,7 +124,7 @@ export async function createCompiledComponentClass(
             } = createLookupTables(class_info);
 
             for (const hook of component.indirect_hooks)
-                await processIndirectHook(component, context, hook, class_info);
+                await processIndirectHook(component, context, hook, class_info, ALLOW_STATIC_REPLACE);
 
             for (const frame of component.frames)
                 await processInlineHooks(component, context, frame.ast, class_info);
@@ -127,10 +132,10 @@ export async function createCompiledComponentClass(
             processResolvedHooks(component, class_info);
 
             if (class_info.lfu_table_entries.length > 0)
-                prependStmtToFrame(class_info.init_frame, nlu);
+                prependStmtToFrame(class_info.init_interface_frame, nlu);
 
             if (class_info.lfu_table_entries.length > 0)
-                prependStmtToFrame(class_info.init_frame, nluf);
+                prependStmtToFrame(class_info.init_interface_frame, nluf);
 
 
             // check for any onload frames. This will be converted to the async_init frame. Any
@@ -242,6 +247,7 @@ export function createClassInfoObject(): CompiledComponentClass {
 
     const
         binding_setup_frame = createBuildFrame("c", ""),
+        init_interface_frame = createBuildFrame("init_interfaces", "c"),
         init_frame = createBuildFrame("init", "c"),
         async_init_frame = createBuildFrame("async_init"),
         terminate_frame = createBuildFrame("terminate"),
@@ -250,13 +256,14 @@ export function createClassInfoObject(): CompiledComponentClass {
             binding_setup_frame,
             init_frame,
             async_init_frame,
+            init_interface_frame,
             terminate_frame,
             nluf_public_variables: null,
             lfu_table_entries: [],
             lu_public_variables: [],
             write_records: [],
             binding_records: new Map(),
-            method_frames: [async_init_frame, init_frame, binding_setup_frame],
+            method_frames: [async_init_frame, init_frame, init_interface_frame, binding_setup_frame],
             nlu_index: 0,
         };
 
@@ -368,7 +375,6 @@ export async function finalizeBindingExpression(
         prev: null,
         root_element: component.HTML
     };
-
     const lz = { ast: null };
     let NEED_ASYNC = false;
     for (const { node, meta: { mutate, skip } } of traverse(mutated_node, "nodes")
@@ -450,7 +456,6 @@ export async function finalizeBindingExpression(
                     skip();
                 }
 
-
                 break;
 
             case JST.AwaitExpression:
@@ -475,7 +480,7 @@ export async function finalizeBindingExpression(
                         bindingIsConstStatic(binding, static_data_pack)
                     )
                 ) {
-                    const { value } = await getStaticValue(node, static_data_pack);
+                    const { value } = await getStaticValue(<any>node, static_data_pack);
 
                     new_node = convertObjectToJSNode(value);
                 } else {
@@ -488,9 +493,11 @@ export async function finalizeBindingExpression(
 
                     new_node = setPos(id, node.pos);
 
-                    if (!component.root_frame.binding_variables.has(<string>name))
-
-                        node.pos.throw(`Undefined reference to ${name}`);
+                    if (!component.root_frame.binding_variables?.has(<string>name)) {
+                        if (node.pos)
+                            node.pos.throw(`Undefined reference to ${name}`);
+                        else throw new Error(`Undefined reference to ${name}`);
+                    }
                 }
 
                 mutate(<any>new_node);

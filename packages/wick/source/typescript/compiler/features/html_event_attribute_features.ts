@@ -1,4 +1,4 @@
-import { JSNode, JSNodeType } from '@candlelib/js';
+import { JSIdentifier, JSNode, JSNodeClass, JSNodeType } from '@candlelib/js';
 import {
     HTMLAttribute, HTMLNodeType,
     IndirectHook
@@ -42,7 +42,7 @@ registerFeature(
         );
 
 
-        build_system.registerHookHandler<IndirectHook<{ nodes: [JSNode], action: string; }>, JSNode | void>({
+        build_system.registerHookHandler<IndirectHook<[{ nodes: [JSNode], action: string; }]>, JSNode | void>({
 
             name: "On Event Hook",
 
@@ -56,22 +56,26 @@ registerFeature(
                 const
                     { action, nodes: [ast] } = node.value[0];
 
-                let arrow_argument_match = new Array(1).fill(null), s = null;
-
-                //if (getListOfUnboundArgs(ast, comp, arrow_argument_match, build_system)) {
-                //    s = parse_js_stmt(`this.al(${element_index}, "${action}", ${arrow_argument_match[0].value}=>a)`);
-                //} else {
-                s = parse_js_stmt(`this.al(${element_index}, "${action}", _=>a)`);
-                //}
-
-                if (ast.type == JSNodeType.ArrowFunction) {
-                    s.nodes[0].nodes[1].nodes[2] = ast;
+                if (ast.type & JSNodeClass.IDENTIFIER) {
+                    let ident: JSIdentifier = <any>ast;
+                    const match = sdp.self.frames.filter(f => f.method_name == ident.value)[0];
+                    if (match) {
+                        const s = parse_js_stmt(`this.al(${element_index}, "${action}", (...a)=>this.${match.method_name}(...a))`);
+                        addInit(s);
+                    }
                 } else {
-                    s.nodes[0].nodes[1].nodes[2].nodes[1] = ast;
+                    const s = parse_js_stmt(`this.al(${element_index}, "${action}", _=>a)`);
+
+                    if (ast.type == JSNodeType.ArrowFunction) {
+                        //@ts-ignore
+                        s.nodes[0].nodes[1].nodes[2] = ast;
+                    } else {
+                        //@ts-ignore
+                        s.nodes[0].nodes[1].nodes[2].nodes[1] = ast;
+                    }
+
+                    addInit(s);
                 }
-
-
-                addInit(s);
             },
 
             buildHTML: (node, sdp) => null

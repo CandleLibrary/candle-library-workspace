@@ -13,6 +13,8 @@ export interface CompiledComponentClass {
      */
     init_frame: FunctionFrame;
     terminate_frame: FunctionFrame;
+
+    init_interface_frame: FunctionFrame;
     /**
      * Statements added to the component's init_async function
      */

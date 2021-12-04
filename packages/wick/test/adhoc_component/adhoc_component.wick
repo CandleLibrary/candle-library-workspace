@@ -5,6 +5,7 @@
  * of a container. These can be used to associate an element with a new 
  * scope that can then be assigned a model independent of the host component.
  */
+
 import { test, sub } from "@model";
 
 export default <div>

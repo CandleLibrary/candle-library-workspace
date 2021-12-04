@@ -7,7 +7,7 @@ assert_group("Animates numeric properties of JS objects", sequence, () => {
 
     let obj = { prop: 0 };
 
-    let animation = glow({ obj: obj, prop: [{ v: 1000, dur: 200, easing: glow.linear }] });
+    let animation = glow({ obj: obj, prop: [{ val: 1000, tic: 200, eas: glow.linear }] });
 
     animation.play();
 
@@ -23,15 +23,14 @@ assert_group("Animates numeric properties of JS objects", sequence, () => {
 
     assert(Math.floor(obj.prop) >= 900);
 
-
 });
 assert_group("Animates non-numeric properties of JS objects using stepped interpolation", () => {
     let obj = { prop: "Thom" };
-    let animation = glow({ obj, prop: [{ v: "Jake", dur: 50 }, { v: "Thumb", dur: 100 }, { v: obj, dur: 150 }] });
+    let animation = glow({ obj, prop: [{ val: "Jake", tic: 50 }, { val: "Thumb", tic: 150 }, { val: obj, tic: 250 }] });
 
     animation.play();
 
-    await spark.sleep(52);
+    await spark.sleep(60);
 
     assert(obj.prop == "Jake");
 

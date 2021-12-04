@@ -213,9 +213,6 @@ export class BasicReporter implements Reporter {
     }
     async start(pending_tests: Test[], global: Globals, terminal: CLITextDraw) {
 
-        //Each test is its own suite.
-        await this.renderToTerminal(["starting"], terminal);
-
         terminal.CLEAR_SCREEN = true;
 
         this.root_suite = createSuite("/");

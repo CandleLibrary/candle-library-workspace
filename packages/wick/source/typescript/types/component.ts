@@ -1,7 +1,7 @@
 import { CSSNode } from "@candlelib/css";
 import URI from "@candlelib/uri";
 import { ComponentData } from '../compiler/common/component';
-import { WickRTComponent } from "../runtime/component.js";
+import { WickRTComponent } from "../client/runtime/component/component.js";
 import { Comment } from "./comment.js";
 import { WickComponentErrorStore } from "./errors.js";
 import { FunctionFrame } from "./function_frame";

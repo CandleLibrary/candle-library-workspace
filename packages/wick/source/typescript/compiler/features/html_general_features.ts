@@ -1,8 +1,8 @@
 
-import { JSNode, stmt } from '@candlelib/js';
+import { JSNode, JSNodeType, stmt } from '@candlelib/js';
 import {
     BINDING_VARIABLE_TYPE,
-    HTMLAttribute, HTMLElementNode, HTMLNode, HTMLNodeType
+    HTMLAttribute, HTMLElementNode, HTMLNode, HTMLNodeType, WickBindingNode, HTMLBindingAttribute
 } from "../../types/all.js";
 import { getAttributeValue, hasAttribute } from '../common/html.js';
 import { registerFeature } from './../build_system.js';
@@ -12,6 +12,10 @@ registerFeature(
 
     "CandleLibrary WICK: General HTML Features",
     (build_system) => {
+
+        const AttributeHook = build_system.registerHookType("attribute-hook", JSNodeType.StringLiteral);
+
+
 
         /*[API] ##########################################################
         * 
@@ -253,9 +257,13 @@ registerFeature(
                                 name: "expat",
                                 value: ComponentHash(index + comp.name)
                             });
-                            console.log("AASDADSAsd");
+
                             if (hasAttribute("radiate_element", node)) {
-                                console.log("AASDADSAsd");
+                                new_node.attributes.push({
+                                    type: HTMLNodeType.HTMLAttribute,
+                                    name: "radiate",
+                                    value: component.name,
+                                });
                             }
                             /*
                             */
@@ -270,68 +278,6 @@ registerFeature(
             }, HTMLNodeType.HTML_Element
         );
 
-
-
-        /*  /** ##########################################################
-          *  Radiate Element
-          * /
-         build_system.registerHTMLParserHandler<HTMLElementNode, HTMLElementNode>(
-             {
-                 priority: -998,
- 
-                 async prepareHTMLNode(node, host_node, host_element, index, skip, component, context) {
- 
- 
-                     if (node.tag?.toLocaleLowerCase().replace(/_/g, "-") == "radiate-element") {
- 
-                         node.tag = "div";
- 
-                         const { comp } = await build_system.parseComponentAST(
-                             Object.assign({}, node, {
-                                 attribute: node.attributes?.slice(),
- 
-                             }),
-                             node.pos.slice(),
-                             component.location,
-                             context,
-                             component
-                         );
- 
-                         if (comp) {
- 
-                             if (!node.attributes)
-                                 node.attributes = [];
- 
-                             node.nodes = [];
- 
-                             node.child_id = component.children.push(1) - 1;
- 
-                             node.component = comp;
- 
-                             node.component_name = node.component.name;
- 
-                             node.attributes.push({
-                                 type: HTMLNodeType.HTMLAttribute,
-                                 name: "radiate",
-                                 value: component.name,
-                             }, {
-                                 type: HTMLNodeType.HTMLAttribute,
-                                 name: "expat",
-                                 value: ComponentHash(index + comp.name)
-                             });
- 
-                             component.local_component_names.set(comp?.name, comp?.name);
- 
-                             skip();
-                         }
- 
-                         return node;
-                     }
-                 }
- 
-             }, HTMLNodeType.HTML_Element
-         ); */
-
         /** ##########################################################
          * Imported Components 
          */
@@ -339,7 +285,7 @@ registerFeature(
             {
                 priority: -99999,
 
-                async prepareHTMLNode(node, host_node, host_element, index, skip, component, context) {
+                async prepareHTMLNode(node: HTMLElementNode, host_node, host_element, index, skip, component, context) {
 
                     if (component.local_component_names.has(node.tag ?? "")) {
 
@@ -353,29 +299,67 @@ registerFeature(
 
                         if (comp) {
 
+                            if (comp.TEMPLATE)
+                                node.pos.throw("Cannot use a template component as a regular component instance.");
+
                             node.component_name = node.component?.name;
 
                             node.child_component_index = node.child_id;
 
-                            //@ts-ignore
-                            node.attributes.push({
-                                type: HTMLNodeType.HTMLAttribute,
-                                name: "expat",
-                                value: ComponentHash(index + comp.name + name)
-                            });
+                            if (node.attributes) {
+                                const new_attributes: HTMLAttribute[] = [];
+
+                                const external_props = new Set();
+
+                                //Upgrade every non-binding attrib to be a binding
+                                for (const attrib of node.attributes) {
+
+                                    external_props.add(attrib.name);
+
+                                    if (!attrib.IS_BINDING) {
+
+                                        const new_attrib = <HTMLBindingAttribute>{
+                                            type: HTMLNodeType.HTMLAttribute,
+                                            name: attrib.name,
+                                            value: <WickBindingNode>{
+                                                type: HTMLNodeType.WickBinding,
+                                                primary_ast: build_system.js.expr(`"${attrib.value.toString().replace(/\"/g, "\\\"")}"`),
+                                                IS_BINDING: true
+                                            },
+                                            IS_BINDING: true
+                                        };
+                                        new_attributes.push(new_attrib);
+                                    } else {
+                                        new_attributes.push(attrib);
+                                    }
+                                    for (const hook of comp.indirect_hooks) {
+                                        if (hook.type == AttributeHook && external_props.has(hook.value[0].name)) {
+                                            hook.EXTERNAL = true;
+                                        }
+                                    }
+                                }
 
 
-                            if (hasAttribute("radiate_element", node)) {
+                                node.attributes = new_attributes;
+
+                                //@ts-ignore
                                 node.attributes.push({
                                     type: HTMLNodeType.HTMLAttribute,
-                                    name: "radiate",
-                                    value: component.name,
+                                    name: "expat",
+                                    value: ComponentHash(index + comp.name + name)
                                 });
+
+
+                                if (hasAttribute("radiate_element", node)) {
+                                    node.attributes.push({
+                                        type: HTMLNodeType.HTMLAttribute,
+                                        name: "radiate",
+                                        value: component.name,
+                                    });
+                                }
                             }
 
                         }
-
-                        node.tag = "div";
 
                         return node;
                     }

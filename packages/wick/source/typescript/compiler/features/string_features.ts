@@ -34,7 +34,7 @@ registerFeature(
 
             const css_selector = string_node.value.slice(1); //remove "@"
 
-            let html_node: HTMLNode = null, expression = null;
+            let html_node: null | HTMLNode = null, expression = null;
             try {
 
 
@@ -56,7 +56,7 @@ registerFeature(
                         break;
 
                     case "ctx2d":
-                        console.log(component.HTML);
+
                         html_node = build_system.css.matchAll("canvas", component.HTML)[0];
                         if (html_node)
                             expression = build_system.js.expr(`$$ele${html_node.id}.getContext("2d")`);

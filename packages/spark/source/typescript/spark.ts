@@ -6,7 +6,7 @@
  * Depending on the platform, caller will either map to requestAnimationFrame or it will be a setTimout.
  */
 const caller = (typeof (window) == "object" && window?.requestAnimationFrame) ? window.requestAnimationFrame : f => {
-    setTimeout(f, 5);
+    setTimeout(() => f(perf.now()), 5);
 };
 
 const perf = (typeof (performance) == "undefined") ? { now: () => Date.now() } : performance;
@@ -22,7 +22,7 @@ interface Sparky {
      * @param step_ratio 
      * @param diff 
      */
-    scheduledUpdate(step_ratio: number, diff: number);
+    scheduledUpdate(step_ratio: number, diff: number): void;
     /**
      * Used internally by Spark. Stores scheduling information.
      * 
@@ -141,14 +141,14 @@ class Spark {
     /**
      * Called by the caller function every tick. Calls .update on any object queued for an update. 
      */
-    update() {
+    update(timestamp: number) {
         this.SCHEDULE_PENDING = false;
 
         this.ACTIVE_UPDATE = true;
 
         const
             uq = this.update_queue,
-            time = perf.now() | 0,
+            time = timestamp,
             diff = Math.ceil(time - this.frame_time) | 1,
             step_ratio = (diff * 0.06); //  step_ratio of 1 = 16.66666666 or 1000 / 60 for 60 FPS
 
@@ -186,7 +186,8 @@ class Spark {
             try {
                 o.scheduledUpdate(step_ratio, diff);
             } catch (e) {
-                this.handleError(e);
+                if (e instanceof Error)
+                    this.handleError(e);
             }
         }
 

@@ -1,6 +1,6 @@
 import { bidirectionalTraverse, TraversedNode, TraverseState } from "@candlelib/conflagrate";
 import { exp, JSExpressionClass, JSNode, JSNodeType } from "@candlelib/js";
-import { rt } from "../../runtime/global.js";
+import { rt } from "../../client/runtime/global.js";
 import { TemplateHTMLNode } from "../../types/all.js";
 import { componentDataToCompiledHTML } from "../ast-build/html.js";
 import * as b_sys from "../build_system.js";
@@ -123,10 +123,11 @@ export function htmlTemplateToString(html: TemplateHTMLNode, html_indent: number
 function addAttributesToString(node: TraversedNode<TemplateHTMLNode>, string: string) {
 
     for (const [key, val] of node.attributes?.entries() ?? [])
-        if (val === "")
+        if (!val || val.length == 0)
             string += ` ${key}`;
         else
-            string += ` ${key}="${val}"`;
+            string += ` ${key}="${val.join(" ")}"`;
+
     return string;
 }
 

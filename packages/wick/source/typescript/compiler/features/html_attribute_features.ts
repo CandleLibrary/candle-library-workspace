@@ -67,8 +67,7 @@ registerFeature(
 
                 const { ast, child_comp_id } = node.value[0];
 
-                const exp = build_system.js.stmt(`this.ch[${child_comp_id}]
-                            .setModel();`);
+                const exp = build_system.js.stmt(`this.ch[${child_comp_id}].setModel();`);
 
                 exp.nodes[0].nodes[1].nodes[0] = ast;
 
@@ -153,7 +152,6 @@ registerFeature(
 
                 const ast = hook.value[0].nodes[0];
 
-
                 if (
                     build_system.getExpressionStaticResolutionType(ast, sdp)
                     !==
@@ -164,7 +162,7 @@ registerFeature(
 
                     if (value)
                         return <any>{
-                            html: { attributes: [[hook.value[0].name, value]] }
+                            html: { attributes: [[hook.value[0]?.name, [value]]] }
 
                         };
                 }

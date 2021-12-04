@@ -1,11 +1,11 @@
-import wind from "@candlelib/wind";
+import wind, { Lexer } from "@candlelib/wind";
 
 import CSS_Percentage from "./percentage.js";
 import CSS_Number from "./number.js";
 
 export default class CSS_Length extends Number {
 
-    static parse(l) {
+    static parse(l: Lexer ) {
         let tx = l.tx,
             pky = l.pk.ty;
 
@@ -105,12 +105,16 @@ export default class CSS_Length extends Number {
         return this.toString();
     }
 
-    lerp(to, t) {
+    lerp(to: CSS_Length, t: number) {
         return new CSS_Length(Number(this) + (to - Number(this)) * t, this.unit);
     }
 
-    copy(other) {
+    from(other: number | CSS_Length = this) {
         return new CSS_Length(other, this.unit);
+    }
+
+    copy() {
+        return new CSS_Length(this, this.unit);
     }
 
     set unit(t) { }

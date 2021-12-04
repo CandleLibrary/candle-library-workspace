@@ -54,3 +54,23 @@ export async function processBindingASTAsync(node: string | WickBindingNode, com
 
     return processNodeAsync(ast, component.root_frame, component, context);
 }
+
+
+/**
+ * Process a wick `{ expression }` binding node.
+ * @param node 
+ * @param component 
+ * @param context 
+ * @returns 
+ */
+export async function processSecondaryBindingASTAsync(node: string | WickBindingNode, component: ComponentData, context: Context) {
+    let ast = null;
+
+    if (typeof node == "object" && node?.secondary_ast) {
+        ast = node.secondary_ast;
+
+        return processNodeAsync(ast, component.root_frame, component, context);
+    }
+
+    return null;
+}

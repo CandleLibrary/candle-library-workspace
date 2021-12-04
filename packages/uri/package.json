@@ -1,6 +1,6 @@
 {
     "name": "@candlelib/uri",
-    "version": "0.3.4",
+    "version": "0.3.6",
     "description": "URL/URI parser and basic request handler.",
     "main": "./build/uri.js",
     "types": "./build/uri.d.ts",
