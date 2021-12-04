@@ -25,7 +25,7 @@ import { createGlobalsObject } from "./tools.js";
 
 
 //*
-const source = await (URL.resolveRelative("./test/data/standard_test_spec.js")).fetchText();
+const source = await (URL.resolveRelative("./data/standard_test_spec.js")).fetchText();
 
 const globals = createGlobalsObject();
 
@@ -59,7 +59,7 @@ assert(assertion_sites[8].static_name == "8 Failed strict equality");
 assert(assertion_sites[9].static_name == "9 Passing equality");
 assert(assertion_sites[10].static_name == "10 The NullReport update method should return true");
 
-const source2 = await (URL.resolveRelative("./test/data/nested_dependencies_test_spec.js")).fetchText();
+const source2 = await (URL.resolveRelative("./data/nested_dependencies_test_spec.js")).fetchText();
 
 assertion_sites = compileTestsFromSourceAST(globals, parser(source2).ast, []).assertion_sites;
 

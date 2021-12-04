@@ -10,7 +10,7 @@ import { compileTestsFromSourceAST } from "../build/compile/compile_statements.j
 import URL from "@candlelib/uri";
 import { createGlobalsObject } from "./tools.js";
 
-const source = await (URL.resolveRelative("./test/data/nested_assert_groups.js")).fetchText();
+const source = await (URL.resolveRelative("./data/nested_assert_groups.js")).fetchText();
 const globals = createGlobalsObject();
 const { assertion_sites } = compileTestsFromSourceAST(globals, parser(source).ast, []);
 

@@ -4,7 +4,7 @@ import { createTestsFromStringSource, createTestSuiteFromSource, getSuiteTestOut
 
 await URL.server();
 
-const source = await (URL.resolveRelative("./test/data/dynamic_test.js")).fetchText();
+const source = await (URL.resolveRelative("./data/dynamic_test.js")).fetchText();
 const assertion_sites = createTestsFromStringSource(source);
 
 assert("Rigs object is not undefined", assertion_sites !== undefined);

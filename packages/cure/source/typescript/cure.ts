@@ -32,6 +32,8 @@ import { Outcome } from "./types/globals.js";
 
 import { createTestFrame } from "./utilities/create_test_frame.js";
 
+export { BrowserRunner } from "./test_running/runners/browser_runner.js";
+
 import { BasicReporter } from "./reporting/basic_reporter.js";
 import { NullReporter } from "./reporting/null_reporter.js";
 export { createTestSuite } from "./utilities/create_test_suite.js";
