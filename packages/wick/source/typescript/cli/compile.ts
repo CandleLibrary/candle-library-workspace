@@ -1,15 +1,14 @@
 import { Logger } from "@candlelib/log";
-import { addCLIConfig, getPackageJsonObject } from "@candlelib/paraffin";
+import { addCLIConfig, args as para_args, getPackageJsonObject } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
-import { default_radiate_hooks, default_wick_hooks, RenderPage } from '../workspace/server/webpage.js';
+import { mkdirSync, promises as fsp } from 'fs';
 import { ComponentData } from '../compiler/common/component.js';
 import { Context } from "../compiler/common/context.js";
-import { getAttribute } from "../compiler/common/html.js";
+import { init_build_system } from '../compiler/init_build_system.js';
 import { compile_module } from '../workspace/server/compile_module.js';
 import { loadComponentsFromDirectory } from '../workspace/server/load_directory.js';
+import { default_radiate_hooks, default_wick_hooks, RenderPage } from '../workspace/server/webpage.js';
 import { create_config_arg_properties } from "./config_arg_properties.js";
-import { Token } from "@candlelib/hydrocarbon";
-
 const compile_logger = Logger.get("wick").get("compile").activate();
 
 const
@@ -18,7 +17,7 @@ const
         = await getPackageJsonObject(new URI(import.meta.url).path), ;
 
 const config_arg = addCLIConfig("compile", create_config_arg_properties());
-
+const log_level_arg = addCLIConfig("compile", para_args.log_level_properties);
 const output_arg = addCLIConfig<URI, URI>("compile", {
     key: "output",
     REQUIRES_VALUE: true,
@@ -32,13 +31,20 @@ placed. Defaults to $CWD/www.
 
 
 const lantern_arg = addCLIConfig("compile", {
-    key: "lantern",
+    key: "serve",
     REQUIRES_VALUE: false,
     default: false,
     transform: (arg) => true,
-    help_brief: `
-Start a Lantern dev server after a successful app compilation  
-`
+    help_brief: `Start a preview server after a successful app compilation`
+});
+
+const target_arg = addCLIConfig("compile", {
+    key: "target",
+    REQUIRES_VALUE: false,
+    default: "github",
+    accepted_values: ["github", "netlify"],
+    transform: (arg) => true,
+    help_brief: `The static server provider that the build should be optimized for`
 });
 
 
@@ -54,8 +60,12 @@ static site that can be optionally hydrated with associated support scripts.`
     }
 ).callback = (
         async (arg, args) => {
+            Logger.get("wick").deactivate().activate(log_level_arg.value);
+
+            await init_build_system();
+
             const input_path = <URI>URI.resolveRelative(args.trailing_arguments.pop() ?? "./");
-            const root_directory = URI.resolveRelative(input_path);
+            const root_directory = <URI>URI.resolveRelative(input_path);
             const output_directory = output_arg.value;
             const config = config_arg.value;
 
@@ -81,109 +91,131 @@ static site that can be optionally hydrated with associated support scripts.`
                     root_directory, context, config.endpoint_mapper
                 );
 
+            if (!page_components) {
+                compile_logger.warn("Unable to locate suitable page components");
+                return;
+            }
+
             compile_logger
                 .rewrite_log(`Loaded ${pluralize(context.components.size, "component")} from        [ ${root_directory + ""} ]`);
 
-            let USE_WICK_RUNTIME = false;
             let USE_RADIATE_RUNTIME = false;
-            let USE_GLOW = false;
 
+            let pending_resources: Promise<any>[] = [];
             //Update resources
-            for (const [, component] of context.components) {
-                for (const { uri, type, node } of component.URI) {
-                    let local_uri = new URI(uri);
-                    if (!local_uri.IS_RELATIVE) {
-                        local_uri = new URI(root_directory + local_uri.path);
-                    } else {
-                        local_uri = URI.resolveRelative(local_uri, component.location);
-                    }
+            pending_resources.push(...([
+                "image", "images", "img", "imgs", "pics", "pictures",
+            ].map(async source_dir => {
 
-                    if (local_uri.host) continue;
+                const source = URI.resolveRelative("./" + source_dir + "/", root_directory + "/");
 
-                    const file_name = local_uri.file;
+                if (source && await source.DOES_THIS_EXIST()) {
+                    const destination = URI.resolveRelative("./" + source_dir + "/", output_directory);
+                    //Copy files from this location to the output destination.
+                    await fsp.cp(source + "", destination + "", {
+                        force: true,
+                        preserveTimestamps: true,
+                        recursive: true
+                    });
+                }
 
-                    if (type == "src") {
-                        const attribute = getAttribute("src", node);
-                        const new_location = "/img/" + file_name;
-                        const new_output_location = new URI(output_directory + "img/" + file_name);
-                        if (await local_uri.DOES_THIS_EXIST()) {
-                            const fsp = (await import("fs")).promises;
-                            attribute.value = new_location;
-                            //Move the file to the out directory 
-                            const source = Buffer.from(await local_uri.fetchBuffer());
-                            await fsp.mkdir(new_output_location.dir, { recursive: true });
-                            await fsp.writeFile(new_output_location.path, source);
+            })));
 
 
-                        } else {
-                            const error = (<Token>attribute.pos).createError(`File ${local_uri} referenced by ${component.location} does not exist`, component.location + "");
-                            compile_logger.get("Images").warn(error.message);
-                        }
-                    }
+            //Build module interface 
+            const exports = [...context.repo].map(([name, value]) => {
+
+                return `export * as ${value.hash} from "${value.url}"`;
+            });
+
+            for (const [, m] of context.repo) {
+
+                const url = new URI(m.url);
+
+                if (!url.IS_RELATIVE && !url.host) {
+                    //Resolve the URI to a path relative to CWD
+                    m.url = "./src/pack.js";
                 }
             }
 
+
+            let pending_page_components: Promise<any>[] = [];
 
             for (const [component_name, { endpoints: ep }] of page_components) {
 
                 for (const endpoint of ep) {
 
-                    const { comp: component } = components.get(component_name) ?? {};
+                    const { comp: component } = components?.get(component_name) ?? {};
 
                     if (component?.TEMPLATE) {
 
-                        const { comp, template_data } = endpoints.get(endpoint) ?? {};
+                        pending_page_components.push(new Promise(async e => {
+                            const { comp, template_data } = endpoints?.get(endpoint) ?? {};
 
-                        context.active_template_data = template_data;
+                            context.active_template_data = template_data;
 
-                        const { USE_RADIATE_RUNTIME: A, USE_WICK_RUNTIME: B } = await writeEndpoint(component, context, endpoint, output_directory);
+                            const { USE_RADIATE_RUNTIME: A, USE_WICK_RUNTIME: B }
+                                = await writeEndpoint(component, context, endpoint, output_directory);
 
-                        context.active_template_data = null;
+                            context.active_template_data = null;
 
-                        USE_RADIATE_RUNTIME ||= A;
-                        USE_WICK_RUNTIME ||= B;
+                            USE_RADIATE_RUNTIME ||= A;
+                        }));
 
-                    }
-                    else {
+                    } else {
 
-                        const { USE_RADIATE_RUNTIME: A, USE_WICK_RUNTIME: B } = await writeEndpoint(component, context, endpoint, output_directory);
+                        (component => {
+                            pending_page_components.push(new Promise(async e => {
 
-                        USE_RADIATE_RUNTIME ||= A;
-                        USE_WICK_RUNTIME ||= B;
+                                const { USE_RADIATE_RUNTIME: A, USE_WICK_RUNTIME: B }
+                                    = await writeEndpoint(component, context, endpoint, output_directory);
+
+                                USE_RADIATE_RUNTIME ||= A;
+
+                                e(true);
+                            }));
+                        })(component);
                     }
                 }
             }
 
-            if (USE_RADIATE_RUNTIME) {
-                USE_GLOW = true;
-                await compile_module(
-                    URI.resolveRelative(
-                        "./source/typescript/entry/wick-radiate.js",
-                        package_dir
-                    ) + "",
-                    output_directory + "radiate.js"
-                );
-                compile_logger.log(`Built wick.radiate module at [ /radiate.js ]`);
-            }
+            await Promise.all(pending_page_components);
 
-            if (USE_WICK_RUNTIME) {
-                await compile_module(
-                    URI.resolveRelative(
-                        "./build/entry/wick-runtime.js",
-                        package_dir
-                    ) + "",
-                    output_directory + "wick.js"
-                );
-                compile_logger.log(`Built wick.runtime module at [ /wick.js ]`);
-            }
+            pending_resources.push(new Promise(async e => {
 
-            /* EsBuild will bundle this for us.
-            if (USE_GLOW)
-                await compile_module(
-                    URI.resolveRelative("@candlelib/glow/build/glow.js", URI.getEXEURL(import.meta)) + "",
-                    output_directory + "glow.js"
-                );
-            //*/
+                try {
+                    const output_dir = <URI>URI.resolveRelative("./.wick-temp/");
+
+                    if (!await output_dir.DOES_THIS_EXIST())
+                        mkdirSync(output_dir + "", { recursive: true });
+
+                    const source_file_path = URI.resolveRelative("./pack_source.js", output_dir + "/") + "";
+                    const pack_file_path = URI.resolveRelative("./src/pack.js", output_directory + "/") + "";
+
+                    if (USE_RADIATE_RUNTIME) {
+                        exports.push(`export * as radiate from "@candlelib/wick/source/typescript/entry/wick-radiate.ts"`);
+                    } else {
+                        exports.push(`export * as wick from "@candlelib/wick/source/typescript/entry/wick-runtime.ts"`);
+                    }
+
+                    await fsp.writeFile(source_file_path, exports.join(";\n") + "\n", { encoding: "utf8" });
+
+
+                    //Resolve module paths
+
+
+
+                    await compile_module(source_file_path, pack_file_path);
+
+                } catch (e) {
+                    compile_logger.error(e);
+                }
+
+                e(true);
+            }));
+
+            await Promise.all(pending_resources);
+
             compile_logger.log(`🎆 Site successfully built! 🎆`);
 
             if (false && lantern_arg.value) {
@@ -279,14 +311,14 @@ async function renderEndpointPage(
     if (USE_RADIATE_RUNTIME)
         hooks.init_script_render = function () {
             return `
-				import init_router from "/radiate.js";
-				init_router();`;
+				import {radiate} from "./src/pack.js";
+				radiate.default();`;
         };
     else
         hooks.init_script_render = function () {
             return `
-			import w from "/wick.js";
-			w.hydrate();`;
+			import {wick} from "./src/pack.js";
+			wick.hydrate();`;
         };
 
     const { page: page_source } = await RenderPage(
