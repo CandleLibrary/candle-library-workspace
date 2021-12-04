@@ -8,9 +8,11 @@ import {
     STATIC_RESOLUTION_TYPE,
     TemplateHTMLNode,
     TemplatePackage,
-    WickBindingNode
+    WickBindingNode,
+    BINDING_VARIABLE_TYPE
 } from "../../types/all.js";
 import * as b_sys from "../build_system.js";
+import { getBindingFromExternalName } from '../common/binding.js';
 import { ComponentData } from '../common/component.js';
 import { Context } from '../common/context.js';
 import { getExpressionStaticResolutionType, getStaticValue, StaticDataPack } from "../data/static_resolution.js";
@@ -119,7 +121,7 @@ export async function __componentDataToCompiledHTML__(
         }: HTMLNode = html,
             children = c.map(i => ({ USED: false, child: i, id: comp_data.length - 1 }));
 
-        if (html.id !== undefined)
+        if (html.id !== undefined && html.id !== 0)
             addAttribute(node, "class", "wk-id-" + html.id);
 
         if (namespace_id)
@@ -383,7 +385,7 @@ async function addComponent(
 
     processAttributes(html.attributes, node,);
 
-    await processHooks(html, static_data_pack, node, template_map);
+    await processHooks(html, static_data_pack, node, template_map, c_comp);
 
     return { state, node };
 }
@@ -609,13 +611,19 @@ async function processHooks(
     static_data_pack: StaticDataPack,
     node: TemplateHTMLNode,
     template_map: TemplatePackage["templates"],
+    /**
+     * This is true if the hook has been defined
+     * as an external attribute of the component, 
+     * set by that component's parent component. 
+     */
+    child_comp: ComponentData | null = null
 ) {
     for (const hook of getHookFromElement(html, static_data_pack.self)
         .filter(
             h => (
                 /**
                  * Container hooks are handled by processContainerHooks,
-                 * which should be called only on container html elements
+                 * which should be called on container elements only.
                  */
                 h.type != ContainerDataHook &&
                 h.type != ContainerFilterHook &&
@@ -627,17 +635,28 @@ async function processHooks(
             )
         )
     ) {
-
-
         const { html, templates } = (await processHookForHTML(hook, static_data_pack) || {});
 
         if (html) {
             if (html.attributes)
-                for (const [k, v] of html.attributes)
+                for (const [k, v] of html.attributes) {
+
+                    // This checks to see if the child component has claimed
+                    // the attribute through a "@props" synthetic import.
+                    // if so, the attribute is not written out to HTML
+                    if (child_comp) {
+
+                        const binding = getBindingFromExternalName(k, child_comp);
+
+                        if (binding && binding.type == BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE)
+                            continue;
+                    }
+
                     if (k.toLocaleLowerCase() == "class")
                         addAttribute(node, "class", ...v);
                     else
                         setAttribute(node, k, ...v);
+                }
 
             if (html.children && node.children)
                 node.children.push(...html.children);
