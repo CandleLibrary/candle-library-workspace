@@ -27,15 +27,21 @@ export function setPos<T>(node: T, pos: Lexer | any): T {
 }
 
 
-export function addPendingModuleToPresets(
+export function addPendingModuleToContext(
     context: Context,
-    from_value: URI,
+    resource_location: URI,
     requesting_source: URI,
 ): string {
+    let resolved_uri = resource_location;
+    let url = resolved_uri.toString();
 
-    const resolved_uri = <URI>URI.resolveRelative(from_value, requesting_source);
+    if (resource_location.IS_RELATIVE) {
+        resolved_uri = <URI>URI.resolveRelative(resource_location, requesting_source);
+        url = resolved_uri.toString();
+    } else if (!resource_location.host) {
+        url = resolved_uri.path;
+    }
 
-    const url = resolved_uri.toString();
 
     const hash = ModuleHash(url);
 
