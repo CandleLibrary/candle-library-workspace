@@ -91,13 +91,15 @@ async function renderPage(
                 `;
             };
 
-
         return (await RenderPage(
             component,
             rt.context,
             {
                 VERBOSE_ANNOTATION_ATTRIBUTES: true,
+                ALLOW_STATIC_REPLACE: false,
                 INTEGRATED_CSS: true,
+                INTEGRATED_HTML: true,
+                STATIC_RENDERED_HTML: true
             },
             hooks
         ))?.page ?? null;
@@ -107,6 +109,8 @@ async function renderPage(
         throw e;
     }
 };
+
+
 const workspace_component_dispatch = <Dispatcher>{
     name: "Workspace Component",
     MIME: "text/html",

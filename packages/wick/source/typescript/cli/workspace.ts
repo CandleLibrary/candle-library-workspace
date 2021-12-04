@@ -60,6 +60,6 @@ support components edited within a code editor.
 
         await init_build_system();
 
-        (await import('../workspace/workspace_dev_server.js'))
+        (await import('../workspace/workspace_server.js'))
             .initDevServer(port, config_arg.value, new URI(arg + '/'));
     };

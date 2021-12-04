@@ -6,16 +6,16 @@ import { Logger, LogLevel } from "@candlelib/log";
 import { addCLIConfig, args as para_args } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
 import { mkdirSync, promises } from 'fs';
-
-const writeFile = promises.writeFile;
-
-import { RenderPage } from "../workspace/server/webpage.js";
 import { ComponentData } from '../compiler/common/component.js';
 import { Context } from "../compiler/common/context.js";
 import { createComponent } from '../compiler/create_component.js';
-import { compile_module, compile_pack } from '../workspace/server/compile_module.js';
-import { create_config_arg_properties } from "./config_arg_properties.js";
 import { init_build_system } from '../compiler/init_build_system.js';
+import { compile_module } from '../workspace/server/compile_module.js';
+import { RenderPage } from "../workspace/server/webpage.js";
+import { create_config_arg_properties } from "./config_arg_properties.js";
+
+const writeFile = promises.writeFile;
+
 
 const run_logger = Logger.get("wick").get("run").activate().deactivate(LogLevel.DEBUG);
 
@@ -54,9 +54,6 @@ Host a single component on a local server.
 
             await init_build_system();
 
-
-
-            //const input_path = URI.resolveRelative(args.trailing_arguments.pop() ?? "./");
             const root_path = URI.resolveRelative(input_path);
             const config = config_arg.value;
 
@@ -70,6 +67,11 @@ Host a single component on a local server.
                 run_logger
                     .debug(`Input root path:\n[ ${input_path + ""} ]`);
 
+                if (!await root_path.DOES_THIS_EXIST()) {
+                    run_logger.error(`Source path ${root_path} does not exist`);
+                    return -1;
+                }
+
                 //Find all components
                 //Build wick and radiate files 
                 //Compile a list of entry components
@@ -82,12 +84,23 @@ Host a single component on a local server.
 
                 if (root_path.ext == "wick" || root_path.ext == "md" || root_path.ext == "html") {
                     //Initialize component
-                    const comp = await createComponent(root_path, context);
+                    await createComponent(root_path, context);
 
                     const server = await lantern({
                         port: port_arg.value,
                         cwd: root_path.dir
                     });
+
+                    if (context.hasErrors()) {
+                        for (const [name, errors] of context.errors) {
+                            for (const error of errors) {
+                                const comp = <ComponentData>context.components.get(name);
+                                const location = root_path.getRelativeTo(comp.location);
+                                run_logger.warn(`\nError encountered in component ${comp.name} (${location}):`);
+                                run_logger.error(error);
+                            }
+                        }
+                    }
 
                     server.addDispatch(
                         <Dispatcher>{
@@ -106,9 +119,10 @@ Host a single component on a local server.
                             async respond(tools) {
                                 const context = new Context();
                                 context.assignGlobals(config?.globals ?? {});
+
                                 const component = await createComponent(root_path, context);
 
-                                if (context.errors.size > 0) {
+                                if (context.hasErrors()) {
                                     for (const [name, errors] of context.errors) {
                                         for (const error of errors) {
                                             const comp = <ComponentData>context.components.get(name);
@@ -127,11 +141,12 @@ Host a single component on a local server.
                                     const source_file_path = URI.resolveRelative("./pack_source.js", output_dir + "/") + "";
                                     const pack_file_path = URI.resolveRelative("./pack.js", output_dir + "/") + "";
                                     //Build module interface 
-                                    const root = `
-${[...context.repo].map(([name, value]) =>
-                                        `export * as ${value.hash} from "${value.url}";`
-                                    ).join("\n")}
-`;
+                                    const root = `${[...context.repo].map(([name, value]) =>
+                                        `export * as ${value.hash} from "${value.url}";\n`
+                                    ).join("\n")}`;
+
+                                    console.log(root);
+
                                     await writeFile(source_file_path, root, { encoding: "utf8" });
 
                                     const module_packs = [];
