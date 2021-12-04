@@ -1,4 +1,4 @@
-import URL from "@candlelib/uri";
+import URI from '@candlelib/uri';
 
 import fs from "fs";
 import http from "http";
@@ -42,14 +42,14 @@ export class HTTPSToolSet extends LanternToolsBase {
             { key = null, cert = null } = (config_options?.secure || {}),
 
             options = Object.assign({}, config_options.secure ? {
-                key: key instanceof URL ? await key.fetchText() : key,
-                cert: cert instanceof URL ? await cert.fetchText() : cert,
+                key: key instanceof URI ? await key.fetchText() : key,
+                cert: cert instanceof URI ? await cert.fetchText() : cert,
             } : {}),
 
             server = (config_options?.secure ? https : http).createServer(options, (req, res) => {
 
                 const
-                    url = new URL(req.url),
+                    url = new URI(req.url),
                     request_data: HTTPSRequestData = {
                         url,
                         req,
@@ -73,10 +73,12 @@ export class HTTPSToolSet extends LanternToolsBase {
 
         log.message(`${server_name} started`);
 
-        log.sub_message(`HTTP server listening on interface ${host}:${port}. Visit http://${host}:${port} to view site`);
-
-        if (config_options.secure)
+        if (config_options.secure) {
             log.sub_message(`${server_name}: Using HTTPS/TLS secure protocol.`);
+            log.sub_message(`HTTPS server listening on interface ${host}:${port}. Visit https://${host}:${port} to view site`);
+        } else {
+            log.sub_message(`HTTP server listening on interface ${host}:${port}. Visit http://${host}:${port} to view site`);
+        }
 
         log.delete();
 

@@ -44,7 +44,7 @@ export class Key<T extends Animatable<T>> {
     }
 
     get duration(): number {
-        return this.t_dur;
+        return this.t_off;
     }
 
     get starting_tic(): number {
@@ -52,7 +52,7 @@ export class Key<T extends Animatable<T>> {
     }
 
     get ending_tic(): number {
-        return this.starting_tic + this.t_dur;
+        return this.starting_tic + this.t_off;
     }
 
     isValidKey(tic: number) {

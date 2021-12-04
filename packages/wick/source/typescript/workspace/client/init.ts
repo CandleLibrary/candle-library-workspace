@@ -1,15 +1,14 @@
 import * as css from "@candlelib/css";
-import * as ACTIONS from "./actions/action.js";
-import { APPLY_ACTION, START_ACTION } from './action_initiators.js';
-import { initSystem } from './system.js';
 import { Logger } from "@candlelib/log";
 import spark from "@candlelib/spark";
-import { FlameSystem } from './types/flame_system.js';
-import { initializeEvents } from './event.js';
-import { getComponentNameFromElement } from './common_functions.js';
 import { Context, UserPresets, WickLibrary, WickRTComponent } from '../../index.js';
+import * as ACTIONS from "./actions/action.js";
+import { APPLY_ACTION, START_ACTION } from './action_initiators.js';
+import { getComponentNameFromElement } from './common_functions.js';
+import { initSystem } from './system.js';
+import { FlameSystem } from './types/flame_system.js';
 
-export const logger = Logger.createLogger("flame-client").activate();
+export const logger = Logger.createLogger("wick-client").activate();
 
 export function init() {
 

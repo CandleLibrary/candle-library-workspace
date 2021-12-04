@@ -7,7 +7,6 @@ import { Element } from './element.js';
 export const enum PageType {
     WICK_PAGE,
     WICK_MODAL,
-
     WICK_TRANSITIONING_MODAL,
     STANDARD
 }
@@ -138,7 +137,7 @@ export class PageView {
                 let contemporary = (prev_page && element.ele.id)
                     ? prev_page.getElement(element.id)
                     : null;
-                
+
                 element.loadComponents(wurl, contemporary);
             }
         }

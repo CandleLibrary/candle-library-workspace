@@ -1,5 +1,5 @@
 import { types } from "@candlelib/css/build/properties/property_and_type_definitions.js";
-import { Animation } from "./anim";
+import { Animation } from "./anim.js";
 
 
 const CSS_Transform2D = types.transform2D;

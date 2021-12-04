@@ -28,7 +28,7 @@ export interface AnimationMethods {
 
     /**
      * 
-     * @param i the the ratio of the animation play from 0. Accepts negative values
+     * @param i the the ratio of the animation play from 0 to 1. Accepts negative values
      */
     step(i: number): void;
 
@@ -108,9 +108,9 @@ export interface AnimationMethods {
     observeStop(): void;
 }
 
-type AnimSequence = AnimationMethods;
+export type AnimSequence = AnimationMethods;
 
-type AnimGroup = AnimationMethods;
+export type AnimGroup = AnimationMethods;
 
 export type AnimationInterpolation = {
     getYatX: (number: number) => number,

@@ -10,7 +10,7 @@ import { EditedComponent, FlameSystem } from "./types/flame_system.js";
 import { WickLibrary } from '../../index.js';
 import { WickRTComponent } from "../../client/runtime/component/component.js";
 
-const patch_logger = Logger.get("flame").get("patcher").activate();
+const patch_logger = Logger.get("wick").get("patcher").activate();
 export function revealEventIntercept(sys: FlameSystem) {
     const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
     event_intercept_ele.style.zIndex = "100000";

@@ -146,9 +146,9 @@ export async function processHookForClass(
 
     const
         extract = { ast: null },
-        pending_write_asts = [],
-        pending_init_asts = [],
-        pending_destroy_asts = [];
+        pending_write_asts: any[] = [],
+        pending_init_asts: any[] = [],
+        pending_destroy_asts: any[] = [];
 
     /**
      * Code that should execute when one or more 
@@ -430,8 +430,8 @@ function processBindingRecords(comp_info: CompiledComponentClass, comp: Componen
 
             if (IS_DIRECT_ACCESS)
                 // Direct access variables ( API & GLOBALS ) are assigned 
-                // at at component initialization start. This allows these 
-                // variables to to be accessed within the component initialization
+                // at component initialization start. This allows these 
+                // variables to be accessed within the component initialization
                 // function  
                 appendStmtToFrame(init_frame, ...getStatementsFromFrame(frame));
             else

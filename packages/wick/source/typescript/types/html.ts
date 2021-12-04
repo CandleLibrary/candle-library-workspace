@@ -61,7 +61,7 @@ export interface HTMLHandler<T = HTMLNode, P = HTMLNode> {
 export interface TemplateHTMLNode {
     tagName?: string;
     data?: string;
-    attributes?: Map<string, string>;
+    attributes?: Map<string, string[]>;
     children?: TemplateHTMLNode[];
     strings?: string[];
     namespace?: number;

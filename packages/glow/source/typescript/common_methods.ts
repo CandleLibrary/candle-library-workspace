@@ -17,7 +17,7 @@ export default <AnimationMethods><any>{
         return this;
     },
 
-    set(i) {
+    set(i: number) {
 
         if (i >= 0)
             this.run(i * this.duration);
@@ -27,7 +27,7 @@ export default <AnimationMethods><any>{
         return this;
     },
 
-    step(i) { return this.set(i); },
+    step(i: number) { return this.set(i); },
 
     play(scale = 1, from = 0) {
         if (this.duration == 0) {

@@ -1,9 +1,9 @@
-import { AnimSequence } from './anim_sequence.js';
+import { AnimGroup } from './anim_group.js';
 import { AnimateObjectArg, AnimationArgs } from "./anim_obj.js";
+import { AnimSequence } from './anim_sequence.js';
 import { CSS_Bezier, Linear } from './common.js';
 import common_methods from "./common_methods.js";
-import { GlowAnimation } from "./types.js";
-import { AnimGroup } from './anim_group.js';
+import { AnimSequence as AS, AnimGroup as AG } from './types.js';
 
 
 export const Animation = ((function anim() {
@@ -15,7 +15,7 @@ export const Animation = ((function anim() {
     Object.assign(AnimSequence.prototype, common_methods);
 
     /** END SHARED METHODS * */
-    const GlowFunction = function (...args: AnimateObjectArg[]): GlowAnimation {
+    const GlowFunction = function (...args: AnimateObjectArg[]): AS | AG {
 
         const output = [];
 
@@ -43,7 +43,7 @@ export const Animation = ((function anim() {
         }
 
         if (args.length > 1)
-            return <GlowAnimation><unknown>new AnimGroup(output);
+            return <any>new AnimGroup(output);
 
         return <any>output[0];
     };
