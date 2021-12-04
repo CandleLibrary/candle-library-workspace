@@ -8,44 +8,44 @@ import { parse_css_selector } from "../source-code-parse/parse.js";
 import { renderWithFormatting, renderNewFormatted } from "../source-code-render/render.js";
 
 export function UpdateSelector(
-    node: CSSNode, name,
+    node: CSSNode, name: string,
     class_selector: CSSSelectorNode,
     ADD_COMPONENT_SCOPE: boolean = true
 ) {
+    if (node.selectors)
+        node.selectors = node.selectors.map(s => {
 
-    node.selectors = node.selectors.map(s => {
+            let HAS_ROOT = false;
+            const ns = { ast: null };
 
-        let HAS_ROOT = false;
-        const ns = { ast: null };
+            for (const { node, meta: { replace } } of traverse(s, "nodes")
+                .makeReplaceable()
+                .extract(ns)
+            ) {
 
-        for (const { node, meta: { replace } } of traverse(s, "nodes")
-            .makeReplaceable()
-            .extract(ns)
-        ) {
-
-            switch (node.type) {
-                case CSSNodeType.TypeSelector:
-                    const val = (<any>node).nodes[0].val;
-                    if (val == "root") {
-                        const obj = Object.assign({}, class_selector, { pos: node.pos });
-                        replace(obj);
-                        HAS_ROOT = true;
-                    } else if (val == "body") {
-                        HAS_ROOT = true;
-                    }
-                default:
-                    break;
+                switch (node.type) {
+                    case CSSNodeType.TypeSelector:
+                        const val = (<any>node).nodes[0].val;
+                        if (val == "root") {
+                            const obj = Object.assign({}, class_selector, { pos: node.pos });
+                            replace(obj);
+                            HAS_ROOT = true;
+                        } else if (val == "body") {
+                            HAS_ROOT = true;
+                        }
+                    default:
+                        break;
+                }
             }
-        }
 
-        if (!HAS_ROOT && ADD_COMPONENT_SCOPE) {
-            const ns = parse_css_selector(`.${name} ${renderWithFormatting(s)}`);
-            ns.pos = s.pos;
-            return ns;
-        }
+            if (!HAS_ROOT && ADD_COMPONENT_SCOPE) {
+                const ns = parse_css_selector(`.${name} ${renderWithFormatting(s)}`);
+                ns.pos = s.pos;
+                return ns;
+            }
 
-        return ns.ast;
-    });
+            return ns.ast;
+        });
 
 }
 
