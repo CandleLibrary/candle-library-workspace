@@ -270,6 +270,8 @@ export class Context {
         this.loadAPIObjects(<UserPresets>user_presets);
     }
 
+    hasErrors(): boolean { return this.errors.size > 0; }
+
     addError(comp: ComponentData, e: Error) {
         if (!this.errors.has(comp.name))
             this.errors.set(comp.name, []);
