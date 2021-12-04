@@ -2,9 +2,9 @@
 import { KeyArg } from "../anim_obj.js";
 import {
     Animatable, CSS_Length, CSS_Path,
-    CSS_Percentage, getComputedCSS, TransformType
+    CSS_Percentage, getComputedCSS, lerpNumber, TransformType
 } from "../common.js";
-import { Key } from '../key.js';
+import { Key, NumericKey, StepKey } from '../key.js';
 
 
 
@@ -78,8 +78,7 @@ export class AnimProp<T extends Animatable<T>> {
                 //Try to get computed value. If it does not exist, then get value from the style attribute.
                 let value: string | number = computed_css ? computed_css.getPropertyValue(name) : "";
 
-                if (!value)
-                    value = obj.style[prop_name];
+                if (!value) value = obj.style[prop_name];
 
                 //This object will be used to render the intermediate values.
                 if (this.type == CSS_Percentage) {
@@ -98,7 +97,7 @@ export class AnimProp<T extends Animatable<T>> {
                 }
                 return new this.type(value);
             default:
-                return new this.type(obj[prop_name]);
+                return obj[prop_name];
         }
 
         return new this.type(0);
@@ -124,14 +123,25 @@ export class AnimProp<T extends Animatable<T>> {
 
         this.duration = Math.max(this.duration, <number>key.tic);
 
-        const own_key = new Key(
-            this.duration,
-            (prev) ? prev.from(v) : new this.type(v) ?? new CSS_Length(0, ""),
-            p1,
-            p2,
-            p3,
-            p4
-        );
+        const own_key =
+            this.type == null
+                ? new StepKey(
+                    this.duration,
+                    v, 0, 0, 0, 0
+                )
+                : this.type == lerpNumber
+                    ? new NumericKey(
+                        this.duration,
+                        +v,
+                        p1, p2, p3, p4
+                    )
+                    : new Key(
+                        this.duration,
+                        (prev && prev.from)
+                            ? prev.from(v)
+                            : new this.type(v) ?? new CSS_Length(0, ""),
+                        p1, p2, p3, p4
+                    );
 
         this.keys.push(own_key);
 
@@ -150,6 +160,8 @@ export class AnimProp<T extends Animatable<T>> {
 
         let prev = null;
 
+        let LAST = false;
+
         let key = this.keys[key_index];
 
         let len = this.keys.length;
@@ -158,14 +170,15 @@ export class AnimProp<T extends Animatable<T>> {
             prev = key;
             key = this.keys[i];
 
-            if (tic < key.t_off)
-                break;
+            if (tic < key.t_off) break;
+
+            if (i == len - 1) LAST = true;
         }
 
         if (prev)
-            return key.getValueAtTic(tic, prev.t_off, prev.val);
+            return key.getValueAtTic(tic, prev.t_off, prev.val, LAST);
 
-        return key.getValueAtTic(tic, 0, this.starting_val);
+        return key.getValueAtTic(tic, 0, this.starting_val, LAST);
     }
 
     run(obj: any, prop_name: string, time: number, type: any) {

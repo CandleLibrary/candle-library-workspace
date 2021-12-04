@@ -68,7 +68,8 @@ export class Key<T extends Animatable<T>> {
     getValueAtTic(
         tic: number,
         prev_off: number,
-        start_val: T
+        start_val: T,
+        LAST: boolean
     ): T {
         const len = this.t_off - prev_off;
 
@@ -88,7 +89,6 @@ export class Key<T extends Animatable<T>> {
                 //Do Cubic interpolation
                 i = getYatXCubic(x, this.p1_x, this.p1_y, this.p2_x, this.p2_y);
             }
-
             return start_val.lerp(this.val, i);
         }
 
@@ -96,14 +96,27 @@ export class Key<T extends Animatable<T>> {
     }
 }
 
+export class StepKey extends Key<any> {
+    getValueAtTic(
+        tic: number,
+        prev_off: number,
+        start_val: any,
+        LAST: boolean
+    ): number {
+        return LAST ? this.val : start_val;
+    }
+};
+
 
 export class NumericKey extends Key<any> {
     getValueAtTic(
         tic: number,
         prev_off: number,
-        start_val: number
+        start_val: number,
+        LAST: boolean
     ): number {
-        const len = this.t_off - prev_off;
+        const diff = this.t_off - prev_off;
+        const len = diff == 0 ? 1 : diff;
 
         const adjust_tic = tic - prev_off;
 
