@@ -164,7 +164,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             this.ele = this.createElement(context, [this]);
 
 
-        this.ele.setAttribute("wrt:c", this.name);
+        this.ele.dataset.wrtc = this.name;
 
         this.init_interfaces(this);
     }

@@ -218,9 +218,9 @@ export function getRootComponentName(ele: HTMLElement) {
 
     while (ele) {
 
-        if (ele.hasAttribute("wrt:c")) {
+        if (ele.dataset.wrtc) {
 
-            return ele.getAttribute("wrt:c");
+            return ele.dataset.wrtc;
         }
 
         ele = ele.parentElement;

@@ -303,7 +303,7 @@ function initializeDefualtSessionDispatchHandlers(
 
 function applyToPatchToRuntimeComp(match: WickRTComponent, to: string) {
     match.name = to;
-    match.ele.setAttribute("wrt:c", to);
+    match.ele.dataset.wrtc = to;
 }
 
 function updateCSSReferences(
