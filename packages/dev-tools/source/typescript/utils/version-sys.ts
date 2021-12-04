@@ -734,8 +734,9 @@ export async function validateEligibility(
                                 &&
                                 !dep.version_data.NEW_VERSION_REQUIRED)
                             ||
-                            depend.version_data.latest_version
-                            != versionToString(val)
+                            (depend.version_data.NEW_VERSION_REQUIRED
+                                &&
+                                depend.version_data.new_version != versionToString(val))
                         ) {
                             dep.version_data.NEW_VERSION_REQUIRED = true;
                             dep.package.dependencies[key] = depend.version_data.new_version;
