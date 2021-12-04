@@ -20,6 +20,8 @@ export class AnimTransform extends types.transform3D {
     }
 }
 
+const HTMLElement = globalThis["HTMLElement"] ?? new Function;
+
 export function typeIsArray(t: any | any[]): t is any[] {
     return [
         AnimTransform,
@@ -124,7 +126,7 @@ export class lerpNonNumeric {
     v: any;
     constructor(v: any) { this.v = v; }
     lerp(to: any, t: any, from: any) {
-        return from.v;
+        return to.v;
     }
     copy(val: any) { return new lerpNonNumeric(val); }
 }
@@ -142,7 +144,9 @@ export function getValueType(name: string, value: any): any {
         case "string":
             const type = parseProperty(name, value, false)?.val?.[0]?.constructor;
 
-            if (!type) {
+            if (type)
+                return type;
+            else {
                 if (CSS_Length._verify_(value))
                     return CSS_Length;
                 if (CSS_Percentage._verify_(value))
@@ -150,10 +154,8 @@ export function getValueType(name: string, value: any): any {
                 if (CSS_Color._verify_(value))
                     return CSS_Color;
             }
-            else
-                return type;
         //intentional
-        case "object":
-            return lerpNonNumeric;
     }
+
+    return null;
 }
