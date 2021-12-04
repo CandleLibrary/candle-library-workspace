@@ -738,10 +738,7 @@ export async function validateEligibility(
                             != versionToString(val)
                         ) {
                             dep.version_data.NEW_VERSION_REQUIRED = true;
-                            const version = parseVersion(dep.version_data.latest_version);
-                            version.sym[2]++;
-                            dep.version_data.new_version = versionToString(version);
-                            dep.package.dependencies[key] = depend.version_data.latest_version;
+                            dep.package.dependencies[key] = depend.version_data.new_version;
                             CHANGES = true;
                         }
                     }
