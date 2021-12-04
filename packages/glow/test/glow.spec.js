@@ -5,7 +5,7 @@ assert_group("Basic single object sequence.", sequence, () => {
 
     const anim = await glow({
         obj,
-        test: [{ v: 0, dur: 200 }, { v: 0.05, dur: 200 }, { v: 20, dur: 200 }, { v: 50, dur: 200 }]
+        test: [{ val: 0, tic: 0 }, { val: 0.05, tic: 200 }, { val: 20, tic: 400 }, { val: 50, tic: 800 }]
     });
 
     await anim.asyncPlay();
@@ -14,5 +14,5 @@ assert_group("Basic single object sequence.", sequence, () => {
 
     anim.step(0.50);
 
-    assert(obj.test == 0.05);
+    assert(obj.test == 20);
 });

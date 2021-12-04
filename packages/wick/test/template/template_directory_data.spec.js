@@ -1,7 +1,7 @@
 import { assert } from "console";
 import { componentDataToCompiledHTML } from "../../build/compiler/ast-build/html.js";
 import { Context } from "../../build/compiler/common/context.js";
-import wick from "../../build/entry/wick-server.js";
+import wick from "../../build/index.js";
 
 /**
  * When a component is instantiated with the `@template` synthetic import,
@@ -37,4 +37,4 @@ export default <div> <directory/> </div>
 `, context);
 
 
-assert("An element cannot be instantiate from a template component", context.errors[0].comp == template_component2.name);
+assert("An element cannot be instantiate from a template component", [...context.errors.entries()][0][0] == template_component2.name);
