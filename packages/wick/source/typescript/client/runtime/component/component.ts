@@ -832,8 +832,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      * Integrates an Element tree with the component. 
      * 
      * This function primary purposes is to make sure 
-     * internal JS hooks target the correct Elements that
-     * should be associated with a component. It also deals
+     * internal JS hooks are able to target elements that
+     * should be associated with this component. It also deals
      * with untangling nested and slotted elements
      * to ensure each element is associated with the component
      * the author has intended.
@@ -910,9 +910,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 //@ts-ignore
                 ele = text;
 
-
-                //  this.elu.push(<any>ele);
-
                 return 0;
 
             } else {
@@ -970,8 +967,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         return sk;
     }
-
-
 
 
     /**
