@@ -181,7 +181,8 @@ export async function importResource(
                 ))
             ) {
                 if (!(await uri.DOES_THIS_EXIST())) {
-                    throw `Could not resolve resource \n${uri} \nimported from \n[${component.location}]`;
+                    context.addWarning(component,
+                        <string>node.pos?.blameDiagram(`Could not resolve resource \n${uri} \nimported from \n[${component.location}]`));
                 }
 
                 module_name = getModuleName(context, new URI(from_value.trim()), component.location);
