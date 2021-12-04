@@ -170,7 +170,7 @@ function ParseString(str: string | Lexer, transform: CSS_Transform2D | CSS_Trans
 // A 2D transform composition of 2D position, 2D scale, and 1D rotation.
 const cos = Math.cos, sin = Math.sin;
 
-const smooth_float = (i: number) => Math.round(i * 100000) * 0.00001;
+const smooth_float = (i: number) => Math.round(i * 1000) * 0.001;
 
 export class CSS_Transform2D extends Float64Array {
 
