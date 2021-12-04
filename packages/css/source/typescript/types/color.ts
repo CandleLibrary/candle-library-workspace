@@ -248,7 +248,7 @@ export default class CSS_Color extends Float64Array {
         return null;
     }
 
-    static _verify_(l: Lexer) {
+    static _verify_(l: Lexer | string) {
         let c = CSS_Color._fs_(l, true);
         if (c)
             return true;
