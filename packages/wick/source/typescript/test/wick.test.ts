@@ -18,8 +18,8 @@ import { componentDataToCSS } from "../compiler/ast-render/css.js";
 import { htmlTemplateToString } from "../compiler/ast-render/html.js";
 import { ComponentData } from "../compiler/common/component.js";
 import { Context } from "../compiler/common/context.js";
-import { WickRTComponent } from "../runtime/component.js";
-import { rt } from "../runtime/global.js";
+import { WickRTComponent } from "../client/runtime/component/component.js";
+import { rt } from "../client/runtime/global.js";
 import { ComponentData } from "../types/component";
 
 
