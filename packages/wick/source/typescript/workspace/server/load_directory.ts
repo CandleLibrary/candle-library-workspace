@@ -169,9 +169,6 @@ export async function loadComponentsFromDirectory(
 		components.set(comp.location + "", { comp });
 	}
 
-
-	console.dir({ page_components }, { depth: 8 });
-
 	return {
 		endpoints,
 		page_components,
