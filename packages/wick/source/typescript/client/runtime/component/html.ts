@@ -1,6 +1,7 @@
 import { WickRTComponent } from "./component.js";
 import { WickContainer } from "./container.js";
 import { rt } from "../global.js";
+import { Logger, LogLevel } from '@candlelib/log';
 
 //
 // https://www.w3.org/TR/2011/WD-html5-20110525/namespaces.html
@@ -144,10 +145,8 @@ export function hydrateComponentElement(
                 if (!first_comp)
                     first_comp = comp;
             }
-        }
-
-        else
-            console.warn(`WickRT :: Could not find component data for ${component_name}`);
+        } else
+            Logger.get("wick").activate(LogLevel.WARN).warn(`WickRT :: Could not find component data for ${component_name}`);
     }
 
     return first_comp;
