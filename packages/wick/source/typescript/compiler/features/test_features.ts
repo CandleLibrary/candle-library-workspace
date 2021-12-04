@@ -26,9 +26,11 @@ registerFeature(
 
                     if (!WITHIN_TEST_FRAME) {
 
+
                         if (node.nodes[1].type == JSNodeType.BlockStatement) {
 
                             const binding = build_system.getComponentBinding(name, component);
+
 
                             if (binding && binding.type == BINDING_VARIABLE_TYPE.CURE_TEST) {
                                 skip();
@@ -57,6 +59,7 @@ registerFeature(
 
                                 WITHIN_TEST_FRAME = false;
 
+                                //@ts-ignore
                                 context.test_rig_sources.get(component).push(out_node);
 
                                 return null;
