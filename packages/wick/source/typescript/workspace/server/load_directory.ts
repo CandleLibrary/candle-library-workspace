@@ -140,7 +140,7 @@ export async function loadComponentsFromDirectory(
 						endpoints_strings.push(path);
 					}
 
-					page_components.set(file_path, { endpoints: endpoints_strings });
+					page_components.set(comp.location + "", { endpoints: endpoints_strings });
 
 				} catch (e) {
 

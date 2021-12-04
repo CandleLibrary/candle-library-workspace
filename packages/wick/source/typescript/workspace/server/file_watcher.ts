@@ -68,6 +68,7 @@ export class FileWatcherHandler implements Sparky {
         const location = new URI(this.path);
 
         const comp = await createComponent(location, rt.context);
+
         if (comp)
             if (comp.HAS_ERRORS) {
 
@@ -81,6 +82,15 @@ export class FileWatcherHandler implements Sparky {
                 rt.context.components.delete(comp.name);
 
             } else {
+
+                //Update any endpoint that have a matching source path.
+                if (store.page_components?.has(this.path)) {
+                    for (const path of store.page_components.get(this.path)?.endpoints ?? []) {
+                        //Update endpoints with this component 
+                        store.endpoints?.set(path, { comp });
+                        logger.log(`Updating endpoint [ ${path} ]`);
+                    }
+                }
 
                 addComponent(comp);
 
