@@ -156,69 +156,67 @@ export async function getPatch(
 
     let patch = null;
 
-    const changes = transition.changes;
+    const component_from = await getComponent(from);
+    const component_to = await getComponent(to);
 
-    if (true/* changes.some(
-        g => g.type == ChangeType.General
-            ||
-            g.type == ChangeType.Attribute
-    ) */) {
-        const component_from = await getComponent(from);
-        const component_to = await getComponent(to);
+    if (!component_from) throw new Error("Could not retrieve from component");
+    if (!component_to) throw new Error("Could not retrieve to component");
 
-        if (!component_from) throw new Error("Could not retrieve from component");
-        if (!component_to) throw new Error("Could not retrieve to component");
+    if (
+        component_to.code_hash != component_from.code_hash
+        ||
+        component_to.ele_hash != component_from.ele_hash
+        ||
+        component_to.text_hash != component_from.text_hash
+    ) {
+        logger.debug("Creating replace patch");
+        patch = {
+            type: PatchType.REPLACE,
+            to: component_to.name,
+            from: component_from.name,
+            patch_scripts: await createReplacePatch(component_to, context)
+        };
 
-        if (
-            component_to.code_hash != component_from.code_hash
-            ||
-            component_to.ele_hash != component_from.ele_hash
-            ||
-            component_to.text_hash != component_from.text_hash
-        ) {
-
-            patch = {
-                type: PatchType.REPLACE,
-                to: component_to.name,
-                from: component_from.name,
-                patch_scripts: await createReplacePatch(component_to, context)
-            };
-
-        } else if (component_to.css_hash != component_from.css_hash) {
-
-            patch = await createCSSPatch(patch, from, to);
-
-        } else if (component_to.text_hash != component_from.text_hash) {
-
-            const elements = [
-                [component_to.HTML, component_from.HTML]
-            ];
-
-            const patches: Patch[PatchType.TEXT]["patches"] = [];
-
-            for (const [to, from] of elements) {
-
-                if (!("IS_BINDING" in to) && !("tag" in to) && "data" in to) {
-                    if (to.data != from?.data)
-                        patches.push({ index: 0, to: to.data, from: from?.data ?? "" });
-                } else if (to.nodes)
-                    for (let i = 0; i < to?.nodes.length; i++) {
-                        elements.push([
-                            to.nodes[i],
-                            from.nodes[i],
-                        ]);
-                    }
-            }
-
-            patch = {
-                type: PatchType.TEXT,
-                to: component_to.name,
-                from: component_from.name,
-                patches: patches
-            };
-        }
-    } else {
+    } else if (component_to.css_hash != component_from.css_hash) {
+        logger.debug("Creating css patch");
         patch = await createCSSPatch(patch, from, to);
+
+    } else if (component_to.text_hash != component_from.text_hash) {
+        logger.debug("Creating text patch");
+        const elements = [
+            [component_to.HTML, component_from.HTML]
+        ];
+
+        const patches: Patch[PatchType.TEXT]["patches"] = [];
+
+        for (const [to, from] of elements) {
+
+            if (!("IS_BINDING" in to) && !("tag" in to) && "data" in to) {
+                if (to.data != from?.data)
+                    patches.push({ index: 0, to: to.data, from: from?.data ?? "" });
+            } else if (to.nodes)
+                for (let i = 0; i < to?.nodes.length; i++) {
+                    elements.push([
+                        to.nodes[i],
+                        from.nodes[i],
+                    ]);
+                }
+        }
+
+        patch = {
+            type: PatchType.TEXT,
+            to: component_to.name,
+            from: component_from.name,
+            patches: patches
+        };
+    } else {
+        logger.debug("Creating replace patch");
+        patch = {
+            type: PatchType.REPLACE,
+            to: component_to.name,
+            from: component_from.name,
+            patch_scripts: await createReplacePatch(component_to, context)
+        };
     }
 
     transition.patch = patch;

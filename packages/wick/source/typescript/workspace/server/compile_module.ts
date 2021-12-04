@@ -12,7 +12,7 @@ export async function compile_module(
 	const result = await build({
 		platform: "browser",
 		format: "esm",
-		minify: false,
+		minify: true,
 		entryPoints: [entry_file_path + ""],
 		bundle: true,
 		outfile: output_file_path

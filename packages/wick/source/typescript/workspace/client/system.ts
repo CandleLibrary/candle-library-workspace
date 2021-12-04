@@ -285,6 +285,19 @@ function initializeDefualtSessionDispatchHandlers(
 
                         new_component.initialize(match.model);
 
+                        //Patch in data from old component
+
+                        if (match.nlu) {
+                            let i = 0;
+
+                            for (const [name, flag] of Object.entries(match.nlu) as [string, number][]) {
+                                if (new_component.nlu[name] && new_component.nlu[name] != undefined)
+                                    continue;
+                                new_component.update({ [name]: match[i++] }, flag >>> 24);
+                            }
+                        }
+
+
                         match.disconnect();
                         match.destructor();
 
