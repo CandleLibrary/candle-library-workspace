@@ -123,10 +123,11 @@ export function htmlTemplateToString(html: TemplateHTMLNode, html_indent: number
 function addAttributesToString(node: TraversedNode<TemplateHTMLNode>, string: string) {
 
     for (const [key, val] of node.attributes?.entries() ?? [])
-        if (val === "")
+        if (!val || val.length == 0)
             string += ` ${key}`;
         else
-            string += ` ${key}="${val}"`;
+            string += ` ${key}="${val.join(" ")}"`;
+
     return string;
 }
 

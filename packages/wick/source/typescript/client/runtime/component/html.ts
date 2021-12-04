@@ -73,7 +73,7 @@ export function Element_Is_Wick_Component(ele: HTMLElement) {
     return (
         ele
         &&
-        ele.hasAttribute("w:c")
+        ele.classList.contains("wk-c")
         &&
         [...getComponentNames(ele)].length > 0
     );
@@ -85,7 +85,7 @@ export function Element_Is_Wick_Template(ele: HTMLElement) {
         &&
         ele.tagName == "TEMPLATE"
         &&
-        ele.hasAttribute("w:c")
+        ele.classList.contains("wk-c")
         &&
         String_Is_Wick_Hash_ID(ele.id + "")
     );
@@ -153,13 +153,17 @@ export function hydrateComponentElement(
     return first_comp;
 }
 
-export function hydrateContainerElement(ele: HTMLElement, parent: WickRTComponent, null_elements: HTMLElement[] = []) {
+export function hydrateContainerElement(
+    ele: HTMLElement,
+    parent: WickRTComponent,
+    null_elements: HTMLElement[] = []
+) {
     const
-        comp_constructors = (<string>ele.getAttribute("w:ctr"))
+        comp_constructors = (<string>ele.dataset["wkctr"])
             .split(" ")
             .map(name => parent.context.component_class.get(name)),
 
-        comp_attributes = (ele.getAttribute("w:ctr-atr") ?? "")
+        comp_attributes = (ele.dataset["wkctra"] ?? "")
             .split(":")
             .map(e => e.split(";").map(e => <[string, string]>e.split("=")));
 

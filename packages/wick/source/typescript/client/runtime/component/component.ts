@@ -494,6 +494,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      * @param trs A transition object that can be used to animate the position change
      */
     transitionIn(row: number, col: number, DESCENDING: boolean, trs: Transition) {
+
         for (const ch of this.ch)
             ch.transitionIn(row, col, DESCENDING, trs);
 
@@ -826,7 +827,24 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     //=========================================================
     //=========================================================
     //=========================================================
+
+    /**
+     * Integrates an Element tree with the component. 
+     * 
+     * This function primary purposes is to make sure 
+     * internal JS hooks target the correct Elements that
+     * should be associated with a component. It also deals
+     * with untangling nested and slotted elements
+     * to ensure each element is associated with the component
+     * the author has intended.
+     * 
+     * @param root 
+     * @param component_chain 
+     */
     integrateElement(
+        /**
+         * The current target element. 
+         */
         ele: HTMLElement,
         root: boolean = true,
         component_chain: WickRTComponent[] = [this]
@@ -836,6 +854,12 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         let scope_component: WickRTComponent = this;
 
+        let class_members = Object.fromEntries(
+            (ele.classList.toString().split(" ").filter(s => s.slice(0, 2) == "wk").map(v => {
+                const [, key, val] = v.split("-").slice();
+                return [key, val ?? "true"];
+            })));
+
         if (root) {
 
             ele.classList.add(this.name);
@@ -844,21 +868,18 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             //@ts-ignore
             ele.wick_component = this;
 
-            //this.elu.push(ele);
-
-            if (ele.hasAttribute("w:ctr")) {
-
+            if (class_members["ctr"])
                 ({ sk, PROCESS_CHILDREN } = process_container(ele, scope_component, sk, PROCESS_CHILDREN));
-            }
 
             this.se(0, ele);
 
         } else {
 
 
-            if (ele.hasAttribute("w:own"))
-                if (+(ele.getAttribute("w:own") || -1) != this.affinity)
+            if (class_members["own"]) {
+                if (+(parseInt(class_members["own"]) || -1) != this.affinity)
                     return 0;
+            }
 
             // Binding Text Node
             if (ele.tagName == "W-E") {
@@ -867,8 +888,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                 this.integrateElement(child, false, component_chain);
 
-                if (ele.hasAttribute("w:u"))
-                    this.se(parseInt((ele.getAttribute("w:u") || "0")), child);
+                if (class_members["id"])
+                    this.se(parseInt((class_members["id"] || "0")), child);
 
 
                 ele.replaceWith(child);
@@ -882,8 +903,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                 ele.replaceWith(text);
 
-                if (ele.hasAttribute("w:u"))
-                    this.se(parseInt((ele.getAttribute("w:u") || "0")), text);
+                if (class_members["id"])
+                    this.se(parseInt((class_members["id"] || "0")), text);
 
 
                 //@ts-ignore
@@ -901,21 +922,21 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                 // Attribute that affect scope assignment
 
-                if (ele.hasAttribute("w:o")) {
+                if (class_members["o"]) {
 
                     // Element outside the scope of the current component
                     if (this.par)
-                        this.par.se(+ele.hasAttribute("w:o"), ele);
+                        this.par.se(+class_members["o"], ele);
 
                     //@ts-ignore
                     iterateElementChildren(ele, this.par, component_chain);
 
                     return 0;
 
-                } else if (ele.hasAttribute("w:r")) {
+                } else if (class_members["r"]) {
 
                     const
-                        index = +(ele.getAttribute("w:r") || -1),
+                        index = +(class_members["r"] || -1),
                         lu_index = index % 50,
                         comp_index = (index / 50) | 0;
 
@@ -927,11 +948,11 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                 //Special Wick Elements
 
-                if (ele.hasAttribute("w:ctr"))
+                if (class_members["ctr"])
 
                     ({ sk, PROCESS_CHILDREN } = process_container(ele, scope_component, sk, PROCESS_CHILDREN));
 
-                else if (ele.hasAttribute("w:c") && this.ele !== ele) {
+                else if (class_members["c"] && this.ele !== ele) {
 
                     hydrateComponentElement(ele, component_chain);
 
@@ -939,8 +960,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 }
             }
 
-            if (ele.hasAttribute("w:u"))
-                this.se(parseInt((ele.getAttribute("w:u") || "0")), ele);
+            if (class_members["id"])
+                this.se(parseInt((class_members["id"] || "0")), ele);
         }
 
 
