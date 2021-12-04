@@ -58,7 +58,6 @@ export function* getComponentNames(ele: HTMLElement): Generator<string, void, vo
 
     const len = ele.classList.length;
 
-
     for (let i = 0; i < len; i++)
         if (String_Is_Wick_Hash_ID(ele.classList[i]))
             yield ele.classList[i];
@@ -118,6 +117,7 @@ export function hydrateComponentElement(
 ) {
 
     let names = getComponentNames(hydrate_candidate), affinity = 0;
+
 
     const u = undefined;
 
