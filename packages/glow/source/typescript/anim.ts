@@ -29,13 +29,37 @@ export const Animation = ((function anim() {
 
                 let props: AnimationArgs = {};
 
-                Object.keys(data)
-                    .forEach(
-                        k => {
-                            if (!({ obj: true, match: true, delay: true }[k]))
-                                props[k] = data[k];
-                        }
-                    );
+                for (const [name, val] of Object.entries(data)) {
+
+                    if ((new Set(["obj", "match", "delay"])).has(name)) continue;
+
+                    if (!Array.isArray(val))
+                        throw new Error(
+                            `Expected the type of attribute ${name} to be an Array.`);
+
+                    let i = 0;
+
+                    for (const key of val) {
+                        if (typeof obj !== "object")
+                            throw new Error(`Expected object type for key ${name}[${i}]`);
+
+                        if (key.tic === undefined)
+                            throw new Error(
+                                `
+Key ${name}[${i}] does not have correct value for "tic" attribute. 
+Expected a number type but got instead ${typeof key.tic}.`);
+
+                        if (key.val === undefined)
+                            throw new Error(
+                                `
+Key ${name}[${i}] does not have a valid "val" attribute. `);
+
+                        i++;
+                    }
+
+                    props[name] = val;
+                }
+
 
                 output.push(new AnimSequence(obj, props));
             } else
