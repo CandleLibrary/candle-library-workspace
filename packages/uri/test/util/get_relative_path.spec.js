@@ -14,6 +14,6 @@ const
     rel3A = new URL("/root/the/jungle/main/dir/my/the/jungle/file/"),
     rel3B = new URL("./main/my/other/file/");
 
-assert(rel1A.getRelativeTo(rel1B).path == "../../../../keep/a/lid/on/it/");
-assert(rel2A.getRelativeTo(rel2B).path == "../../../my/other/file/");
-assert(rel3A.getRelativeTo(rel3B).path == "../../../../../my/other/file/");
+assert(rel1A.getRelativeTo(rel1B).path == "../keep/a/lid/on/it/");
+assert(rel2A.getRelativeTo(rel2B).path == "./main/my/other/file/");
+assert(rel3A.getRelativeTo(rel3B).path == "./main/my/other/file/");
