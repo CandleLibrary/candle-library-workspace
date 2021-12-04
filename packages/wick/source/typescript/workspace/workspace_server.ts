@@ -23,10 +23,14 @@ import { ServerSession } from './server/session.js';
 import { initializeDefualtSessionDispatchHandlers } from './server/session_handlers.js';
 import { loadComponents, store } from './server/store.js';
 import { default_radiate_hooks, default_wick_hooks, RenderPage } from './server/webpage.js';
+import { promises as fsp } from 'fs';
+import { compile_module, compile_pack } from './server/compile_module.js';
 const logger = Logger.get("wick");
 Logger.get("lantern");
 Logger.get("wick");
 URI.server();
+
+let resolved_working_directory = <URI>URI.resolveRelative("./", process.cwd() + "/");
 
 function initializeWebSocketServer(lantern: LanternServer<any>) {
     const ws_logger = logger.get("web-socket");
@@ -153,6 +157,46 @@ const workspace_component_dispatch = <Dispatcher>{
     }
 };
 
+const workspace_modules_dispatch = <Dispatcher>{
+    name: "Workspace Editor Modules",
+    MIME: "application/javascript",
+    keys: [],
+    init(lantern, dispatcher) {
+        lantern.addExtension("js", "application/javascript");
+        lantern.addExtension("ts", "application/javascript");
+        dispatcher.keys = [{ ext: ext_map.ts | ext_map.ts, dir: "/*" }];
+    },
+    respond: async function (tools) {
+        const output_dir = <URI>URI.resolveRelative("./.wick-temp/", resolved_working_directory);
+        const module_path = <URI>URI.resolveRelative(tools.pathname, resolved_working_directory);
+        const output_path = <URI>URI.resolveRelative("./" + tools.file + ".temp", output_dir);
+        if (tools.ext == "ts") {
+
+            if (!await output_dir?.DOES_THIS_EXIST()) {
+                logger.debug("Creating wick-temp folder");
+                await fsp.mkdir(output_dir + "", { recursive: true });
+                logger.debug("Created wick-temp folder");
+            }
+
+            console.log({
+                cwd: tools.cwd,
+                output_dir,
+                module_path,
+                output_path
+            });
+
+            await compile_module(module_path + "", output_path + "");
+
+            if (await output_path.DOES_THIS_EXIST()) {
+                tools.setMIME();
+                return tools.sendUTF8FromFile(output_path + "");
+            }
+        }
+
+        return false;
+    }
+};
+
 
 const workspace_editor_dispatch = <Dispatcher>{
     name: "Workspace Editor",
@@ -190,6 +234,7 @@ export async function initDevServer(
 ) {
     rt.setPresets();
 
+    resolved_working_directory = <URI>URI.resolveRelative(working_directory, process.cwd() + "/");
 
     await loadComponents(
         working_directory,
@@ -209,12 +254,14 @@ export async function initDevServer(
 
     server.addDispatch(workspace_editor_dispatch);
     server.addDispatch(workspace_component_dispatch);
+    server.addDispatch(workspace_modules_dispatch);
     server.addDispatch(candle_library_dispatch);
     server.addDispatch(filesystem_dispatch);
     server.addDispatch(candle_favicon_dispatch);
     server.addDispatch($404_dispatch);
 
-    logger.log(`HTTP Server initialized and listening at [ ${port} ] `);
+    logger.log(`HTTPS Server initialized and listening on port [ ${port} ] `);
+    logger.log(`Checkout out your workspace at [ https://localhost:${port} ]!`);
 
     initializeWebSocketServer(server);
 }
