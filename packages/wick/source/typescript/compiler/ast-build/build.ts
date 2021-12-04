@@ -91,7 +91,12 @@ export async function createCompiledComponentClass(
     component: ComponentData,
     context: Context,
     INCLUDE_HTML: boolean = true,
-    INCLUDE_CSS: boolean = true
+    INCLUDE_CSS: boolean = true,
+    /**
+     * If true, bindings that can be completely resolved server
+     * side will not generate any JS code
+     */
+    ALLOW_STATIC_REPLACE: boolean = true
 ): Promise<CompiledComponentClass> {
 
     b_sys.enableBuildFeatures();
@@ -119,7 +124,7 @@ export async function createCompiledComponentClass(
             } = createLookupTables(class_info);
 
             for (const hook of component.indirect_hooks)
-                await processIndirectHook(component, context, hook, class_info);
+                await processIndirectHook(component, context, hook, class_info, ALLOW_STATIC_REPLACE);
 
             for (const frame of component.frames)
                 await processInlineHooks(component, context, frame.ast, class_info);

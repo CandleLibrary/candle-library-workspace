@@ -78,7 +78,12 @@ export async function processIndirectHook(
     comp: ComponentData,
     context: Context,
     indirect_hook: IndirectHook<any>,
-    class_info: CompiledComponentClass
+    class_info: CompiledComponentClass,
+    /**
+     * If true, bindings that can be completely resolved server
+     * side will not have any JS code generated 
+     */
+    ALLOW_STATIC_REPLACE = false
 ) {
     await processHookForClass(
         indirect_hook,
@@ -87,6 +92,7 @@ export async function processIndirectHook(
         class_info,
         indirect_hook.ele_index,
         indirect_hook.ALLOW_STATIC_REPLACE
+        && ALLOW_STATIC_REPLACE
     );
 }
 
@@ -244,7 +250,6 @@ export async function processHookForClass(
         // statically resolvable with constant values only
 
         if (
-            false &&
             ALLOW_STATIC_REPLACE &&
             getExpressionStaticResolutionType(ast, static_data_pack)
             ==
@@ -252,7 +257,6 @@ export async function processHookForClass(
         )
             continue;
 
-        // Do not leak template bindings to runtime components
 
 
         // Convert runtime static variables to prevent 

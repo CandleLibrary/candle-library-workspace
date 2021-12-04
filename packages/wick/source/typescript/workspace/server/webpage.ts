@@ -108,6 +108,7 @@ interface RenderPageOptions {
      * default: `true`
      */
     INTEGRATE_COMPONENTS?: boolean;
+
     /**
      * If true, all Wick annotation attributes will
      * be rendered, including those on elements that 
@@ -116,6 +117,15 @@ interface RenderPageOptions {
      * default: `false`
      */
     VERBOSE_ANNOTATION_ATTRIBUTES?: boolean;
+
+    /**
+     * If true, JS code will not be generated for 
+     * bindings that can be statically resolved 
+     * server-side.
+     * 
+     * default: `true`
+     */
+    ALLOW_STATIC_REPLACE?: boolean;
 }
 
 const default_options: RenderPageOptions = {
@@ -124,6 +134,7 @@ const default_options: RenderPageOptions = {
     STATIC_RENDERED_CSS: true,
     STATIC_RENDERED_HTML: true,
     INTEGRATE_COMPONENTS: true,
+    ALLOW_STATIC_REPLACE: true,
     VERBOSE_ANNOTATION_ATTRIBUTES: false
 };
 
@@ -146,6 +157,7 @@ export async function RenderPage(
         STATIC_RENDERED_CSS = default_options.STATIC_RENDERED_CSS,
         STATIC_RENDERED_HTML = default_options.STATIC_RENDERED_HTML,
         INTEGRATE_COMPONENTS = default_options.INTEGRATE_COMPONENTS,
+        ALLOW_STATIC_REPLACE = default_options.ALLOW_STATIC_REPLACE,
         VERBOSE_ANNOTATION_ATTRIBUTES = default_options.VERBOSE_ANNOTATION_ATTRIBUTES,
     }: RenderPageOptions = default_options,
     hooks: PageRenderHooks = comp.RADIATE
@@ -210,7 +222,7 @@ export async function RenderPage(
 
         const class_info =
             await createCompiledComponentClass(
-                comp, context, INTEGRATED_HTML, INTEGRATED_CSS
+                comp, context, INTEGRATED_HTML, INTEGRATED_CSS, ALLOW_STATIC_REPLACE
             ),
             { class_string } = createClassStringObject(comp, class_info, context, "w.rt.C");
 
