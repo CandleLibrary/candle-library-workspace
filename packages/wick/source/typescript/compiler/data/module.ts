@@ -11,7 +11,7 @@ import {
 import { processWickCSS_AST } from '../ast-parse/parse.js';
 import { parseSource } from "../ast-parse/source.js";
 import { addBindingVariable, addWriteFlagToBindingVariable, addSourceLocationToBindingVariable } from "../common/binding.js";
-import { addPendingModuleToPresets } from '../common/common.js';
+import { addPendingModuleToContext } from '../common/common.js';
 import { ComponentData, mergeComponentData } from '../common/component.js';
 import { Context } from '../common/context.js';
 import { parse_css } from '../source-code-parse/parse.js';
@@ -24,9 +24,9 @@ function getModuleName(
     requesting_source: URI
 ) {
 
-    return addPendingModuleToPresets(context, from_value, requesting_source);
+    return addPendingModuleToContext(context, from_value, requesting_source);
     if (!context.repo.has(module_name))
-        return addPendingModuleToPresets(context, from_value, requesting_source);
+        return addPendingModuleToContext(context, from_value, requesting_source);
     else
         return context.repo.get(module_name)?.hash || "";
 }
@@ -129,6 +129,7 @@ export async function importResource(
         [url, meta] = from_value.split(":"),
 
         uri = <URI>URI.resolveRelative(url, component.location);
+
 
     switch (url + "") {
 
