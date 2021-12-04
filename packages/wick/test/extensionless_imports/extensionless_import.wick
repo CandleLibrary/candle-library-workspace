@@ -15,7 +15,7 @@ import test from "@test";
 test: {
     
     assert("Imports component from a filepath that omits the file extension `.wick`", 
-        ele.children[0].classList[1] == "eleA" 
+        ele.children[0].classList.contains("eleA") == true
     );
 
     assert("Imports component from a filepath that omits the file extension `.md`", 
@@ -23,7 +23,7 @@ test: {
     );
 
     assert("Imports component from a filepath of a folder with an index.wick component", 
-        ele.children[1].classList[1] == "eleB" 
+        ele.children[1].classList.contains("eleB") == true
     );
 
     assert("Imports component from a filepath of a folder with an index.md component", 

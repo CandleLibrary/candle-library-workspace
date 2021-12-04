@@ -16,6 +16,7 @@ import { createComponent } from '../compiler/create_component.js';
 import { parse_component } from '../compiler/source-code-parse/parse.js';
 import { loadComponentsFromDirectory } from '../workspace/server/load_directory.js';
 import { create_config_arg_properties } from "./config_arg_properties.js";
+import { init_build_system } from '../compiler/init_build_system.js';
 
 export const test_logger = Logger.get("wick").get("test");
 const log_level_arg = addCLIConfig("test", para_args.log_level_properties);
@@ -36,6 +37,8 @@ Test components that have been defined with the \`@test\` synthetic import
     accepted_values: <(typeof URI)[]>[URI]
 }).callback = (
         async (input_path, args) => {
+
+            await init_build_system();
 
             test_logger.activate(log_level_arg.value);
 
@@ -61,7 +64,9 @@ Test components that have been defined with the \`@test\` synthetic import
             } else {
 
                 await loadComponentsFromDirectory(
-                    root_path, context, config.endpoint_mapper
+                    root_path,
+                    context,
+                    config.endpoint_mapper
                 );
             }
 
@@ -176,7 +181,7 @@ Test components that have been defined with the \`@test\` synthetic import
                     test_logger.log("Running tests:");
                     await test_frame.start(suites);
                 } else
-                    test_logger.log("No tests were found. Exiting");
+                    test_logger.warn("No tests were found. Exiting");
             }
 
             test_frame.endWatchedTests();
