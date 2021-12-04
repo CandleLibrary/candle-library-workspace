@@ -378,7 +378,7 @@ function renderRadiatePageString(
     </style>
   </head>
   <body>
-    <script> document.body.hidden = true; </script>
+    <script> document.body.classList.toggle("radiate-init"); </script>
 ${html}
 ${templates}
     <script type=module id="wick-init-script">

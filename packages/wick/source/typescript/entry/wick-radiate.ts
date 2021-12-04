@@ -33,7 +33,7 @@ export default function radiate() {
                 console.warn(e);
             }
 
-            document.body.hidden = false;
+            document.body.classList.toggle("radiate-init");
         }
     );
 
