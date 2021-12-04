@@ -149,10 +149,13 @@ export class HTTPSToolSet extends LanternToolsBase {
 
     async sendUTF8FromFile(file_path: string): Promise<boolean> {
 
-        const loc = path.isAbsolute(file_path) ? file_path : path.join(CWD, file_path);
+        const uri = new URI(file_path);
+
+        const loc = uri.IS_RELATIVE ? <URI>URI.resolveRelative(uri, CWD) : uri;
 
         try {
-            const str = await fsp.readFile(loc, "utf8");
+            const str = await fsp.readFile(loc + "", "utf8");
+
             this.sendHeaders();
             this.res.write(str, "utf8");
             this.res.end();
@@ -160,7 +163,8 @@ export class HTTPSToolSet extends LanternToolsBase {
             return true;
         }
         catch (e) {
-            this._log.sub_error(e.stack);
+            if (e instanceof Error)
+                this._log.warn(e.stack);
             return false;
         }
     };
@@ -177,7 +181,8 @@ export class HTTPSToolSet extends LanternToolsBase {
             this.log(`Responding with utf8 string`);
         }
         catch (e) {
-            this._log.sub_error(e);
+            console.log(e);
+            //this._log.sub_error(e);
             return false;
         }
 
