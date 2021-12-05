@@ -380,10 +380,7 @@ export class Context {
             if (name in this.api)
                 return;
 
-            this.api[name] = {
-                hash: name,
-                default: obj,
-            };
+            this.api[name] = Object.assign({ hash: name }, obj);
         }
     }
 
