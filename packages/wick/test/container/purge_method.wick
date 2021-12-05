@@ -1,0 +1,40 @@
+/**
+ * This Component demonstrates tests the purge method on a container,
+ * which should remove components, both mounted and standby, from the 
+ * container. This method is primarily used for the workspace dev 
+ * environment.
+ */
+
+let data = [{v:1},{v:2},{v:3},{v:4}];
+
+let v = 1;
+
+export default <div>
+
+    <input type=number value={v} />
+
+    <container {data}>
+        <span>span value: {model.v}</span>
+    </container>
+
+</div>;
+
+import test from "@test";
+
+test: {
+
+    assert_group("Test Purge", sequence, ()=>{
+
+        const container = comp.ctr[0];
+
+        assert("Components mounted to DOM before purge", Array.from(document.querySelectorAll("span")).length == 4);
+
+        assert("Container has components before purge", container.comps.length == 4);
+
+        container.purge();
+
+        assert("All components removed from `comps` array.", container.comps.length == 0);
+
+        assert("All components removed from DOM after purge", Array.from(document.querySelectorAll("span")).length == 0);
+    })
+}

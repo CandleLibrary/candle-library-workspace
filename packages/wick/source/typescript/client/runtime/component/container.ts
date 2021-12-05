@@ -1073,4 +1073,19 @@ export class WickContainer implements Sparky, ObservableWatcher {
 
         if (OWN_TRANSITION) this.filterExpressionUpdate(transition);
     }
+    /**
+     * Forcefully remove all components from container, ignoring 
+     * transitions
+     */
+    purge() {
+
+        for (const comp of this.comps) {
+            comp.par = null;
+            comp.removeFromDOM();
+        }
+
+        this.comps.length = 0;
+        this.active_comps.length = 0;
+        this.mounted_comps.length = 0;
+    }
 }
