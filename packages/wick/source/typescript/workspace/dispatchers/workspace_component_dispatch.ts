@@ -4,9 +4,12 @@ import {
 } from "@candlelib/lantern";
 import { rt } from '../../client/runtime/global.js';
 import { ComponentData } from '../../compiler/common/component.js';
+import { createComponent } from '../../compiler/create_component.js';
+import { Context } from '../../compiler/common/context.js';
 import { logger } from '../logger.js';
 import { store } from '../server/store.js';
 import { default_radiate_hooks, default_wick_hooks, RenderPage } from '../server/webpage.js';
+import { get_resolved_working_directory } from './resolved_working_directory.js';
 export async function renderPage(
 
     component: ComponentData

@@ -17,7 +17,7 @@ import { set_resolved_working_directory } from './dispatchers/resolved_working_d
 import { workspace_component_dispatch } from './dispatchers/workspace_component_dispatch.js';
 import { workspace_editor_dispatch } from './dispatchers/workspace_editor_dispatch.js';
 import { workspace_modules_dispatch } from './dispatchers/workspace_modules_dispatch.js';
-import { logger } from './logger';
+import { logger } from './logger.js';
 import { ServerSession } from './server/session.js';
 import { initializeDefualtSessionDispatchHandlers } from './server/session_handlers.js';
 import { loadComponents } from './server/store.js';

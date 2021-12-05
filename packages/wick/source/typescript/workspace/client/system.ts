@@ -9,6 +9,8 @@ import { Session } from '../common/session.js';
 import { EditedComponent, FlameSystem } from "./types/flame_system.js";
 import { WickLibrary } from '../../index.js';
 import { WickRTComponent } from "../../client/runtime/component/component.js";
+import { WickContainer } from "../../client/runtime/component/container";
+import { isGeneratorFunction } from 'util/types';
 
 const patch_logger = Logger.get("wick").get("patcher").activate();
 export function revealEventIntercept(sys: FlameSystem) {
