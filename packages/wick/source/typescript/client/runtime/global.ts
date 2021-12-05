@@ -58,6 +58,8 @@ export interface WickRuntime {
 
     init: () => Promise<void>;
 }
+let GLOW_CHECKED = false;
+let local_glow: any = null;
 
 const rt: WickRuntime = (() => {
 
@@ -74,7 +76,14 @@ const rt: WickRuntime = (() => {
 
         root_components: [],
 
-        get glow(): typeof GlowAnimation { return glow; },
+        get glow(): typeof GlowAnimation | null {
+            if (!GLOW_CHECKED) {
+                //@ts-ignore
+                local_glow = globalThis["glow"];
+            }
+
+            return local_glow;
+        },
 
         get p() { return rt.context; },
 
