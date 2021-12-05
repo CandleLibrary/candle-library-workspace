@@ -38,8 +38,8 @@ export function compileTestsFromAST(test_ast: JSNode, suite: TestSuite, globals:
             suite.tests = [];
 
     } catch (e) {
-
-        createTestError(globals, suite, e, `Critical error encountered when compiling tests`);
+        if (e instanceof Error)
+            createTestError(globals, suite, e, `Critical error encountered when compiling tests`);
     }
 }
 
