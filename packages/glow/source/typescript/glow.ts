@@ -18,5 +18,8 @@ const Glow = Object.assign(Animation, {
 	transformTo: TransformTo
 });
 
+//@ts-ignore
+globalThis["glow"] = Glow;
+
 export default Glow;
 
