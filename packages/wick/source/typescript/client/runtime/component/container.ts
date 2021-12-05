@@ -1090,13 +1090,25 @@ export class WickContainer implements Sparky, ObservableWatcher {
      */
     purge() {
 
-        for (const comp of this.comps) {
+        let seen = new WeakSet();
+
+        for (const comp of [
+            ...this.comps,
+            ...this.active_comps,
+            ...this.mounted_comps,
+            ...this.transition_list.map(t => t.comp)
+        ]) {
+            if (seen.has(comp))
+                continue;
+            seen.add(comp);
             comp.par = null;
             comp.removeFromDOM();
+            comp.destructor();
         }
 
         this.comps.length = 0;
         this.active_comps.length = 0;
         this.mounted_comps.length = 0;
+        this.transition_list.length = 0;
     }
 }
