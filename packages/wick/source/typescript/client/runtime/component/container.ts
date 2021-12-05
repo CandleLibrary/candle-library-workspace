@@ -42,7 +42,7 @@ const enum TransitionType {
 }
 
 
-type ContainerComponent = WickRTComponent & { index: number; container_model: any; _TRANSITION_STATE_: boolean; container: WickContainer; };
+export type ContainerComponent = WickRTComponent & { index: number; container_model: any; _TRANSITION_STATE_: boolean; container: WickContainer; };
 
 const component_attributes_default: [string?, string?][][] = [[[]]];
 
