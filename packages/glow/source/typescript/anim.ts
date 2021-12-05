@@ -43,11 +43,11 @@ export const Animation = ((function anim() {
                         if (typeof obj !== "object")
                             throw new Error(`Expected object type for key ${name}[${i}]`);
 
-                        if (key.tic === undefined)
+                        if (key.tic === undefined || isNaN(key.tic) || typeof key.tic != "number")
                             throw new Error(
                                 `
 Key ${name}[${i}] does not have correct value for "tic" attribute. 
-Expected a number type but got instead ${typeof key.tic}.`);
+Expected a number type but got instead ${isNaN(key.tic ?? 0) ? "NaN" : typeof key.tic}.`);
 
                         if (key.val === undefined)
                             throw new Error(
