@@ -72,13 +72,22 @@ export class BrowserRunner implements TestRunner {
 
             this.kill_switch = await BrowserRunner.setupServer(globals);
 
+            this.hook(BrowserRunner.server);
+
             BrowserRunner.SERVER_LOADED = true;
         }
 
         BrowserRunner.active_runner = this;
 
+
         this.run();
     }
+
+    /**
+     * Overridable function of extending the functionality
+     * of the lantern server. Only called per server initiation
+     */
+    hook(server: LanternServer<any>) { }
 
     private async run() {
 
