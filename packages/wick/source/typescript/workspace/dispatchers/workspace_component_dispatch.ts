@@ -12,7 +12,9 @@ import { default_radiate_hooks, default_wick_hooks, RenderPage } from '../server
 import { get_resolved_working_directory } from './resolved_working_directory.js';
 export async function renderPage(
 
-    component: ComponentData
+    component: ComponentData,
+
+    context: Context = rt.context
 
 ): Promise<string | null> {
 
@@ -44,7 +46,7 @@ export async function renderPage(
 
         return (await RenderPage(
             component,
-            rt.context,
+            context,
             {
                 VERBOSE_ANNOTATION_ATTRIBUTES: true,
                 ALLOW_STATIC_REPLACE: false,
@@ -83,17 +85,37 @@ export const workspace_component_dispatch = <Dispatcher>{
             }
 
             if (store.endpoints?.has(tools.dir)) {
+
+                //Load component from scratch
                 //@ts-ignore
                 const { comp } = store.endpoints.get(tools.dir);
 
-                if (comp.HAS_ERRORS) {
+                const context = new Context();
 
-                    logger.get(`comp error`).warn(`Component ${comp.name} (${comp.location}) produced compilation errors:`);
-                    for (const error of rt.context.getErrors(comp))
-                        logger.get(`comp error`).warn(error);
+                const new_comp = await createComponent(comp.location, context, get_resolved_working_directory());
+
+
+                if (context.hasErrors()) {
+
+                    for (const [name, errors] of context.errors) {
+
+                        const comp = context.components.get(name);
+
+                        if (comp) {
+
+                            logger.get(`comp error`).warn(`Component ${comp.name} (${comp.location}) produced compilation errors:`);
+
+                            for (const error of errors)
+                                logger.get(`comp error`).warn(error);
+
+                        }
+                    }
                 }
 
-                const page = await renderPage(comp);
+                for (const error of context.getWarnings(new_comp))
+                    logger.get(`comp warning`).warn(error);
+
+                const page = await renderPage(new_comp, context);
 
                 if (page)
                     return tools.sendUTF8String(page);
