@@ -173,10 +173,17 @@ function initializeDefualtSessionDispatchHandlers(
 
                     updateCSSReferences(page_wick.rt.context, from, to, matches, style);
 
-                    patch_logger.debug(`Applying CSS patch: [ ${from} ]->[ ${to} ] to ${matches.length} component${matches.length == 1 ? "" : "s"}`);
+                    patch_logger.log(`Applying CSS patch: [ ${from} ]->[ ${to} ] to ${matches.length} component${matches.length == 1 ? "" : "s"}`);
 
                     if (to != from)
                         for (const match of matches) {
+                            if (match.container) {
+                                for (const _class of match.container.comp_constructors) {
+                                    if (_class.edit_name == from || _class.name == from)
+                                        _class.edit_name = to;
+                                }
+
+                            }
                             applyToPatchToRuntimeComp(match, to);
                         }
 
@@ -189,7 +196,7 @@ function initializeDefualtSessionDispatchHandlers(
 
                     const matches = getRuntimeComponentsFromName(from, page_wick);
 
-                    patch_logger.debug(`Applying STUB patch: [ ${from} ]->[ ${to} ] to ${matches.length} component${matches.length == 1 ? "" : "s"}`);
+                    patch_logger.log(`Applying STUB patch: [ ${from} ]->[ ${to} ] to ${matches.length} component${matches.length == 1 ? "" : "s"}`);
 
                     if (to != from) {
 
@@ -209,7 +216,7 @@ function initializeDefualtSessionDispatchHandlers(
 
                     updateCSSReferences(page_wick.rt.context, from, to, matches);
 
-                    patch_logger.debug(`Applying TEXT patch: [ ${from} ]->[ ${to} ] to ${matches.length} component${matches.length == 1 ? "" : "s"}`);
+                    patch_logger.log(`Applying TEXT patch: [ ${from} ]->[ ${to} ] to ${matches.length} component${matches.length == 1 ? "" : "s"}`);
 
                     for (const match of matches) {
                         if (to != from)
@@ -251,60 +258,86 @@ function initializeDefualtSessionDispatchHandlers(
                     const class_ = classes[0];
                     const matches = getRuntimeComponentsFromName(from, page_wick);
 
-                    patch_logger.debug(`Transitioning [ ${from} ] to [ ${to} ]. ${matches.length} component${matches.length == 1 ? "" : "s"} will be replaced.`);
+                    patch_logger.log(`Transitioning [ ${from} ] to [ ${to} ]. ${matches.length} component${matches.length == 1 ? "" : "s"} will be replaced.`);
 
 
                     for (const match of matches) {
 
-                        // Do some patching magic to replace the old component 
-                        // with the new one. 
-                        const ele = match.ele;
-                        const par_ele = ele.parentElement;
-                        const par_comp = match.par;
+                        if (match.container) {
+                            //Replace the component constructor and re-init container components
 
-                        const new_component = new class_(
-                            null,
-                            undefined,
-                            [],
-                            "",
-                            page_wick.rt.context
-                        );
+                            const container: WickContainer = match.container;
 
-                        if (par_ele)
-                            par_ele.replaceChild(new_component.ele, ele);
+                            if (container.comp_constructors.some(c => (c.edit_name == from || c.name == from))) {
 
-                        if (par_comp) {
+                                container.comp_constructors
+                                    = container.comp_constructors.map(c => (c.edit_name == from || c.name == from) ? class_ : c);
 
-                            const index = par_comp.ch.indexOf(match);
+                                const models = container.active_comps.map(c => c.model);
+                                try {
+                                    patch_logger.log("Transitioning out old components");
+                                    container.filter_new_items([]);
+                                } catch (e) {
+                                    patch_logger.error(e);
+                                    patch_logger.log("Forcefully removing components from container");
+                                    container.purge();
+                                }
 
-                            if (index >= 0) {
-                                par_comp.ch.splice(index, 1, new_component);
-                                new_component.par = par_comp;
+                                container.filter_new_items(models);
                             }
 
-                            match.par = null;
-                        }
+                        } else {
 
-                        new_component.initialize(match.model);
+                            // Do some patching magic to replace the old component 
+                            // with the new one. 
+                            const ele = match.ele;
+                            const par_ele = ele.parentElement;
+                            const par_comp = match.par;
 
-                        //Patch in data from old component
+                            const new_component = new class_(
+                                null,
+                                undefined,
+                                [],
+                                "",
+                                page_wick.rt.context
+                            );
 
-                        if (match.nlu) {
-                            let i = 0;
+                            if (par_ele)
+                                par_ele.replaceChild(new_component.ele, ele);
 
-                            for (const [name, flag] of Object.entries(match.nlu) as [string, number][]) {
-                                if (new_component.nlu[name] && new_component.nlu[name] != undefined)
-                                    continue;
-                                new_component.update({ [name]: match[i++] }, flag >>> 24);
+                            if (par_comp) {
+
+                                const index = par_comp.ch.indexOf(match);
+
+                                if (index >= 0) {
+                                    par_comp.ch.splice(index, 1, new_component);
+                                    new_component.par = par_comp;
+                                }
+
+                                match.par = null;
                             }
+
+                            new_component.initialize(match.model);
+
+                            //Patch in data from old component
+
+                            if (match.nlu) {
+                                let i = 0;
+
+                                for (const [name, flag] of Object.entries(match.nlu) as [string, number][]) {
+                                    if (new_component.nlu[name] && new_component.nlu[name] != undefined)
+                                        continue;
+                                    new_component.update({ [name]: match[i++] }, flag >>> 24);
+                                }
+                            }
+
+
+                            match.disconnect();
+                            match.destructor();
+
+                            if (removeRootComponent(match, page_wick))
+                                addRootComponent(new_component, page_wick);
                         }
-
-
-                        match.disconnect();
-                        match.destructor();
-
-                        if (removeRootComponent(match, page_wick))
-                            addRootComponent(new_component, page_wick);
                     }
                 }
             }
