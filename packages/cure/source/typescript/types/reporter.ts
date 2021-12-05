@@ -46,7 +46,7 @@ export interface Reporter {
      * @param {CLITextDraw | Console} terminal - An output terminal to write test messages to.
      * 
      */
-    start: (pending_tests: Test[], globals: Globals, terminal: CLITextDraw | Console) => void;
+    start: (pending_tests: Test[], globals: Globals, terminal: CLITextDraw | Console) => void | Promise<void>;
 
     /**
      * Called periodically if the TestFrame is in watch mode.

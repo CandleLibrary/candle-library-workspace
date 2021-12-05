@@ -108,7 +108,7 @@ export class BasicReporter implements Reporter {
         this.notifications = [];
     }
 
-    notify(...messages) {
+    notify(...messages: any[]) {
         const message = messages.map(m => m.toString()).join(" ");
         console.log(`${this.colors.symB + message + rst}`);
     }
@@ -171,15 +171,15 @@ export class BasicReporter implements Reporter {
         return strings;
     }
 
-    async loadingSuites(global: Globals, terminal) { }
+    async loadingSuites(global: Globals, terminal: any) { }
 
-    async loadingTests(global: Globals, terminal) { }
+    async loadingTests(global: Globals, terminal: any) { }
 
-    async reloadingWatchedFile(global: Globals, terminal) { }
+    async reloadingWatchedFile(global: Globals, terminal: any) { }
 
-    async reloadingWatchedSuite(global: Globals, terminal) { }
+    async reloadingWatchedSuite(global: Globals, terminal: any) { }
 
-    async prestart(global: Globals, terminal) { }
+    async prestart(global: Globals, terminal: any) { }
 
     async renderToTerminal(output: string[], terminal: CLITextDraw) {
         if (this.WORKING) {
@@ -274,7 +274,8 @@ export class BasicReporter implements Reporter {
         return out;
     }
 
-    async complete(results: TestInfo[], globals: Globals, terminal: CLITextDraw): Promise<boolean> {
+    async complete(results: TestInfo[], globals: Globals, terminal: CLITextDraw | Console): Promise<boolean> {
+
 
         const
             time_end = performance.now(),

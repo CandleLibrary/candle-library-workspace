@@ -45,7 +45,7 @@ export default <AnimationMethods><any>{
         return this;
     },
 
-    asyncPlay(scale, from) {
+    asyncPlay(scale: number, from: number) {
 
         this.play(scale, from);
 
@@ -87,7 +87,7 @@ export default <AnimationMethods><any>{
         return this;
     },
 
-    issueEvent(event) {
+    issueEvent(event: string) {
         if (this.events[event])
             this.events[event] = this.events[event].filter(e => e(this) !== false);
     },
@@ -104,7 +104,7 @@ export default <AnimationMethods><any>{
         });
     },
 
-    scheduledUpdate(a, t) {
+    scheduledUpdate(a: number, t: number) {
 
         if (!this.PLAY) return;
 
