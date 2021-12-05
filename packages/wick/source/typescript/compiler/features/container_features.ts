@@ -495,7 +495,7 @@ registerFeature(
 
                 async prepareHTMLNode(node, host_node, host_element, index, skip, component, context) {
 
-                    if (node.name == "shift" && "IS_CONTAINER" in host_node) {
+                    if ((node.name == "shift" || node.name == "col" || node.name == "columns") && "IS_CONTAINER" in host_node) {
 
                         // Process the primary expression for Binding Refs and static
                         // data
