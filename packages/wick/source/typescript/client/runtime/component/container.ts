@@ -968,6 +968,8 @@ export class WickContainer implements Sparky, ObservableWatcher {
 
             this.primeTransitions(transition);
 
+            transition.play();
+
         } else {
 
             const
