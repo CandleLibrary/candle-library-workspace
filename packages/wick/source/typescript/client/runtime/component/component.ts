@@ -169,7 +169,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.init_interfaces(this);
     }
 
-    init_interfaces() { }
+    init_interfaces(c: any) { }
 
     initialize(model: any = this.model) {
 
@@ -296,7 +296,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 return ele;
             }
         }
-        throw new Error("WickRT :: NO template element for component: " + this.name);
+        throw new Error(`WickRT :: NO template element for component: ${this.name}. Was this component defined without a default HTML element export?`);
     }
 
     removeCSS() {

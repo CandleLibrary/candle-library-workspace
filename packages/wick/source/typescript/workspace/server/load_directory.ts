@@ -1,11 +1,11 @@
-import { Logger } from '@candlelib/log';
 import { traverseFilesFromRoot } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
+import { rt } from '../../client/runtime/global.js';
 import { ComponentData } from '../../compiler/common/component.js';
 import { Context } from '../../compiler/common/context.js';
-import { rt } from '../../client/runtime/global.js';
-import { EndpointMapper } from "../../types/config.js";
 import { createComponent } from '../../compiler/create_component.js';
+import { EndpointMapper } from "../../types/config.js";
+import { logger } from '../logger.js';
 
 export function mapEndpoints(uri: URI, working_directory: URI) {
 
@@ -125,9 +125,7 @@ export async function loadComponentsFromDirectory(
 								endpoints.set(template_endpoint, { comp, template_data: data });
 								endpoints_strings.push(template_endpoint);
 							} else {
-								Logger
-									.get("wick")
-									.get("build")
+								logger.get("build")
 									.warn(
 										`Could not create endpoint for template (${file_path})[${i}].\nMissing endpoint string attribute in template data`,
 										data
@@ -144,15 +142,9 @@ export async function loadComponentsFromDirectory(
 
 				} catch (e) {
 
-					Logger
-						.get("wick")
-						.get("build")
-						.error(file_path);
+					logger.get("build").error(file_path);
 
-					Logger
-						.get("wick")
-						.get("build")
-						.error(e);
+					logger.get("build").error(e);
 
 					return {
 						endpoints: null,

@@ -1,22 +1,40 @@
+import { traverse } from '@candlelib/conflagrate';
 import {
-    BasicReporter, compileTestsFromAST, createTestFrame,
+    BasicReporter, BrowserRunner, compileTestsFromAST, createTestFrame,
     createTestSuite
 } from "@candlelib/cure";
 import { JSNode, JSNodeType } from '@candlelib/js';
+import { LanternServer } from "@candlelib/lantern";
 import { Logger } from "@candlelib/log";
 import { addCLIConfig, args as para_args } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
-import { traverse } from '@candlelib/conflagrate';
-import { createCompiledComponentClass, finalizeBindingExpression, processInlineHooks } from '../compiler/ast-build/build.js';
+import {
+    createCompiledComponentClass,
+    finalizeBindingExpression,
+    processInlineHooks
+} from '../compiler/ast-build/build.js';
 import { componentDataToJSStringCached } from "../compiler/ast-render/js.js";
-import { getDependentComponents } from "../workspace/server/webpage.js";
+import { getModuleName } from '../compiler/common/binding.js';
 import { ComponentData } from '../compiler/common/component.js';
 import { Context } from "../compiler/common/context.js";
 import { createComponent } from '../compiler/create_component.js';
-import { parse_component } from '../compiler/source-code-parse/parse.js';
-import { loadComponentsFromDirectory } from '../workspace/server/load_directory.js';
-import { create_config_arg_properties } from "./config_arg_properties.js";
 import { init_build_system } from '../compiler/init_build_system.js';
+import { parse_component } from '../compiler/source-code-parse/parse.js';
+import { BINDING_VARIABLE_TYPE } from '../index.js';
+import { set_resolved_working_directory } from '../workspace/dispatchers/resolved_working_directory.js';
+import { workspace_modules_dispatch } from '../workspace/dispatchers/workspace_modules_dispatch.js';
+import { loadComponentsFromDirectory } from '../workspace/server/load_directory.js';
+import { getDependentComponents } from "../workspace/server/webpage.js";
+import { create_config_arg_properties } from "./config_arg_properties.js";
+
+class WickBrowserRunner extends BrowserRunner {
+    constructor(...args: []) {
+        super(...args);
+    }
+    hook(server: LanternServer<any>) {
+        server.addDispatch(workspace_modules_dispatch);
+    }
+}
 
 export const test_logger = Logger.get("wick").get("test");
 const log_level_arg = addCLIConfig("test", para_args.log_level_properties);
@@ -42,9 +60,11 @@ Test components that have been defined with the \`@test\` synthetic import
 
             test_logger.activate(log_level_arg.value);
 
-            //const input_path = URI.resolveRelative(args.trailing_arguments.pop() ?? "./");
             const root_path = <URI>URI.resolveRelative(input_path);
+
             const config = config_arg.value;
+
+            set_resolved_working_directory(new URI(root_path.dir + "/"));
 
             test_logger
                 .debug(`Input root path:                [ ${input_path + ""} ]`);
@@ -62,15 +82,13 @@ Test components that have been defined with the \`@test\` synthetic import
             if (root_path.ext == "wick") {
                 await createComponent(root_path, context);
             } else {
-
                 await loadComponentsFromDirectory(
                     root_path,
                     context,
-                    config.endpoint_mapper
+                    (uri: URI, cwd: URI) => uri.getRelativeTo(cwd).toString()
                 );
             }
 
-            const test_sources = [];
             const suites = [];
             const test_frame = createTestFrame({
                 WATCH: false,
@@ -80,10 +98,10 @@ Test components that have been defined with the \`@test\` synthetic import
 
             await test_frame.init();
 
-            test_frame.setReporter(new BasicReporter());
+            test_frame.globals.runners?.map(r => r.close());
 
             let i = 0;
-
+            const module_ref = new Map([...context.repo.values()].map(v => [v.hash, v]));
             for (const [, component] of context.components) {
 
                 if (context.test_rig_sources.has(component)) {
@@ -111,10 +129,34 @@ Test components that have been defined with the \`@test\` synthetic import
                             comp, context, true, true, "wick.rt.C"
                         );
 
+                        const module_dependencies = new Map();
+
+                        for (const [str, b] of comp.root_frame.binding_variables ?? []) {
+
+                            if (
+                                b.type == BINDING_VARIABLE_TYPE.MODULE_MEMBER_VARIABLE
+                                ||
+                                b.type == BINDING_VARIABLE_TYPE.MODULE_NAMESPACE_VARIABLE
+                                ||
+                                b.type == BINDING_VARIABLE_TYPE.MODULE_VARIABLE
+                            ) {
+                                const mod = module_ref.get(getModuleName(b));
+
+                                if (mod)
+                                    module_dependencies.set(mod.hash, mod);
+                            }
+                        }
+
+                        if (module_dependencies.size > 0) {
+                            const module_mapping = [...module_dependencies.values()].map(m => `["${m.hash}", "${m.url}"]`);
+                            component_strings.push(`await wick.appendPresets({"repo":[${module_mapping}]});`);
+                        }
+
                         component_strings.push(`wick.rt.rC(${class_string})`);
                     }
 
-                    const model = traverse(source_ast_block, "nodes").makeMutable()
+                    //@ts-ignore
+                    const model: any = traverse(source_ast_block, "nodes").makeMutable()
                         .filter("type", JSNodeType.VariableStatement, JSNodeType.LexicalStatement)
                         .run(
                             (node, meta) => {
@@ -138,21 +180,23 @@ Test components that have been defined with the \`@test\` synthetic import
 
                     const ast: JSNode = {
                         type: JSNodeType.Module,
-                        nodes: [<any>source_ast_block],
+                        nodes: [...source_ast_block.nodes],
                         pos: component.root_frame.ast.pos
                     };
 
                     await processInlineHooks(component, context, ast, comp_class);
 
-                    const test_source_ast = (await finalizeBindingExpression(
-                        ast,
-                        component,
-                        comp_class,
-                        context,
-                        "comp"
-                    )).ast;
+                    const test_source_ast = (
+                        await finalizeBindingExpression(
+                            ast,
+                            component,
+                            comp_class,
+                            context,
+                            "comp"
+                        )).ast;
 
                     if (model)
+                        //@ts-ignore
                         source.nodes[5 + component_strings.length]
                             .nodes[0].nodes[1].nodes.push(model);
 
@@ -161,9 +205,8 @@ Test components that have been defined with the \`@test\` synthetic import
 
                     compileTestsFromAST(source, test_suite, test_frame.globals);
 
-                    for (const test of test_suite.tests) {
+                    for (const test of test_suite.tests)
                         test.BROWSER = true;
-                    }
                 }
             }
 
@@ -178,6 +221,8 @@ Test components that have been defined with the \`@test\` synthetic import
                 }
             } else {
                 if (suites.length > 0) {
+                    test_frame.setReporter(new BasicReporter());
+                    test_frame.globals.runners = [new WickBrowserRunner()];
                     test_logger.log("Running tests:");
                     await test_frame.start(suites);
                 } else
