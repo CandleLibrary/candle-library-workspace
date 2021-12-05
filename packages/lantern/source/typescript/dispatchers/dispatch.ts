@@ -129,7 +129,7 @@ export default async function dispatcher<T>(tool_set, request_data: RequestData,
 
 
 /** Root dispatch function **/
-dispatcher.default = async function (code, tool_set, request_data: RequestData, log_queue: LogQueue, DispatchMap, ext_map) {
+dispatcher.default = async function (code, tool_set, request_data: RequestData, log_queue: LogQueue, DispatchMap: Map<string, Dispatcher[]>, ext_map) {
     /** Extra Flags **/
     const
         url = request_data.url,
@@ -158,7 +158,7 @@ dispatcher.default = async function (code, tool_set, request_data: RequestData, 
     return result;
 };
 
-function SetDispatchMap(dir, dispatch_object, ext, DispatchMap) {
+function SetDispatchMap(dir: string, dispatch_object: Dispatcher, ext: number, DispatchMap: Map<string, Dispatcher[]>) {
 
     for (let i = 1; i !== 0x10000000; i = (i << 1)) {
         if ((ext & i)) {
@@ -173,13 +173,18 @@ function SetDispatchMap(dir, dispatch_object, ext, DispatchMap) {
 
             if (d) {
                 d.push(dispatch_object);
+                d.sort((a, b) => {
+                    let a_val = typeof a.priority == "number" ? a.priority : 0;
+                    let b_val = typeof b.priority == "number" ? b.priority : 0;
+                    return b_val - a_val;
+                });
             } else
                 DispatchMap.set(dispatch_key, [dispatch_object]);
         }
     }
 }
 
-export function AddDispatch(log_queue: LogQueue, DispatchMap, DefaultDispatchMap, ...dispatch_objects) {
+export function AddDispatch(log_queue: LogQueue, DispatchMap: Map<string, Dispatcher[]>, DefaultDispatchMap: Map<string, Dispatcher>, ...dispatch_objects: Dispatcher[]) {
 
     for (const dispatch_object of dispatch_objects)
         AddCustomDispatch(log_queue, dispatch_object, DispatchMap, DefaultDispatchMap);
@@ -187,7 +192,7 @@ export function AddDispatch(log_queue: LogQueue, DispatchMap, DefaultDispatchMap
     return this;
 }
 
-function AddCustomDispatch(log_queue: LogQueue, dispatch_object, DispatchMap, DefaultDispatchMap) {
+function AddCustomDispatch(log_queue: LogQueue, dispatch_object: Dispatcher, DispatchMap: Map<string, Dispatcher[]>, DefaultDispatchMap: Map<string, Dispatcher>) {
 
     const log = log_queue.createLocalLog("DISPATCH_MAP");
 
@@ -262,7 +267,7 @@ function AddCustomDispatch(log_queue: LogQueue, dispatch_object, DispatchMap, De
     return this;
 }
 
-function AddDefaultDispatch(log_queue: LogQueue, dispatch_object, DispatchDefaultMap) {
+function AddDefaultDispatch(log_queue: LogQueue, dispatch_object: Dispatcher, DispatchDefaultMap: Map<string, Dispatcher>) {
 
     const log = log_queue.createLocalLog("DISPATCH_MAP");
 
