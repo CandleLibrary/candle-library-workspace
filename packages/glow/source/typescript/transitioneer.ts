@@ -26,7 +26,7 @@ function $in(this: TransitionClass, ...data: any[]) {
                     easing = anim_data.easing;
                 seq = this.TT[anim_data.match](anim_data.obj, duration, easing);
             } else
-                seq = Animation.createSequence(anim_data);
+                seq = Animation(anim_data);
 
             //Parse the object and convert into animation props. 
             if (seq) {
@@ -75,7 +75,7 @@ function $out(this: TransitionClass, ...data: any[]) {
             if (anim_data.match) {
                 this.TT[anim_data.match] = TransformTo(anim_data.obj);
             } else {
-                let seq = Animation.createSequence(anim_data);
+                let seq = Animation(anim_data);
                 if (seq) {
                     this.out_seq.push(seq);
                     this.out_duration = Math.max(this.out_duration, seq.duration);
