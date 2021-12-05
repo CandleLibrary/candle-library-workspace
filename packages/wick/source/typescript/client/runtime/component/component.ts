@@ -274,14 +274,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.CONNECTED = false;
     }
 
-    /** 
-     * ██████   ██████  ███    ███         ██     ██   ██ ████████ ███    ███ ██      
-     * ██   ██ ██    ██ ████  ████        ██      ██   ██    ██    ████  ████ ██      
-     * ██   ██ ██    ██ ██ ████ ██       ██       ███████    ██    ██ ████ ██ ██      
-     * ██   ██ ██    ██ ██  ██  ██      ██        ██   ██    ██    ██  ██  ██ ██      
-     * ██████   ██████  ██      ██     ██         ██   ██    ██    ██      ██ ███████                                                                                                                                                          
-     */
-
 
     ce(): HTMLElement {
 
@@ -395,14 +387,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         this.disconnected();
     }
-
-    /***
-     * ████████ ██████   █████  ███    ██ ███████ ██ ████████ ██  ██████  ███    ██ ███████ 
-     *    ██    ██   ██ ██   ██ ████   ██ ██      ██    ██    ██ ██    ██ ████   ██ ██      
-     *    ██    ██████  ███████ ██ ██  ██ ███████ ██    ██    ██ ██    ██ ██ ██  ██ ███████ 
-     *    ██    ██   ██ ██   ██ ██  ██ ██      ██ ██    ██    ██ ██    ██ ██  ██ ██      ██ 
-     *    ██    ██   ██ ██   ██ ██   ████ ███████ ██    ██    ██  ██████  ██   ████ ███████
-     */
 
 
     oTI(row: number, col: number, DESCENDING: boolean, trs: Transition) { }
@@ -520,16 +504,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         }
 
     }
-
-    /***
-     * ███    ███  ██████  ██████  ███████ ██      
-     * ████  ████ ██    ██ ██   ██ ██      ██      
-     * ██ ████ ██ ██    ██ ██   ██ █████   ██      
-     * ██  ██  ██ ██    ██ ██   ██ ██      ██      
-     * ██      ██  ██████  ██████  ███████ ███████ 
-     */
-
-
     setModel(model: ObservableModel | any) {
 
         if (this.model && model != this.model) {
@@ -600,14 +574,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 | BINDING_FLAG.DEFAULT_BINDING_STATE
             );
     }
-
-    /**
-     * ██    ██ ██████  ██████   █████  ████████ ███████ 
-     * ██    ██ ██   ██ ██   ██ ██   ██    ██    ██      
-     * ██    ██ ██████  ██   ██ ███████    ██    █████   
-     * ██    ██ ██      ██   ██ ██   ██    ██    ██      
-     *  ██████  ██      ██████  ██   ██    ██    ███████ 
-     */
 
     update(data: any, flags: number = 1, IMMEDIATE: boolean = false) {
 
