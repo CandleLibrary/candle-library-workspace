@@ -305,34 +305,43 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     }
 
     removeCSS() {
+        if (this.context.css_cache) {
 
-        const cache = this.context.css_cache.get(this.name);
+            const cache = this.context.css_cache.get(this.name);
 
-        if (cache) {
-            cache.count--;
-            if (cache.count <= 0) {
-                cache.css_ele.parentElement.removeChild(cache.css_ele);
-                this.context.css_cache.delete(this.name);
+            if (cache && cache.css_ele.parentElement) {
+                cache.count--;
+                if (cache.count <= 0) {
+                    cache.css_ele.parentElement.removeChild(cache.css_ele);
+                    this.context.css_cache.delete(this.name);
+                }
             }
         }
     }
 
     setCSS(style_string = this.getCSS()) {
 
-        if (style_string) {
+        if (style_string && this.context.css_cache) {
 
             if (!this.context.css_cache.has(this.name)) {
 
-                const { window: { document }, css_cache } = this.context,
-                    css_ele = document.createElement("style");
+                const { window, css_cache } = this.context;
+                if (window) {
+                    const { document } = window,
 
-                css_ele.innerHTML = style_string;
+                        css_ele = document.createElement("style");
 
-                document.head.appendChild(css_ele);
+                    css_ele.innerHTML = style_string;
 
-                css_cache.set(this.name, { css_ele, count: 1 });
-            } else
-                this.context.css_cache.get(this.name).count++;
+                    document.head.appendChild(css_ele);
+
+                    css_cache.set(this.name, { css_ele, count: 1 });
+                }
+            } else {
+                if (this.context.css_cache.has(this.name))
+                    //@ts-ignore
+                    this.context.css_cache.get(this.name).count++;
+            }
 
             this.ele.classList.add(this.name);
         }
