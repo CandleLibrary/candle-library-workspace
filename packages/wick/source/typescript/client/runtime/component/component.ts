@@ -96,6 +96,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     _SCHD_: number;
 
+    static edit_name: string | undefined;
+
     constructor(
         existing_element = null,
         wrapper: WickRTComponent | null = null,
@@ -104,7 +106,10 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         context: Context = rt.context,
         element_affinity = 0
     ) {
-        this.name = this.constructor.name;
+        this.name =
+            this.constructor?.edit_name
+            ??
+            this.constructor.name;
 
         this.ci = 0;
         this.ch = [];
@@ -603,13 +608,14 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
             const val = data[name];
 
-
-            if (typeof val !== "undefined" && this.nlu) {
+            if (val !== undefined && this.nlu) {
 
                 const index = this.nlu[name];
 
-                if (flags && ((index >>> 24) & flags) == flags)
+                if (flags && ((index >>> 24) & flags) == flags) {
+
                     this.ua(index & 0xFFFFFF, val);
+                }
             }
         }
 
@@ -637,6 +643,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         if (attribute_value !== prev_val) {
 
             comp[attribute_index] = attribute_value;
+
             if (
                 !this.call_set.has(attribute_index)
                 &&
@@ -700,7 +707,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         const comp: { [key: string]: any; } = <any>this;
 
         for (const id of ids)
-            if (typeof comp[id] == "undefined")
+            if (comp[id] === undefined)
                 return false;
 
         return true;
@@ -736,7 +743,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
             const val = data[key];
 
-            if (typeof val !== "undefined" && this.nlu) {
+            if (val !== undefined && this.nlu) {
 
                 const index = this.nlu[key];
 
@@ -999,7 +1006,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 ele = node;
             };
 
-            ele.data = data;
+            ele.data = data + "";
         }
     }
 
