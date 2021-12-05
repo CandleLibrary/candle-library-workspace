@@ -1,12 +1,12 @@
 import { Action } from "../types/action.js";
 import { ActionType } from "../types/action_type.js";
-import { FlameSystem } from "../types/flame_system.js";
+import { WorkspaceSystem } from "../types/workspace_system.js";
 import { ObjectCrate } from "../types/object_crate.js";
 import { EditorSelection } from "../types/selection.js";
 import { setNumericValue } from "./common.js";
 import { sealCSS, updateCSS } from "./update_css.js";
 
-function getContentBox(sel: EditorSelection, sys: FlameSystem) {
+function getContentBox(sel: EditorSelection, sys: WorkspaceSystem) {
 
     const
         { ele } = sel,
@@ -34,7 +34,7 @@ function getContentBox(sel: EditorSelection, sys: FlameSystem) {
     return { top, left, width, height };
 }
 
-function getNumericValue(sys: FlameSystem, crate: ObjectCrate, type: string): number {
+function getNumericValue(sys: WorkspaceSystem, crate: ObjectCrate, type: string): number {
     return getContentBox(crate.sel, sys)[type];
 }
 

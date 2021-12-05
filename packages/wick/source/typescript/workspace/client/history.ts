@@ -1,5 +1,5 @@
 import { setState } from "./actions/update.js";
-import { FlameSystem } from "./types/flame_system.js";
+import { WorkspaceSystem } from "./types/workspace_system.js";
 import { HistoryState } from "./types/history_state";
 
 export default (function HISTORY() {
@@ -39,7 +39,7 @@ export default (function HISTORY() {
          * changes of the change list the pointer is 
          * now at.
          */
-        ROLLBACK_EDIT_STATE(system: FlameSystem) {
+        ROLLBACK_EDIT_STATE(system: WorkspaceSystem) {
             if (pointer > -1) {
                 const state = stack[pointer];
                 setState(false, state, system);
@@ -52,7 +52,7 @@ export default (function HISTORY() {
          * changes of the change list the pointer is 
          * now at.
          */
-        ROLLFORWARD_EDIT_STATE(system: FlameSystem) {
+        ROLLFORWARD_EDIT_STATE(system: WorkspaceSystem) {
             if (pointer < stack.length - 1) {
                 pointer++;
                 const state = stack[pointer];
@@ -61,7 +61,7 @@ export default (function HISTORY() {
 
         },
 
-        WriteBack(system: FlameSystem) {
+        WriteBack(system: WorkspaceSystem) {
             return;
         }
     };

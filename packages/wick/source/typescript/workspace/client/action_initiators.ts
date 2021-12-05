@@ -6,7 +6,7 @@ import { getCSSCache } from "./cache/css_cache.js";
 import { getActiveSelections, getActiveSelectionsCount, getComponentNameFromElement } from "./common_functions.js";
 import { activeSys, active_system as system, revealEventIntercept } from "./system.js";
 import { Action } from "./types/action.js";
-import { FlameSystem } from "./types/flame_system.js";
+import { WorkspaceSystem } from "./types/workspace_system.js";
 import { ObjectCrate } from "./types/object_crate.js";
 
 /**
@@ -47,12 +47,12 @@ interface ActionRef {
 
 export default class ActionQueueRunner implements Sparky {
 
-    sys: FlameSystem;
+    sys: WorkspaceSystem;
     queue: ActionRef[];
     _SCHD_: number;
     PENDING: number;
 
-    constructor(sys: FlameSystem) {
+    constructor(sys: WorkspaceSystem) {
         this.sys = sys;
         this._SCHD_ = 0;
         this.queue = [];
@@ -162,11 +162,11 @@ export default class ActionQueueRunner implements Sparky {
  * @param actions 
  * @param data 
  */
-export function APPLY_ACTION(sys: FlameSystem, actions: Action[], data: ObjectCrate["data"]) {
+export function APPLY_ACTION(sys: WorkspaceSystem, actions: Action[], data: ObjectCrate["data"]) {
     sys.action_runner.addAction(ActionRefType.APPLY, actions, data);
 }
 export function __APPLY_ACTION__(
-    sys: FlameSystem,
+    sys: WorkspaceSystem,
     ref: ActionRef,
 ) {
 
@@ -215,7 +215,7 @@ export function START_ACTION(
 }
 
 export function __START_ACTION__(
-    sys: FlameSystem,
+    sys: WorkspaceSystem,
     ref: ActionRef,
 ) {
 
@@ -270,7 +270,7 @@ export function __START_ACTION__(
 }
 
 async function INIT_CRATES(
-    sys: FlameSystem,
+    sys: WorkspaceSystem,
     ref: ActionRef
 ) {
     const { data } = ref;
@@ -345,7 +345,7 @@ async function INIT_CRATES(
 export function areActionsRunning() { return (ACTIVE_ACTIONS.length > 0); }
 
 export function UPDATE_ACTION(
-    sys: FlameSystem,
+    sys: WorkspaceSystem,
     ref: ActionRef,
     INITIAL_PASS = false
 ): boolean {
@@ -374,7 +374,7 @@ export function UPDATE_ACTION(
 }
 
 export async function END_ACTION(
-    sys: FlameSystem,
+    sys: WorkspaceSystem,
     ref: ActionRef,
     INITIAL_PASS = false
 ) {

@@ -9,7 +9,7 @@ import {
 } from "./common_functions.js";
 import { DrawObject, EditorToolState } from "./editor_model.js";
 import history from "./history.js";
-import { FlameSystem } from "./types/flame_system";
+import { WorkspaceSystem } from "./types/workspace_system";
 import { ButtonType, InputHandler } from "./types/input";
 
 
@@ -230,7 +230,7 @@ const action_input_handler: InputHandler = <InputHandler>{
 
 let active_input_handler = default_handler;
 
-function keypressEventResponder(e: KeyboardEvent, sys: FlameSystem): boolean {
+function keypressEventResponder(e: KeyboardEvent, sys: WorkspaceSystem): boolean {
 
     if (e.ctrlKey) {
         if (e.key == "z") {
@@ -271,14 +271,14 @@ function keypressEventResponder(e: KeyboardEvent, sys: FlameSystem): boolean {
 
 let POINTER_DOWN = false, DRAG_BUTTON = 0;
 
-function contextMenuEventResponder(e: Event, sys: FlameSystem) {
+function contextMenuEventResponder(e: Event, sys: WorkspaceSystem) {
     e.preventDefault();
     e.stopImmediatePropagation();
     e.stopPropagation();
 }
 
 
-function pointerUpEventResponder(e: PointerEvent, sys: FlameSystem) {
+function pointerUpEventResponder(e: PointerEvent, sys: WorkspaceSystem) {
 
     POINTER_DOWN = false;
     DRAG_BUTTON = 0;
@@ -289,7 +289,7 @@ function pointerUpEventResponder(e: PointerEvent, sys: FlameSystem) {
     e.stopImmediatePropagation();
 }
 
-function pointerDownEventResponder(e: PointerEvent, sys: FlameSystem) {
+function pointerDownEventResponder(e: PointerEvent, sys: WorkspaceSystem) {
     POINTER_DOWN = true;
     DRAG_BUTTON = e.button + 1;
 
@@ -299,7 +299,7 @@ function pointerDownEventResponder(e: PointerEvent, sys: FlameSystem) {
     e.stopImmediatePropagation();
 }
 
-function pointerMoveEventResponder(e: PointerEvent, sys: FlameSystem) {
+function pointerMoveEventResponder(e: PointerEvent, sys: WorkspaceSystem) {
     sys.dx = e.x - sys.cx;
     sys.cx = e.x;
     sys.dy = e.y - sys.cy;
@@ -312,7 +312,7 @@ function pointerMoveEventResponder(e: PointerEvent, sys: FlameSystem) {
         active_input_handler = active_input_handler.move(e, sys);
 }
 
-function wheelScrollEventResponder(e: WheelEvent, sys: FlameSystem) {
+function wheelScrollEventResponder(e: WheelEvent, sys: WorkspaceSystem) {
 
     active_input_handler = active_input_handler.wheel(e, sys);
 
@@ -320,13 +320,13 @@ function wheelScrollEventResponder(e: WheelEvent, sys: FlameSystem) {
     e.stopPropagation();
 }
 
-function windowResizeEventResponder(e: Event, sys: FlameSystem) {
+function windowResizeEventResponder(e: Event, sys: WorkspaceSystem) {
     sys.editor_model.sc++;
 }
 
 
 export function initializeEvents(
-    sys: FlameSystem,
+    sys: WorkspaceSystem,
     edited_window: Window,
 ) {
     const { ui: { event_intercept_frame: event_intercept_ele } } = sys;

@@ -1,9 +1,9 @@
-import { FlameSystem } from "../types/flame_system.js";
+import { WorkspaceSystem } from "../types/workspace_system.js";
 import { HistoryArtifact } from "../types/history_artifact.js";
 import { ObjectCrate } from "../types/object_crate.js";
 
 
-export function updateCSS(sys: FlameSystem, history: HistoryArtifact, FORWARD = true) {
+export function updateCSS(sys: WorkspaceSystem, history: HistoryArtifact, FORWARD = true) {
 
     const
         active = FORWARD ? history.progress : history.regress,
@@ -106,6 +106,6 @@ export function updateCSS(sys: FlameSystem, history: HistoryArtifact, FORWARD = 
 }
 
 
-export async function sealCSS(sys: FlameSystem, crate: ObjectCrate) {
+export async function sealCSS(sys: WorkspaceSystem, crate: ObjectCrate) {
     return history;
 }

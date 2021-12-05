@@ -6,8 +6,10 @@ import {
     PrecedenceFlags,
     tools
 } from "@candlelib/css";
+import { ContainerComponent, WickRTComponent } from '../../client/index.js';
+import { WickLibrary } from '../../index.js';
 import { releaseCSSCache } from './cache/css_cache.js';
-import { FlameSystem, StyleData } from "./types/flame_system";
+import { WorkspaceSystem, StyleData } from "./types/workspace_system";
 import { EditorSelection } from "./types/selection";
 import { TrackedCSSProp } from "./types/tracked_css_prop";
 
@@ -35,7 +37,7 @@ const {
 
 
 export function getMatchedRulesFromComponentData(
-    sys: FlameSystem,
+    sys: WorkspaceSystem,
     ele: HTMLElement,
     styles_array: StyleData[]
 ): CSSRuleNode[] {
@@ -51,7 +53,7 @@ export function getMatchedRulesFromComponentData(
 };
 
 export function getApplicableProps(
-    sys: FlameSystem,
+    sys: WorkspaceSystem,
     ele: HTMLElement,
     styles_array: StyleData[]
 ): Map<string, TrackedCSSProp> {
@@ -183,12 +185,12 @@ function getMatchingElementsFromCompID(
     return out_elements;
 }
 
-export function setRTInstanceClass(sys: FlameSystem, comp_name: string, comp_class: typeof WickRTComponent) {
+export function setRTInstanceClass(sys: WorkspaceSystem, comp_name: string, comp_class: typeof WickRTComponent) {
     sys.editor_wick.rt.context.component_class.set(comp_name, comp_class);
     sys.page_wick.rt.context.component_class.set(comp_name, comp_class);
 }
 
-export function getRuntimeComponentsFromName(name: string, wick: WickLibrary): WickRTComponent[] {
+export function getRuntimeComponentsFromName(name: string, wick: WickLibrary): (WickRTComponent | ContainerComponent)[] {
 
     //Traverse dom structure and identify all components
 
@@ -242,7 +244,7 @@ export function getComponentNameFromElement(ele: HTMLElement): string {
  * ██   ██    ██    ██      ██ ███████     ██   ████  ██████  ██████  ███████                                                                           
  */
 
-export function getValidSelectionsCount(sys: FlameSystem) {
+export function getValidSelectionsCount(sys: WorkspaceSystem) {
 
     let count = 0;
 
@@ -258,7 +260,7 @@ export function getValidSelectionsCount(sys: FlameSystem) {
     return count;
 }
 
-export function getActiveSelectionsCount(sys: FlameSystem) {
+export function getActiveSelectionsCount(sys: WorkspaceSystem) {
 
     let count = 0;
 
@@ -274,7 +276,7 @@ export function getActiveSelectionsCount(sys: FlameSystem) {
     return count;
 }
 
-export function* getActiveSelections(sys: FlameSystem): Generator<EditorSelection> {
+export function* getActiveSelections(sys: WorkspaceSystem): Generator<EditorSelection> {
 
     const selections = sys.editor_model.selections;
 
@@ -284,7 +286,7 @@ export function* getActiveSelections(sys: FlameSystem): Generator<EditorSelectio
     }
 };
 
-export function invalidateSelection(sel: EditorSelection, sys: FlameSystem) {
+export function invalidateSelection(sel: EditorSelection, sys: WorkspaceSystem) {
     const
         selections = sys.editor_model.selections,
         i = selections.indexOf(sel);
@@ -306,7 +308,7 @@ export function invalidateSelection(sel: EditorSelection, sys: FlameSystem) {
     }
 }
 
-export function invalidateInactiveSelections(sys: FlameSystem) {
+export function invalidateInactiveSelections(sys: WorkspaceSystem) {
     const selections = sys.editor_model.selections;
 
     for (const sel of selections)
@@ -316,14 +318,14 @@ export function invalidateInactiveSelections(sys: FlameSystem) {
 
 }
 
-export function invalidateAllSelections(sys: FlameSystem) {
+export function invalidateAllSelections(sys: WorkspaceSystem) {
     const selections = sys.editor_model.selections;
 
     for (const sel of selections)
         invalidateSelection(sel, sys);
 }
 
-export function updateSelections(sys: FlameSystem) {
+export function updateSelections(sys: WorkspaceSystem) {
     const selections = sys.editor_model.selections;
 
     for (const sel of selections)
@@ -335,7 +337,7 @@ export function updateSelections(sys: FlameSystem) {
 }
 
 export function updateActiveSelections(
-    sys: FlameSystem
+    sys: WorkspaceSystem
 ) {
     const selections = sys.editor_model.selections;
 
@@ -350,7 +352,7 @@ export function updateActiveSelections(
 }
 
 export function getSelection(
-    sys: FlameSystem,
+    sys: WorkspaceSystem,
     ele: HTMLElement
 ): EditorSelection {
 
@@ -380,7 +382,7 @@ export function getSelection(
 
     return getSelection(sys, ele);
 }
-export function createSelection(sys: FlameSystem): EditorSelection {
+export function createSelection(sys: WorkspaceSystem): EditorSelection {
     return sys.editor_wick.objects.ObservableScheme<EditorSelection>({
         component: "",
         ACTIVE: false,
@@ -411,7 +413,7 @@ export function createSelection(sys: FlameSystem): EditorSelection {
     });
 }
 
-export function updateSelectionCoords(sel: EditorSelection, sys: FlameSystem): EditorSelection {
+export function updateSelectionCoords(sel: EditorSelection, sys: WorkspaceSystem): EditorSelection {
 
     if (!sel.VALID) return sel;
 
@@ -449,7 +451,7 @@ function getElementInHTMLNamespace(ele: HTMLElement) {
     return null;
 }
 
-export function getSelectionFromPoint(x: number, y: number, sys: FlameSystem): EditorSelection {
+export function getSelectionFromPoint(x: number, y: number, sys: WorkspaceSystem): EditorSelection {
 
     sys.ui.event_intercept_frame.style.pointerEvents = "none";
 
@@ -483,11 +485,11 @@ export function getSelectionFromPoint(x: number, y: number, sys: FlameSystem): E
 }
 
 
-export function getElementFromEvent(event: PointerEvent, sys: FlameSystem): EditorSelection {
+export function getElementFromEvent(event: PointerEvent, sys: WorkspaceSystem): EditorSelection {
     return getSelectionFromPoint(event.x, event.y, sys);
 }
 
-export function getIndexOfElementInRTInstance(comp: WickRTComponent, ele: HTMLElement, sys: FlameSystem): number {
+export function getIndexOfElementInRTInstance(comp: WickRTComponent, ele: HTMLElement, sys: WorkspaceSystem): number {
     if (comp == sys.harness) {
         for (let i = 0; i < sys.edited_components.components.length; i++)
             if (ele == sys.edited_components.components[i].frame)

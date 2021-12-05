@@ -3,7 +3,7 @@ import {
     CSS_Percentage
 } from "@candlelib/css";
 import { getCSSCache } from "../cache/css_cache.js";
-import { FlameSystem } from "../types/flame_system.js";
+import { WorkspaceSystem } from "../types/workspace_system.js";
 import { ObjectCrate } from "../types/object_crate.js";
 
 export const noop = () => { };
@@ -100,7 +100,7 @@ function numericAdjust(ALLOW_NEGATIVE = false, RELATIVE = false, value = 0, deno
 }
 
 export function setNumericValue(
-    sys: FlameSystem,
+    sys: WorkspaceSystem,
     crate: ObjectCrate,
     prop_name,
     value: number,

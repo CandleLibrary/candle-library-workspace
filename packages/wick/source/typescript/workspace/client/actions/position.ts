@@ -1,7 +1,7 @@
 import { CSSFlags } from "../cache/css_cache.js";
 import { Action } from "../types/action.js";
 import { ActionType } from "../types/action_type.js";
-import { FlameSystem } from "../types/flame_system.js";
+import { WorkspaceSystem } from "../types/workspace_system.js";
 import { ObjectCrate } from "../types/object_crate.js";
 import { EditorSelection } from "../types/selection.js";
 import {
@@ -18,7 +18,7 @@ import { sealCSS, updateCSS } from "./update_css.js";
 /********************************** POSITION SUB ACTIONS *************************************/
 /***************************************************************************************/
 
-export function SETLEFT(sys: FlameSystem, crate: ObjectCrate, val: number = 0) {
+export function SETLEFT(sys: WorkspaceSystem, crate: ObjectCrate, val: number = 0) {
 
     const { css_cache, data: { dx } } = crate, pos = val || dx;
 
@@ -30,7 +30,7 @@ export function SETLEFT(sys: FlameSystem, crate: ObjectCrate, val: number = 0) {
     css_cache.applyScratchRule(sys, 0);
 }
 
-export function SETRIGHT(sys: FlameSystem, crate: ObjectCrate, val: number = 0) {
+export function SETRIGHT(sys: WorkspaceSystem, crate: ObjectCrate, val: number = 0) {
 
     const { css_cache, data: { dx } } = crate, pos = val || dx;
 
@@ -42,7 +42,7 @@ export function SETRIGHT(sys: FlameSystem, crate: ObjectCrate, val: number = 0) 
     css_cache.applyScratchRule(sys, 0);
 }
 
-export function SETTOP(sys: FlameSystem, crate: ObjectCrate, val: number = 0) {
+export function SETTOP(sys: WorkspaceSystem, crate: ObjectCrate, val: number = 0) {
 
     const { css_cache, data: { dy } } = crate, pos = val || dy;
 
@@ -54,7 +54,7 @@ export function SETTOP(sys: FlameSystem, crate: ObjectCrate, val: number = 0) {
     css_cache.applyScratchRule(sys, 0);
 }
 
-export function SETBOTTOM(sys: FlameSystem, crate: ObjectCrate, val: number = 0) {
+export function SETBOTTOM(sys: WorkspaceSystem, crate: ObjectCrate, val: number = 0) {
 
     const { css_cache, data: { dy } } = crate, pos = val || dy;
 
@@ -166,7 +166,7 @@ const HEIGHT_MARGIN_POSITIONING = CSSFlags.HEIGHT_VAL | CSSFlags.MARGIN_T_VAL | 
 const HEIGHT_AUTO_MARGIN_POSITIONING = CSSFlags.HEIGHT_VAL | CSSFlags.MARGIN_T_VAL | CSSFlags.MARGIN_B_VAL; //width cannot be set
 const VERTICAL_MARGIN_FLAGS = CSSFlags.MARGIN_T_VAL | CSSFlags.MARGIN_B_VAL;
 
-function setHorizontalBoxModel(sys: FlameSystem, crate: ObjectCrate) {
+function setHorizontalBoxModel(sys: WorkspaceSystem, crate: ObjectCrate) {
 
     const
         { css_cache } = crate,
@@ -241,7 +241,7 @@ function setHorizontalBoxModel(sys: FlameSystem, crate: ObjectCrate) {
 }
 
 //same as above, just vertical
-function setVerticalBoxModel(sys: FlameSystem, crate: ObjectCrate) {
+function setVerticalBoxModel(sys: WorkspaceSystem, crate: ObjectCrate) {
 
     const
         { css_cache } = crate,

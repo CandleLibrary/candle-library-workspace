@@ -1,4 +1,4 @@
-import { FlameSystem } from "./flame_system";
+import { WorkspaceSystem } from "./workspace_system";
 
 export const enum ButtonType {
     NONE,
@@ -11,9 +11,9 @@ export const enum ButtonType {
 }
 
 export interface InputHandler {
-    down: (e: PointerEvent, sys: FlameSystem) => InputHandler;
-    up: (e: PointerEvent, sys: FlameSystem) => InputHandler;
-    drag: (e: PointerEvent, button: ButtonType, sys: FlameSystem) => InputHandler;
-    move?: (e: PointerEvent, sys: FlameSystem) => InputHandler;
-    wheel: (e: WheelEvent, sys: FlameSystem) => InputHandler;
+    down: (e: PointerEvent, sys: WorkspaceSystem) => InputHandler;
+    up: (e: PointerEvent, sys: WorkspaceSystem) => InputHandler;
+    drag: (e: PointerEvent, button: ButtonType, sys: WorkspaceSystem) => InputHandler;
+    move?: (e: PointerEvent, sys: WorkspaceSystem) => InputHandler;
+    wheel: (e: WheelEvent, sys: WorkspaceSystem) => InputHandler;
 }

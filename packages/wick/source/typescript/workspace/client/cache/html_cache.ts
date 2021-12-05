@@ -1,7 +1,7 @@
 /* Cache collects info about the CSS state of an element and provides methods to create new properties. */
 
 
-import { FlameSystem } from "../types/flame_system";
+import { WorkspaceSystem } from "../types/workspace_system";
 import { getIndexOfElementInRTInstance } from "../common_functions.js";
 
 export class HTMLCache {
@@ -13,7 +13,7 @@ export class HTMLCache {
         return getIndexOfElementInRTInstance(this.comp, this.ele);
     }
 
-    init(sys: FlameSystem, comp: WickRTComponent, ele: HTMLElement) {
+    init(sys: WorkspaceSystem, comp: WickRTComponent, ele: HTMLElement) {
         this.ele = ele;
     }
 
@@ -28,7 +28,7 @@ export class HTMLCache {
     }
 }
 
-export function HTMLCacheFactory(sys: FlameSystem, ele: HTMLElement): HTMLCache {
+export function HTMLCacheFactory(sys: WorkspaceSystem, ele: HTMLElement): HTMLCache {
 
     let cache: HTMLCache = null;
 

@@ -1,13 +1,13 @@
 import history from "../history.js";
 import { Action } from "../types/action.js";
 import { ActionType } from "../types/action_type.js";
-import { FlameSystem } from "../types/flame_system.js";
+import { WorkspaceSystem } from "../types/workspace_system.js";
 import { HistoryState } from "../types/history_state";
 import { ObjectCrate } from "../types/object_crate.js";
 import { clearRatioMeasure, markRatioMeasure, startRatioMeasure } from "./ratio.js";
 
 
-export function setState(FORWARD = true, history_state: HistoryState, sys: FlameSystem, POST_UPDATE: boolean = false) {
+export function setState(FORWARD = true, history_state: HistoryState, sys: WorkspaceSystem, POST_UPDATE: boolean = false) {
 
     const update_components: Set<string> = new Set;
 
@@ -86,7 +86,7 @@ export function setState(FORWARD = true, history_state: HistoryState, sys: Flame
 const action_seal_cache: Map<ActionType, { progress: Action["historyProgress"], regress: Action["historyRegress"]; }> = new Map();
 
 let change_nonce = 0;
-export function applyAction(sys: FlameSystem, crates: ObjectCrate[], INITIAL_PASS: boolean = false) {
+export function applyAction(sys: WorkspaceSystem, crates: ObjectCrate[], INITIAL_PASS: boolean = false) {
 
     if (INITIAL_PASS) {
 
@@ -184,7 +184,7 @@ export function applyAction(sys: FlameSystem, crates: ObjectCrate[], INITIAL_PAS
     change_nonce++;
 }
 
-export async function sealAction(sys: FlameSystem, crates: ObjectCrate[]) {
+export async function sealAction(sys: WorkspaceSystem, crates: ObjectCrate[]) {
 
     for (const crate of crates) {
 

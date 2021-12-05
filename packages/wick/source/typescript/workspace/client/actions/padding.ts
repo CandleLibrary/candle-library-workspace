@@ -1,6 +1,6 @@
 import { Action } from "../types/action.js";
 import { ActionType } from "../types/action_type.js";
-import { FlameSystem } from "../types/flame_system.js";
+import { WorkspaceSystem } from "../types/workspace_system.js";
 import { ObjectCrate } from "../types/object_crate.js";
 import { noop, setNumericValue } from "./common.js";
 import {
@@ -10,17 +10,17 @@ import {
 import { sealCSS, updateCSS } from "./update_css.js";
 
 
-export function SETPADDINGTOP(sys: FlameSystem, crate: ObjectCrate, x: number) {
+export function SETPADDINGTOP(sys: WorkspaceSystem, crate: ObjectCrate, x: number) {
     setNumericValue(sys, crate, "padding_top", x, setNumericValue.parent_height);
 }
 
-export function SETPADDINGBOTTOM(sys: FlameSystem, crate: ObjectCrate, x: number) {
+export function SETPADDINGBOTTOM(sys: WorkspaceSystem, crate: ObjectCrate, x: number) {
     setNumericValue(sys, crate, "padding_bottom", x, setNumericValue.parent_height);
 }
-export function SETPADDINGLEFT(sys: FlameSystem, crate: ObjectCrate, x: number) {
+export function SETPADDINGLEFT(sys: WorkspaceSystem, crate: ObjectCrate, x: number) {
     setNumericValue(sys, crate, "padding_left", x, setNumericValue.parent_width);
 }
-export function SETPADDINGRIGHT(sys: FlameSystem, crate: ObjectCrate, x: number) {
+export function SETPADDINGRIGHT(sys: WorkspaceSystem, crate: ObjectCrate, x: number) {
     setNumericValue(sys, crate, "padding_right", x, setNumericValue.parent_width);
 }
 

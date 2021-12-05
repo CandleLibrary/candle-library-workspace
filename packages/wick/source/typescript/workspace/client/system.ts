@@ -6,23 +6,23 @@ import ActionQueueRunner from './action_initiators.js';
 import { createSelection, getRuntimeComponentsFromName, updateActiveSelections } from './common_functions.js';
 import { EditorModel } from "./editor_model.js";
 import { Session } from '../common/session.js';
-import { EditedComponent, FlameSystem } from "./types/flame_system.js";
+import { EditedComponent, WorkspaceSystem } from "./types/workspace_system.js";
 import { WickLibrary } from '../../index.js';
 import { WickRTComponent } from "../../client/runtime/component/component.js";
 import { WickContainer } from "../../client/runtime/component/container";
 import { isGeneratorFunction } from 'util/types';
 
 const patch_logger = Logger.get("wick").get("patcher").activate();
-export function revealEventIntercept(sys: FlameSystem) {
+export function revealEventIntercept(sys: WorkspaceSystem) {
     const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
     event_intercept_ele.style.zIndex = "100000";
 }
 
-export function hideEventIntercept(sys: FlameSystem) {
+export function hideEventIntercept(sys: WorkspaceSystem) {
     const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
     event_intercept_ele.style.zIndex = "";
 }
-export var active_system: FlameSystem | null = null;
+export var active_system: WorkspaceSystem | null = null;
 export function activeSys() { return active_system; }
 
 export function CreateTimeStamp(): number { return window.performance.now(); }
@@ -44,11 +44,11 @@ export function initSystem(
     edit_css?: any,
     editor_window?: Window,
     editor_frame?: HTMLElement
-): FlameSystem {
+): WorkspaceSystem {
 
     if (active_system) return active_system;
 
-    active_system = <FlameSystem>{
+    active_system = <WorkspaceSystem>{
 
         active_selection: null,
 
@@ -141,7 +141,7 @@ export function initSystem(
 function initializeDefualtSessionDispatchHandlers(
     session: Session,
     page_wick: WickLibrary,
-    system: FlameSystem
+    system: WorkspaceSystem
 ) {
 
     session.setHandler(EditorCommand.UPDATED_COMPONENT, (command, session) => {
@@ -263,7 +263,7 @@ function initializeDefualtSessionDispatchHandlers(
 
                     for (const match of matches) {
 
-                        if (match.container) {
+                        if ("container" in match) {
                             //Replace the component constructor and re-init container components
 
                             const container: WickContainer = match.container;
@@ -274,6 +274,12 @@ function initializeDefualtSessionDispatchHandlers(
                                     = container.comp_constructors.map(c => (c.edit_name == from || c.name == from) ? class_ : c);
 
                                 const models = container.active_comps.map(c => c.model);
+
+                                for (const comp of container.comps) {
+                                    if (comp.name == from)
+                                        removeRootComponent(match, page_wick);
+                                }
+
                                 try {
                                     patch_logger.log("Transitioning out old components");
                                     container.filter_new_items([]);
@@ -302,8 +308,6 @@ function initializeDefualtSessionDispatchHandlers(
                                 page_wick.rt.context
                             );
 
-                            if (par_ele)
-                                par_ele.replaceChild(new_component.ele, ele);
 
                             if (par_comp) {
 
@@ -318,6 +322,12 @@ function initializeDefualtSessionDispatchHandlers(
                             }
 
                             new_component.initialize(match.model);
+                            new_component.connect();
+
+                            if (par_ele) {
+                                new_component.appendToDOM(par_ele, ele);
+                                match.removeFromDOM();
+                            }
 
                             //Patch in data from old component
 

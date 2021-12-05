@@ -75,7 +75,7 @@ export interface EditedComponent {
  * Stores state information about the current Flame editing 
  * context. 
  */
-export interface FlameSystem {
+export interface WorkspaceSystem {
 
     /**
      * The websocket connection to the editor server

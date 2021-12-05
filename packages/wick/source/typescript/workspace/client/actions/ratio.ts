@@ -1,5 +1,5 @@
 
-import { FlameSystem } from "../types/flame_system.js";
+import { WorkspaceSystem } from "../types/workspace_system.js";
 import { ObjectCrate } from "../types/object_crate.js";
 
 export interface RatioMarker {
@@ -56,7 +56,7 @@ const ratio_markers = (new Array(64)).fill({}, 0, 64).map(c => <RatioMarker>{
 
 let pointer = 0;
 
-export function startRatioMeasure(sys: FlameSystem, crate: ObjectCrate, delta: number = 0, measurement_key: string = "", max_level: number = 4): RatioMarker {
+export function startRatioMeasure(sys: WorkspaceSystem, crate: ObjectCrate, delta: number = 0, measurement_key: string = "", max_level: number = 4): RatioMarker {
     const
 
         { ele } = crate.sel,
@@ -83,7 +83,7 @@ export function startRatioMeasure(sys: FlameSystem, crate: ObjectCrate, delta: n
     return marker;
 }
 
-export function markRatioMeasure(sys: FlameSystem, crate: ObjectCrate, marker: RatioMarker): RatioMarker {
+export function markRatioMeasure(sys: WorkspaceSystem, crate: ObjectCrate, marker: RatioMarker): RatioMarker {
 
     const
         { ele } = crate.sel,
@@ -140,7 +140,7 @@ export function clearRatioMeasure(marker: RatioMarker) {
 };
 
 export function getRatio(
-    system: FlameSystem,
+    system: WorkspaceSystem,
     component: RuntimeComponent,
     element,
     funct,

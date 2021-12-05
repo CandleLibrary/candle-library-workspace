@@ -1,6 +1,6 @@
 import { Action } from "../types/action.js";
 import { ActionType } from "../types/action_type.js";
-import { FlameSystem } from "../types/flame_system.js";
+import { WorkspaceSystem } from "../types/workspace_system.js";
 import { ObjectCrate } from "../types/object_crate.js";
 import { getContentBox, noop, setNumericValue } from "./common.js";
 import {
@@ -10,17 +10,17 @@ import {
 import { sealCSS, updateCSS } from "./update_css.js";
 
 
-export function SETMARGINTOP(sys: FlameSystem, crate: ObjectCrate, x: number) {
+export function SETMARGINTOP(sys: WorkspaceSystem, crate: ObjectCrate, x: number) {
     setNumericValue(sys, crate, "margin_top", x, setNumericValue.parent_height);
 }
 
-export function SETMARGINBOTTOM(sys: FlameSystem, crate: ObjectCrate, x: number) {
+export function SETMARGINBOTTOM(sys: WorkspaceSystem, crate: ObjectCrate, x: number) {
     setNumericValue(sys, crate, "margin_bottom", x, setNumericValue.parent_height);
 }
-export function SETMARGINLEFT(sys: FlameSystem, crate: ObjectCrate, x: number) {
+export function SETMARGINLEFT(sys: WorkspaceSystem, crate: ObjectCrate, x: number) {
     setNumericValue(sys, crate, "margin_left", x, setNumericValue.parent_width);
 }
-export function SETMARGINRIGHT(sys: FlameSystem, crate: ObjectCrate, x: number) {
+export function SETMARGINRIGHT(sys: WorkspaceSystem, crate: ObjectCrate, x: number) {
     setNumericValue(sys, crate, "margin_right", x, setNumericValue.parent_width);
 }
 

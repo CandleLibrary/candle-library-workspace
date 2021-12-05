@@ -5,8 +5,9 @@ import { Context, UserPresets, WickLibrary, WickRTComponent } from '../../index.
 import * as ACTIONS from "./actions/action.js";
 import { APPLY_ACTION, START_ACTION } from './action_initiators.js';
 import { getComponentNameFromElement } from './common_functions.js';
+import { initializeEvents } from './event.js';
 import { initSystem } from './system.js';
-import { FlameSystem } from './types/flame_system.js';
+import { WorkspaceSystem } from './types/workspace_system.js';
 
 export const logger = Logger.createLogger("wick-client").activate();
 
@@ -29,12 +30,15 @@ export function init() {
 
     document.body.appendChild(editor_frame);
 
-    const page_wick: WickLibrary = <any>window["wick"];
+    //@ts-ignore
+    const page_wick: WickLibrary = <any>globalThis["wick"];
 
     return new Promise((res, rej) => {
         editor_frame.contentWindow.addEventListener("load", async () => {
 
             const editor_window = editor_frame.contentWindow;
+
+            //@ts-ignore
             const editor_wick: WickLibrary = editor_window["wick"];
 
             const host = document.location.hostname;
@@ -45,7 +49,7 @@ export function init() {
             const system = await initSystem(uri, page_wick, editor_wick, css, editor_window, editor_frame);
 
             const session = system.session;
-
+            debugger;
             editor_wick.appendPresets(<UserPresets>{
                 models: {
                     "active-selection": system.active_selection,
@@ -67,52 +71,13 @@ export function init() {
 
             await spark.sleep(300);
 
-            //  system.action_bar.setModel(system.active_selection);
+            system.action_bar.setModel(system.active_selection);
 
-            // initializeEvents(system, window);
+            initializeEvents(system, window);
 
-            // editor_frame.style.display = "block";
+            editor_frame.style.display = "block";
 
             res(true);
         });
     });
 };
-
-function extractIFrameContentAndPlaceIntoHarness(
-    system: FlameSystem,
-    harness_component: WickRTComponent,
-    captive_window: Window,
-    page_context: Context
-) {
-    //Pull out the content of the app and place into a harness component
-    const
-        //Every new component will be placed in its own harness, which is used to 
-        //represent the component's window and document context.
-        root_component: WickRTComponent =
-            (<Element & { wick_component: WickRTComponent; }>
-                captive_window.document.querySelector("[w\\3A c]"))
-                .wick_component;
-
-    system.edited_components.components.push({ comp: root_component.name }); //= [];
-
-    const ele = document.querySelector("iframe");
-    document.body.removeChild(ele);
-    root_component.destructor();
-
-    const harness = new (harness_component.class_with_integrated_css)(
-        system.edited_components,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        page_context
-    );
-
-    window.document.body.appendChild(harness.ele);
-    //root_component.par = harness;
-    ////harness.onModelUpdate();
-    //
-    system.edit_view = harness.ele;
-    system.edit_view.style.transformOrigin = "top left";
-    //
-}
