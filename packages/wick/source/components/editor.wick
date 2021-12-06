@@ -1,10 +1,12 @@
 import { state, selections } from "@model:flame-editor";
 import { sys } from "@api";
 
-import draw_canvas from "./draw_canvas.wick";
-import adjust_box from "./element_adjust_box.wick";
-import hover_box from "./element_hover_box.wick";
-import action_bar from "./action_bar.wick";
+import draw_canvas from "./interface/draw_canvas.wick";
+import adjust_box from "./interface/element_adjust_box.wick";
+import hover_box from "./interface/element_hover_box.wick";
+import plugin_host from "./plugin/plugin_host.wick";
+
+const root = "@root";
 
 function onload(){
     sys.ui.event_intercept_frame = "@.event-intercept";
@@ -15,7 +17,6 @@ export default <div>
     <style>
         root {
             font-family:Arial;
-            background-color: rgba(255,25,25,0.08);
             position:fixed;
             top:0;
             left:0;
@@ -28,23 +29,29 @@ export default <div>
             text-transform: uppercase;
             text-align:center;
             position: fixed;
-            background-color: rgba(255, 255, 256, 0.5);
             width: 100vw;
             height: 100vh;
             top: 0;
             left: 0;
             color: #DDD;
         }
+
+        body.off .event-intercept { pointer-events:none; }
+
+        root div {transition:opacity 150ms}
+
+        body.off div { opacity:0 }
+
     </style>
 
     <div class="event-intercept"></div>
     
-    <action_bar/>
-    
-    <adjust_box />
+    <adjust_box/>
 
-    <hover_box />
+    <hover_box/>
     
-    <draw_canvas />
+    <draw_canvas/>
+
+    <plugin_host/>
     
-</div>
+</div>;

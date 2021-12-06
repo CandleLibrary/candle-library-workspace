@@ -1,5 +1,5 @@
 import { top, left, width, height, ele, css, component } from "@model";
-import { ACTIONS, getComponentNameFromElement } from "@api";
+import {  getComponentNameFromElement } from "@api";
 import handle from "./handle.wick";
 
 
@@ -32,42 +32,34 @@ var data = [{
     ele: ele,
     ele_updated: 1,
     pos_type: "top-left",
-    ACTION: [ACTIONS.RESIZET, ACTIONS.RESIZEL],
 }, {
     ele: ele,
     ele_updated: 1,
     pos_type: "top",
-    ACTION: [ACTIONS.RESIZET],
 }, {
     ele: ele,
     ele_updated: 1,
     pos_type: "top-right",
-    ACTION: [ACTIONS.RESIZET, ACTIONS.RESIZER],
 }, {
     ele: ele,
     ele_updated: 1,
     pos_type: "right",
-    ACTION: [ACTIONS.RESIZER],
 }, {
     ele: ele,
     ele_updated: 1,
     pos_type: "bottom-right",
-    ACTION: [ACTIONS.RESIZEB, ACTIONS.RESIZER],
 }, {
     ele: ele,
     ele_updated: 1,
     pos_type: "bottom",
-    ACTION: [ACTIONS.RESIZEB],
 }, {
     ele: ele,
     ele_updated: 1,
     pos_type: "bottom-left",
-    ACTION: [ACTIONS.RESIZEB, ACTIONS.RESIZEL],
 }, {
     ele: ele,
     ele_updated: 1,
     pos_type: "left",
-    ACTION: [ACTIONS.RESIZEL],
 }];
 
 function $update(width, height, left, top) {

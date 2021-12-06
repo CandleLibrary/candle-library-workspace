@@ -34,8 +34,6 @@ switch (pos_type) {
         break;
 };
 
-function onpointerdown(event) { START_ACTION(sys, ACTION); }
-
 export default <div><div class="fill"></div></div>;
 
 

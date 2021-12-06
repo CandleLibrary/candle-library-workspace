@@ -1,9 +1,11 @@
 import { draw_objects, selection_box, sc } from "@model:flame-editor";
 import { sys } from "@api";
 
-var canvas = "@#canvas", ctx = canvas.getContext("2d");
+var canvas = "@canvas", ctx = "@ctx2d";
 
 function $updateDraw(sc) {
+
+    debugger;
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;

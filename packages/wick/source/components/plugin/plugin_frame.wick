@@ -1,0 +1,54 @@
+import m, {name, src, logger} from "@model";
+import {Logger} from "@candlelib/log";
+import { sys } from "@api";
+
+/**
+    Connects the plugin component to the 
+    workspace to allow it communicate with 
+    the workspace and update components.
+*/
+async function integrate(){
+    const window = "@iframe".contentWindow;
+
+    const { wick } = window;
+
+    const logger = Logger.get("wick").activate().get("plugin").get(`[${name}]`);
+
+    wick.appendPresets({
+        api: { sys: {
+            logger,
+            get_active_selections: ()=>sys.editor_model.selections.filter(s=>s.ACTIVE),
+            update_style: ()=>{},
+        }, }
+    })
+
+    if(wick && wick.rt.root_components[0])
+        wick.rt.root_components[0].setModel(m);
+    else 
+        logger.error(`Unable to intialize plugin ${name}`);
+}
+
+export default <div> <iframe onload=integrate {src}/> </div>;
+
+<style>
+    
+    root { 
+        position:absolute;
+        width: 150px;
+        height: 150px;
+        background-color:white;
+        border-radius:10px;
+        box-shadow: 0 0 20px #00000008;
+        padding:10px;
+        top:10px;
+        left:10px;
+    }
+
+    iframe {
+        border:none;
+        width:100%;
+        height:100%;
+        color:red;
+    }
+
+</style>
