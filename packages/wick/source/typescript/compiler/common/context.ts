@@ -204,6 +204,7 @@ export class Context {
 
         user_presets.options = Object.assign({}, DefaultPresets.options, user_presets.options);
 
+        //@ts-ignore
         user_presets.options.url = Object.assign({}, DefaultPresets.options.url, (user_presets.options || {}).url || {});
 
         this.url = new URL;
@@ -316,6 +317,7 @@ export class Context {
         const options = user_presets.options;
 
         for (const cn in options)
+            //@ts-ignore
             if (typeof options[cn] != typeof DefaultPresets.options[cn])
                 throw new ReferenceError(`Unrecognized preset ${cn}`);
     }
@@ -377,8 +379,8 @@ export class Context {
 
         if (this.api) {
 
-            if (name in this.api)
-                return;
+            //if (name in this.api)
+            //    return;
 
             this.api[name] = Object.assign({ hash: name }, obj);
         }

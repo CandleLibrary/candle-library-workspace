@@ -7,6 +7,7 @@ import { rt, WickEnvironment } from "../global.js";
 import {
     hydrateComponentElement, hydrateContainerElement
 } from "./html.js";
+import { Status } from './component_status.js';
 
 
 type BindingUpdateFunction = (...rest: any[]) => void;
@@ -18,22 +19,13 @@ const enum DATA_DIRECTION {
     UP = 2
 }
 
-const enum ComponentFlag {
-    CONNECTED = 1 << 0,
-    TRANSITIONED_IN = 1 << 1,
-    DESTROY_AFTER_TRANSITION = 1 << 2
-}
-
-
 export class WickRTComponent implements Sparky, ObservableWatcher {
 
     ele: HTMLElement;
 
     elu: (HTMLElement | Text)[][];
 
-    CONNECTED: boolean;
-
-    ALLOW_UPDATE: boolean;
+    status: Status;
 
     context: Context;
 
@@ -73,9 +65,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     name: string;
 
     protected wrapper: WickRTComponent | null;
-    INITIALIZED: boolean;
-    TRANSITIONED_IN: boolean;
-    DESTROY_AFTER_TRANSITION: boolean;
 
     active_flags: number;
     update_state: number;
@@ -98,6 +87,18 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     static edit_name: string | undefined;
 
+    is(flag: Status) {
+        return (this.status & flag) == flag;
+    }
+
+    setStatus(...flags: Status[]) {
+        this.status |= flags.reduce((r, t) => r | t, 0);
+    }
+
+    removeStatus(...flags: Status[]) {
+        this.status ^= (this.status & flags.reduce((r, t) => r | t, 0));
+    }
+
     constructor(
         existing_element = null,
         wrapper: WickRTComponent | null = null,
@@ -116,7 +117,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         } else {
             this.name = this.constructor.name;
         }
-
+        this.status = 0;
         this.ci = 0;
         this.ch = [];
         this.elu = [];
@@ -132,12 +133,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.active_flags = 0;
         this.call_depth = 0;
         this.affinity = element_affinity;
-
-        this.ALLOW_UPDATE = true;
-        this.CONNECTED = false;
-        this.INITIALIZED = false;
-        this.TRANSITIONED_IN = false;
-        this.DESTROY_AFTER_TRANSITION = false;
 
         //@ts-ignore
         this.up = this.updateParent;
@@ -184,10 +179,10 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     initialize(model: any = this.model) {
 
-        if (this.INITIALIZED)
+        if (this.is(Status.INITIALIZED))
             return this;
 
-        this.INITIALIZED = true;
+        this.setStatus(Status.INITIALIZED);
 
         this.model = model;
 
@@ -258,7 +253,11 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     removeChild(cp: WickRTComponent) {
         if (cp.par == this) {
-            this.ch = this.ch.filter(c => c !== cp);
+            const index = this.ch.indexOf(cp);
+
+            if (index >= 0) {
+                this.ch.splice(index, 1);
+            }
             cp.par = null;
         }
     }
@@ -275,8 +274,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     }
 
     connect() {
-        this.CONNECTED = true;
-        this.ALLOW_UPDATE = true;
+        this.setStatus(Status.CONNECTED, Status.ALLOW_UPDATE);
         for (const child of this.ch)
             child.connect();
         this.onModelUpdate();
@@ -285,8 +283,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     disconnect() {
         for (const child of this.ch)
             child.disconnect();
-        this.ALLOW_UPDATE = false;
-        this.CONNECTED = false;
+
+        this.removeStatus(Status.CONNECTED, Status.ALLOW_UPDATE);
     }
 
 
@@ -384,7 +382,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     removeFromDOM() {
         //Prevent erroneous removal of scope.
-        if (this.CONNECTED == false) return;
+        if (!this.is(Status.CONNECTED)) return;
 
         //Lifecycle Events: Disconnecting <======================================================================
         this.disconnecting();
@@ -411,14 +409,14 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     onTransitionOutEnd() {
 
-        if (!this.TRANSITIONED_IN) {
+        if (!this.is(Status.TRANSITIONED_IN)) {
 
             //this.removeFromDOM();
 
-            if (this.DESTROY_AFTER_TRANSITION)
+            if (this.is(Status.DESTROY_AFTER_TRANSITION))
                 this.destructor();
 
-            this.DESTROY_AFTER_TRANSITION = false;
+            this.removeStatus(Status.DESTROY_AFTER_TRANSITION);
         }
 
         this.out_trs = null;
@@ -444,9 +442,10 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         for (const ch of this.ch)
             ch.transitionOut(row, col, DESCENDING, transition, false);
 
-        this.DESTROY_AFTER_TRANSITION = DESTROY_AFTER_TRANSITION;
+        if (DESTROY_AFTER_TRANSITION)
+            this.setStatus(Status.DESTROY_AFTER_TRANSITION);
 
-        this.TRANSITIONED_IN = false;
+        this.removeStatus(Status.TRANSITIONED_IN);
 
         let transition_time = 0;
 
@@ -513,7 +512,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         try {
             this.oTI(row, col, DESCENDING, trs.in);
-            this.TRANSITIONED_IN = true;
+            this.setStatus(Status.TRANSITIONED_IN);
         } catch (e) {
             console.log(e);
         }
@@ -578,7 +577,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         // Go through the model's props and test whether they are different then the 
         // currently cached variables
 
-        if (!this.ALLOW_UPDATE) return;
+        if (!this.is(Status.ALLOW_UPDATE)) return;
 
         if (model) {
 
@@ -599,7 +598,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     update(data: any, flags: number = 1, IMMEDIATE: boolean = false) {
 
-        if (!this.ALLOW_UPDATE) return;
+        if (!this.is(Status.ALLOW_UPDATE)) return;
 
         for (const name in data) {
 
