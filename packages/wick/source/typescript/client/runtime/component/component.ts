@@ -387,7 +387,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         this.disconnected();
     }
-
+    oTIC() { }
 
     oTI(row: number, col: number, DESCENDING: boolean, trs: Transition) { }
     oTO(row: number, col: number, DESCENDING: boolean, trs: Transition) { }
@@ -502,8 +502,15 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         } catch (e) {
             console.log(e);
         }
-
     }
+
+    transitionInEnd() {
+        for (const ch of this.ch)
+            ch.transitionInEnd();
+
+        this.oTIC();
+    }
+
     setModel(model: ObservableModel | any) {
 
         if (this.model && model != this.model) {

@@ -30,7 +30,7 @@ registerFeature(
                         [name_node] = node.nodes;
 
                     let
-                        name = (<JSIdentifier>name_node).value,
+                        name = name_node.value,
                         root_name = name;
 
                     if (!frame.IS_ROOT)
@@ -53,6 +53,7 @@ registerFeature(
                         const internal_method_name = {
                             "ontransitionin": "oTI",
                             "onin": "oTI",
+                            "ontrsdone": "oTIC",
                             "ontrsin": "oTI",
                             "onout": "oTO",
                             "ontransitionout": "oTO",
@@ -61,7 +62,7 @@ registerFeature(
                             "onload": "onload",
                             "onmount": "onload",
 
-                        }[name.toLocaleLowerCase().replace("on_", "on")] ?? "";
+                        }[name.toLowerCase().replace("on_", "on").replace(/_/g, "")] ?? "";
 
                         if (internal_method_name != "") {
                             // This should be an internally called method
