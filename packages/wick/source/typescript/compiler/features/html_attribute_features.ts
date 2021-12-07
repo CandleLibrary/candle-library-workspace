@@ -17,6 +17,12 @@ registerFeature(
     (build_system) => {
 
         const AttributeHook = build_system.registerHookType("attribute-hook", JSNodeType.StringLiteral);
+        /**
+         * ```html
+         * <div class={ <boolean-expressions> ; "class names"} > ...
+         * ```
+         */
+        const ClassAttributeHook = build_system.registerHookType("class-attribute-hook", JSNodeType.StringLiteral);
         const AssignedModelHook = build_system.registerHookType("assigned-model-binding", NodeTypes.HTMLAttribute);
         /** ##########################################################
          * MODEL ATTRIBUTE
@@ -169,6 +175,95 @@ registerFeature(
             }
         });
 
-    }
+        /** ##########################################################
+         * BINDING CLASS ATTRIBUTE VALUE 
+         * 
+         * ```html
+         * <div class={ <boolean-expressions> ; "class names"} > ...
+         * ```
+         */
+        build_system.registerHTMLParserHandler<HTMLAttribute>(
+            {
+                priority: -9999,
 
+                async prepareHTMLNode(attr, host_node, host_element, index, skip, component, context) {
+
+
+                    if (attr.IS_BINDING && attr.name.toLowerCase().trim() == "class" && attr.value.secondary_ast) {
+
+                        const [primary, secondary] = await Promise.all(
+                            [build_system.processBindingAsync(attr.value, component, context),
+                            build_system.processSecondaryBindingAsync(attr.value, component, context)]
+                        );
+
+                        // Create an indirect hook for container data attribute
+                        build_system.addIndirectHook(component, ClassAttributeHook, {
+                            name: attr.name, nodes: [
+                                primary, secondary
+                            ]
+                        }, index, true);
+
+                        return null;
+                    }
+                }
+            }, HTMLNodeType.HTMLAttribute
+        );
+
+        build_system.registerHookHandler<IndirectHook<{ name: string; nodes: [JSNode]; }>, JSNode | void>({
+
+            name: "Class Attribute Hook",
+
+            types: [ClassAttributeHook],
+
+            verify: () => true,
+
+            buildJS: (node, sdp, element_index, addWrite, addInit) => {
+
+                const { name, nodes: [primary_ast, secondary_ast] } = node.value[0];
+
+                // If the element in question belongs to another component AND that 
+                // component has defined an attribute import for the particular
+                // attribute, then update the child components value instead if updating
+                // the attribute value.
+
+                const ele = <HTMLNode><any>build_system.getElementAtIndex(sdp.self, element_index);
+
+                const s = build_system.js.expr(`this.set_class(${element_index}, e, a)`);
+
+                s.nodes[1].nodes[1] = primary_ast;
+                s.nodes[1].nodes[2] = secondary_ast;
+
+                addWrite(s);
+            },
+
+            async buildHTML(hook, sdp) {
+
+                const [primary, secondary] = hook.value[0].nodes;
+
+                if (
+                    build_system.getExpressionStaticResolutionType(primary, sdp)
+                    !==
+                    STATIC_RESOLUTION_TYPE.INVALID
+                    &&
+                    build_system.getExpressionStaticResolutionType(secondary, sdp)
+                    !==
+                    STATIC_RESOLUTION_TYPE.INVALID
+                ) {
+
+                    const { value: boolean } = await build_system.getStaticValue(primary, sdp);
+                    const { value: values } = await build_system.getStaticValue(primary, sdp);
+
+                    if (!!boolean && values) {
+                        if (Array.isArray(values))
+                            return <any>{
+                                html: { attributes: [["class", values.flatMap(v => v.toString().split(" "))]] }
+                            };
+                        else return <any>{
+                            html: { attributes: [["class", values.toString().split(" ")]] }
+                        };
+                    }
+                }
+            }
+        });
+    }
 );

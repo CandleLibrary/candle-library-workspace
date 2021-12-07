@@ -999,6 +999,32 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         }
     }
 
+    set_class(
+        ele_index: number,
+        bool_expression: boolean,
+        classes: any
+    ) {
+
+        const bool = !!bool_expression;
+
+        let class_strings = [];
+
+        if (Array.isArray(classes))
+            class_strings = classes.flatMap(c => c.toString().split(" "));
+        else
+            class_strings = classes.toString().split(" ");
+
+
+        for (const ele of this.elu[ele_index] ?? []) {
+            if (ele instanceof HTMLElement) {
+                if (bool)
+                    ele.classList.add(...class_strings);
+                else
+                    ele.classList.remove(...class_strings);
+            }
+        }
+    }
+
 
     al(
         ele_index: number,
