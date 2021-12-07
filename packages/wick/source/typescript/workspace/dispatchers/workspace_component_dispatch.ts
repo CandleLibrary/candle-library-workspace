@@ -6,7 +6,7 @@ import { rt } from '../../client/runtime/global.js';
 import { ComponentData } from '../../compiler/common/component.js';
 import { createComponent } from '../../compiler/create_component.js';
 import { Context } from '../../compiler/common/context.js';
-import { logger } from '../logger.js';
+import { logger } from '../common/logger.js';
 import { store } from '../server/store.js';
 import { default_radiate_hooks, default_wick_hooks, RenderPage } from '../server/webpage.js';
 import { get_resolved_working_directory } from './resolved_working_directory.js';
@@ -28,19 +28,19 @@ export async function renderPage(
         if (component.RADIATE)
             hooks.init_script_render = function () {
                 return `
-    import init_router from "/@cl/wick-radiate/";
-    init_router();
     import "/@cl/wick/workspace/client/index.js";
+    import init_router from "/@cl/wick-radiate/";
+    import w from "/@cl/wick-rt/";
+    init_router();
                 `;
             };
-
 
         else
             hooks.init_script_render = function () {
                 return `
+    import "/@cl/wick/workspace/client/index.js";
     import w from "/@cl/wick-rt/";
     w.hydrate();
-    import "/@cl/wick/workspace/client/index.js";
                 `;
             };
 
@@ -93,7 +93,6 @@ export const workspace_component_dispatch = <Dispatcher>{
                 const context = new Context();
 
                 const new_comp = await createComponent(comp.location, context, get_resolved_working_directory());
-
 
                 if (context.hasErrors()) {
 
