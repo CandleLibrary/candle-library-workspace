@@ -1,0 +1,32 @@
+
+import { valid } from "@model:poll";
+
+export default <div class="test" class={ valid ; ["test2","test3"] } ></div>;
+
+import test from "@test";
+
+test: {
+
+    let $model = {valid:true};
+
+    assert("Class [test2] is dynamically added", 
+        ele.classList.contains("test2") == true
+    );
+
+    assert("Class [test3] is dynamically added", 
+        ele.classList.contains("test3") == true
+    );
+
+    keep: comp.model.valid = false;
+
+    await spark.sleep(100);
+
+    assert("Class [test2] is dynamically removed", 
+        ele.classList.contains("test2") == false
+    );
+
+    assert("Class [test3] is dynamically removed", 
+        ele.classList.contains("test3") == false
+    );
+    
+}

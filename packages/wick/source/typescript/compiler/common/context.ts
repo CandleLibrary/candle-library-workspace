@@ -1,7 +1,7 @@
 import { JSNode } from '@candlelib/js';
 import { default as URI, default as URL } from "@candlelib/uri";
 import { PluginStore } from "../../plugin/plugin.js";
-import { WickRTComponent } from '../../runtime/component.js';
+import { WickRTComponent } from '../../client/runtime/component/component.js';
 import { ComponentClassStrings, ComponentStyle } from '../../types/component.js';
 import { WickCompileConfig } from "../../types/config.js";
 import { ComponentData } from './component.js';
@@ -170,7 +170,7 @@ export class Context {
     /**
      *  Prevent infinite recursion
      */
-    wrapper?: typeof WickRTComponent;
+    wrapper: typeof WickRTComponent | null;
 
     named_components: Map<string, ComponentData>;
 
@@ -204,6 +204,7 @@ export class Context {
 
         user_presets.options = Object.assign({}, DefaultPresets.options, user_presets.options);
 
+        //@ts-ignore
         user_presets.options.url = Object.assign({}, DefaultPresets.options.url, (user_presets.options || {}).url || {});
 
         this.url = new URL;
@@ -316,6 +317,7 @@ export class Context {
         const options = user_presets.options;
 
         for (const cn in options)
+            //@ts-ignore
             if (typeof options[cn] != typeof DefaultPresets.options[cn])
                 throw new ReferenceError(`Unrecognized preset ${cn}`);
     }
@@ -377,13 +379,10 @@ export class Context {
 
         if (this.api) {
 
-            if (name in this.api)
-                return;
+            //if (name in this.api)
+            //    return;
 
-            this.api[name] = {
-                hash: name,
-                default: obj,
-            };
+            this.api[name] = Object.assign({ hash: name }, obj);
         }
     }
 

@@ -21,6 +21,9 @@
     "devDependencies": {
         "@types/node": "*"
     },
+    "devDependencies": {
+        "@types/node": "*"
+    },
     "candle-lib-modules": {
         "@candlelib/uri": "*",
         "@candlelib/paraffin": "*",

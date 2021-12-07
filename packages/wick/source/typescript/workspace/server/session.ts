@@ -1,12 +1,11 @@
-import { Logger } from '@candlelib/log';
 import { WebSocket } from "ws";
+import { ComponentData } from '../../compiler/common/component.js';
+import { logger } from '../common/logger.js';
 import { Session } from '../common/session.js';
 import { getComponentDependencies } from './component_tools.js';
 import { getPageWatcher } from './file_watcher.js';
-import { addReference, store, __sessions__ } from './store.js';
-import { ComponentData } from '../../compiler/common/component.js';
+import { addReference, __sessions__ } from './store.js';
 
-export const logger = Logger.createLogger("flame");
 
 /**
  * This class binds to a WebSocket connection and
@@ -31,7 +30,7 @@ export class ServerSession extends Session {
         connection: WebSocket,
     ) {
 
-        super(connection, logger);
+        super(connection, logger.get("session").get("server"));
 
         this.active_component_path = "";
 

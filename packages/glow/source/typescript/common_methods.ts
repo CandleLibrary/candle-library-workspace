@@ -45,7 +45,7 @@ export default <AnimationMethods><any>{
         return this;
     },
 
-    asyncPlay(scale, from) {
+    asyncPlay(scale: number, from: number) {
 
         this.play(scale, from);
 
@@ -63,7 +63,7 @@ export default <AnimationMethods><any>{
         return this;
     },
 
-    addEventListener(event, listener) {
+    addEventListener(event: string, listener: (args: any) => void) {
         if (typeof (listener) === "function") {
             if (!this.events[event])
                 this.events[event] = [];
@@ -71,7 +71,7 @@ export default <AnimationMethods><any>{
         }
     },
 
-    removeEventListener(event, listener) {
+    removeEventListener(event: string, listener: (args: any) => void) {
         if (typeof (listener) === "function") {
             const events = this.events[event];
             if (events)
@@ -87,9 +87,9 @@ export default <AnimationMethods><any>{
         return this;
     },
 
-    issueEvent(event) {
+    issueEvent(event: string) {
         if (this.events[event])
-            this.events[event] = this.events[event].filter(e => e(this) !== false);
+            this.events[event] = this.events[event].filter((e: any) => e(this) !== false);
     },
 
     observeStop(): Promise<null> {
@@ -98,13 +98,13 @@ export default <AnimationMethods><any>{
                 this.scheduledUpdate(0, 0);
 
             if (this.duration < 1)
-                return res();
+                return res(this);
 
-            this.addEventListener("stopped", () => (res(), false));
+            this.addEventListener("stopped", () => (res(this), false));
         });
     },
 
-    scheduledUpdate(a, t) {
+    scheduledUpdate(a: number, t: number) {
 
         if (!this.PLAY) return;
 

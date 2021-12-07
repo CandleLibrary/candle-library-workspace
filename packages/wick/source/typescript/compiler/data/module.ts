@@ -23,12 +23,7 @@ function getModuleName(
     from_value: URI,
     requesting_source: URI
 ) {
-
     return addPendingModuleToContext(context, from_value, requesting_source);
-    if (!context.repo.has(module_name))
-        return addPendingModuleToContext(context, from_value, requesting_source);
-    else
-        return context.repo.get(module_name)?.hash || "";
 }
 
 /**

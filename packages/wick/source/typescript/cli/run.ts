@@ -87,6 +87,7 @@ Host a single component on a local server.
                     await createComponent(root_path, context);
 
                     const server = await lantern({
+                        host: "0.0.0.0",
                         port: port_arg.value,
                         cwd: root_path.dir
                     });

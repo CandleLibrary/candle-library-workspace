@@ -14,17 +14,18 @@ import {
 import { Logger } from '@candlelib/log';
 import URI from '@candlelib/uri';
 import { Lexer } from "@candlelib/wind";
+import { ObservableWatcher } from '../../../types/all.js';
 import { EditorCommand } from '../../../types/editor_types.js';
 import { Change, ChangeType } from '../../../types/transition.js';
 import {
     getComponentNameFromElement, getElementWIndex, getRuntimeComponentsFromName, updateActiveSelections
 } from "../common_functions.js";
-import { FlameSystem, StyleData } from "../types/flame_system.js";
 import { TrackedCSSProp } from "../types/tracked_css_prop.js";
+import { StyleData, WorkspaceSystem } from "../types/workspace_system.js";
 
 const cache_logger = Logger.get("flame").get("css").activate();
 
-let global_cache = null;
+let global_cache: any = null;
 
 const unset_string = new CSS_String("unset"), unset_pos = {
     slice() { return "unset"; }
@@ -170,6 +171,10 @@ export class ValueHost implements ObservableModel {
 
     watchers: ObservableWatcher[];
 
+    __value__: number;
+
+    unit: string;
+
 
     constructor() {
 
@@ -238,7 +243,7 @@ export class CSSCache implements ObservableModel {
 
     rules: any;
 
-    system: FlameSystem;
+    system: WorkspaceSystem;
 
     computed: CSSStyleDeclaration;
 
@@ -291,7 +296,7 @@ export class CSSCache implements ObservableModel {
     }
 
 
-    constructor(sys: FlameSystem) {
+    constructor(sys: WorkspaceSystem) {
         this.rule_list = new sys.editor_wick.objects.ObservableArray([]);
         this.changes = [];
         this.affected_elements = [];
@@ -416,7 +421,7 @@ export class CSSCache implements ObservableModel {
         this.styles = styles;
     }
 
-    init(system: FlameSystem, ele: HTMLElement) {
+    init(system: WorkspaceSystem, ele: HTMLElement) {
 
         this.setup();
 
@@ -1132,7 +1137,7 @@ export function updateLastOccurrenceOfRuleInStyleSheet(stylesheet: any, rule: CS
 const cache_array: { e: HTMLElement, cache: CSSCache; }[] = [];
 
 export function getCSSCache(
-    sys: FlameSystem,
+    sys: WorkspaceSystem,
     ele: HTMLElement
 ): CSSCache {
 
@@ -1182,7 +1187,7 @@ export function releaseCSSCache(cache: CSSCache) {
  * @returns 
  */
 function getComponentHierarchyNames(
-    sys: FlameSystem,
+    sys: WorkspaceSystem,
     name: string
 ) {
     const components = getRuntimeComponentsFromName(name, sys.page_wick);

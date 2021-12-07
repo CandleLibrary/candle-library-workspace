@@ -344,7 +344,7 @@ export class ObservableContainerBase<T> extends ObservableBase {
 
         return item;
 
-        let identifier;
+        /* let identifier;
 
         if (typeof (item) == "object" && this.key)
             identifier = item[this.key];
@@ -357,7 +357,7 @@ export class ObservableContainerBase<T> extends ObservableBase {
         if (filters && identifier)
             return (this.__filterIdentifier__(identifier, filters)) ? identifier : undefined;
 
-        return identifier;
+        return identifier; */
     }
 
     /** 

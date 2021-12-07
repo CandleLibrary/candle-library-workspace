@@ -1,3 +1,25 @@
+## [v0.18.0] - 2021-12-07 
+
+- [2021-12-07]
+
+    Added initial workspace plugin system (experimental), and added workspace toggle button.
+
+- [2021-12-07]
+
+    Implemented a class attribute feature that leverages the secondary expression syntax to dynamically toggle class tokens based on the boolean value of the primary expression.  example:  ```jsx  <div class="normal-class-name" class={ !!truthy ; "dynamic-class-name" } <!-- new feature --> class={ !!falsy ; "dynamic-class-name" } > ...  ```  This can be stacked by reusing the class attribute in the same element for different sets of class tokens.
+
+- [2021-12-05]
+
+    Added `col` & `columns` attributes as an alias of `shift` attribute on container elements. These aliases are a better representation of the use of this attribute.
+
+- [2021-12-05]
+
+    Added purge method to runtime container. (For use with workspace dev environment)
+
+- [2021-12-05]
+
+    Enable loading of import .ts modules in tests
+
 ## [v0.17.0] - 2021-12-04 
 
 - [2021-11-26]

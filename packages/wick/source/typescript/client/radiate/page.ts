@@ -3,6 +3,7 @@ import { Transition } from '@candlelib/glow';
 import { ComponentElement, WickRTComponent } from '../runtime/component/component.js';
 import { hydrateComponentElements } from '../runtime/component/html.js';
 import { Element } from './element.js';
+import { rt, WickEnvironment } from '../runtime/global.js';
 
 export const enum PageType {
     WICK_PAGE,
@@ -14,7 +15,7 @@ export const enum PageType {
 /**
  * Page visualization of the data that model contains.
  */
-export class PageView {
+export class Page {
 
     url: URI;
     eles: Element[];
@@ -31,7 +32,7 @@ export class PageView {
 
     constructor(URL: URI, app_page: ComponentElement) {
 
-        app_page.classList.add("radiate-app");
+        app_page.classList.add("radiate-page");
 
         //Initialize the app_page
         this.page_component_name = app_page.classList[0];
@@ -51,18 +52,21 @@ export class PageView {
     init_components() {
 
         if (this.ele) {
+            for (const comp of hydrateComponentElements([this.ele])) {
+                if (comp) {
+                    comp.initialize().connect();
 
-
-            for (const comp of hydrateComponentElements([this.ele]))
-                if (comp)
-                    comp.initialize(null).connect();
+                    if (rt.isEnv(WickEnvironment.WORKSPACE))
+                        rt.addRootComp(comp);
+                }
+            }
 
 
             this.component = this.ele.wick_component;
 
             //Only gather radiate elements that are direct children of the 
-            //app node to reduce the complexity of transitioning between 
-            //pages.
+            //app node to reduce the complexity of matching 
+            //transitioning between pages.
 
             const radiate_elements: ComponentElement[] = <any>
 
@@ -116,7 +120,7 @@ export class PageView {
     connect(
         app_element: HTMLElement,
         wurl: URI,
-        prev_page: PageView | null = null
+        prev_page: Page | null = null
     ) {
 
         if (this.style && !this.style.parentElement)
@@ -153,9 +157,12 @@ export class PageView {
     }
 
     transitionIn(transition: Transition) {
-
         if (this.component)
             this.component.transitionIn(0, 0, false, transition);
+    }
+    transitionComplete() {
+        if (this.component)
+            this.component.transitionInEnd();
     }
 
     setType(type: PageType, router: any) {

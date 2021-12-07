@@ -163,6 +163,8 @@ export async function getPatch(
     if (!component_to) throw new Error("Could not retrieve to component");
 
     if (
+        true
+        ||
         component_to.code_hash != component_from.code_hash
         ||
         component_to.ele_hash != component_from.ele_hash

@@ -127,6 +127,15 @@ export interface DispatchKey {
  */
 export interface Dispatcher {
     /**
+     * Dispatchers defined with a higher priority will be selected
+     * to handle a given request before those with a lower priority.
+     * 
+     * If no priority is defined, then order in which the dispatchers
+     * are defined determines which dispatchers handle a request first.
+     */
+    priority?: number;
+
+    /**
      * Identifier string of the dispatcher.
      *
      */

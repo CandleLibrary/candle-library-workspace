@@ -1,0 +1,31 @@
+/**
+ * Add a new element to the containing element as either
+ * a previous sibling, following sibling, or as the first
+ * child of the element.
+ */
+import { top, left, width, height} from "@model";
+
+function $update(width, height, left, top) {
+     const div = "@#main";
+
+    div.style.width = width-1 + "px";
+    div.style.height = height-1 + "px";
+    div.style.left = left-1 + "px";
+    div.style.top = top-1 + "px";
+};
+
+<style>
+
+    root {
+        position:fixed;
+        width:150px;
+        height:150px;
+        z-index:10000;
+        pointer-events:none;
+        border-radius:5px;
+        border:1px solid rgba(128,128,128, 0.2);
+    }
+
+</style>;
+
+export default <div id="main"></div>;

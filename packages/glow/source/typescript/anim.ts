@@ -1,6 +1,6 @@
 import { AnimGroup } from './anim_group.js';
 import { AnimateObjectArg, AnimationArgs } from "./anim_obj.js";
-import { AnimSequence } from './anim_sequence.js';
+import { __AnimSequence__ } from './anim_sequence.js';
 import { CSS_Bezier, Linear } from './common.js';
 import common_methods from "./common_methods.js";
 import { AnimSequence as AS, AnimGroup as AG } from './types.js';
@@ -12,7 +12,7 @@ export const Animation = ((function anim() {
 
     Object.assign(AnimGroup.prototype, common_methods);
 
-    Object.assign(AnimSequence.prototype, common_methods);
+    Object.assign(__AnimSequence__.prototype, common_methods);
 
     /** END SHARED METHODS * */
     const GlowFunction = function (...args: AnimateObjectArg[]): AS | AG {
@@ -43,11 +43,11 @@ export const Animation = ((function anim() {
                         if (typeof obj !== "object")
                             throw new Error(`Expected object type for key ${name}[${i}]`);
 
-                        if (key.tic === undefined)
+                        if (key.tic === undefined || isNaN(key.tic) || typeof key.tic != "number")
                             throw new Error(
                                 `
 Key ${name}[${i}] does not have correct value for "tic" attribute. 
-Expected a number type but got instead ${typeof key.tic}.`);
+Expected a number type but got instead ${isNaN(key.tic ?? 0) ? "NaN" : typeof key.tic}.`);
 
                         if (key.val === undefined)
                             throw new Error(
@@ -61,7 +61,7 @@ Key ${name}[${i}] does not have a valid "val" attribute. `);
                 }
 
 
-                output.push(new AnimSequence(obj, props));
+                output.push(new __AnimSequence__(obj, props));
             } else
                 console.error(`Glow animation was passed an undefined object.`);
         }
@@ -75,7 +75,7 @@ Key ${name}[${i}] does not have a valid "val" attribute. `);
     Object.assign(GlowFunction, {
         createSequence: GlowFunction,
 
-        createGroup: (...rest: AnimSequence[]) => new AnimGroup(rest),
+        createGroup: (...rest: __AnimSequence__[]) => new AnimGroup(rest),
 
         set USE_TRANSFORM(v) { USE_TRANSFORM = !!v; },
 

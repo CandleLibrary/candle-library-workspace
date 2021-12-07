@@ -282,6 +282,27 @@ export function getDependentComponents(comp: ComponentData, context: Context) {
 }
 
 
+const boiler_plate = `
+    <style id="wick-boiler-plate">
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+        position:absolute; 
+        top:0;
+        left:0; 
+        width:100%;
+        padding:0;
+        margin:0; border:none;
+    }
+    
+    li { list-style:none }
+    
+    a { text-decoration:none }
+    
+    </style>`;
 function renderWickPageString(
     context: Context,
     templates: string,
@@ -300,16 +321,7 @@ function renderWickPageString(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     ${head.split("\n").join("\n    ")}
-    <style id="wick-boiler-plate">
-        body {
-            position:absolute; top:0;
-            left:0; width:100%;
-            height:100%; padding:0;
-            margin:0; border:none;
-        }
-        li { list-style:none }
-        a { text-decoration:none }
-    </style>
+    ${boiler_plate}
     <style id="wick-app-style">
     ${style.split("\n").join("\n    ")}
     </style>       
@@ -344,30 +356,22 @@ function renderRadiatePageString(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     ${head.split("\n").join("\n    ")}
+    ${boiler_plate}
 
-    <style id="wick-boiler-plate">
-        body {
-            position:absolute; top:0;
-            left:0; width:100%;
-            height:100%; padding:0;
-            margin:0; border:none;
-        }
-        li { list-style:none }
-        a { text-decoration:none }
-    </style>
     <style id="wick-app-style">
     ${style.split("\n").join("\n            ")}
     </style>
 
     <style id="radiate">
+        .radiate-page {
+            position:absolute;
+            top:0;
+            left:0;
+        }
         radiate-modals {
             position:fixed;
             top:0;
             left:0;
-        }
-
-        radiate-modal {
-
         }
 
         radiate-modals iframe{

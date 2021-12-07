@@ -1,11 +1,11 @@
-import { AnimSequence } from './anim_sequence.js';
+import { __AnimSequence__ } from './anim_sequence.js';
 
 export class AnimGroup {
     seq: Array<any>;
 
     duration: number;
 
-    constructor(sequences: AnimSequence[]) {
+    constructor(sequences: __AnimSequence__[]) {
 
         //@ts-ignore
         this.constructCommon();
@@ -27,7 +27,7 @@ export class AnimGroup {
         this.destroyCommon();
     }
 
-    add(seq: AnimSequence) {
+    add(seq: __AnimSequence__) {
 
         this.seq.push(seq);
 

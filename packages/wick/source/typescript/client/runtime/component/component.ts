@@ -3,10 +3,11 @@ import spark, { Sparky } from "@candlelib/spark";
 import { Context } from '../../../compiler/common/context.js';
 import { BINDING_FLAG, ObservableModel, ObservableWatcher } from "../../../types/all";
 import { WickContainer } from "./container.js";
-import { rt } from "../global.js";
+import { rt, WickEnvironment } from "../global.js";
 import {
     hydrateComponentElement, hydrateContainerElement
 } from "./html.js";
+import { Status } from './component_status.js';
 
 
 type BindingUpdateFunction = (...rest: any[]) => void;
@@ -18,22 +19,13 @@ const enum DATA_DIRECTION {
     UP = 2
 }
 
-const enum ComponentFlag {
-    CONNECTED = 1 << 0,
-    TRANSITIONED_IN = 1 << 1,
-    DESTROY_AFTER_TRANSITION = 1 << 2
-}
-
-
 export class WickRTComponent implements Sparky, ObservableWatcher {
 
     ele: HTMLElement;
 
     elu: (HTMLElement | Text)[][];
 
-    CONNECTED: boolean;
-
-    ALLOW_UPDATE: boolean;
+    status: Status;
 
     context: Context;
 
@@ -73,9 +65,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     name: string;
 
     protected wrapper: WickRTComponent | null;
-    INITIALIZED: boolean;
-    TRANSITIONED_IN: boolean;
-    DESTROY_AFTER_TRANSITION: boolean;
 
     active_flags: number;
     update_state: number;
@@ -96,6 +85,20 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     _SCHD_: number;
 
+    static edit_name: string | undefined;
+
+    is(flag: Status) {
+        return (this.status & flag) == flag;
+    }
+
+    setStatus(...flags: Status[]) {
+        this.status |= flags.reduce((r, t) => r | t, 0);
+    }
+
+    removeStatus(...flags: Status[]) {
+        this.status ^= (this.status & flags.reduce((r, t) => r | t, 0));
+    }
+
     constructor(
         existing_element = null,
         wrapper: WickRTComponent | null = null,
@@ -104,8 +107,17 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         context: Context = rt.context,
         element_affinity = 0
     ) {
-        this.name = this.constructor.name;
+        if (rt.isEnv(WickEnvironment.WORKSPACE)) {
 
+            this.name =
+                //@ts-ignore
+                this.constructor?.edit_name
+                ??
+                this.constructor.name;
+        } else {
+            this.name = this.constructor.name;
+        }
+        this.status = 0;
         this.ci = 0;
         this.ch = [];
         this.elu = [];
@@ -121,12 +133,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.active_flags = 0;
         this.call_depth = 0;
         this.affinity = element_affinity;
-
-        this.ALLOW_UPDATE = true;
-        this.CONNECTED = false;
-        this.INITIALIZED = false;
-        this.TRANSITIONED_IN = false;
-        this.DESTROY_AFTER_TRANSITION = false;
 
         //@ts-ignore
         this.up = this.updateParent;
@@ -169,14 +175,14 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.init_interfaces(this);
     }
 
-    init_interfaces() { }
+    init_interfaces(c: any) { }
 
     initialize(model: any = this.model) {
 
-        if (this.INITIALIZED)
+        if (this.is(Status.INITIALIZED))
             return this;
 
-        this.INITIALIZED = true;
+        this.setStatus(Status.INITIALIZED);
 
         this.model = model;
 
@@ -203,10 +209,19 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             this.wrapper.setModel({ comp: this });
         } else if /*Prevent recursion, which will be infinite */ (
             context.wrapper && this.name !== context.wrapper.name
-        ) {
-            this.wrapper = new (context.component_class.get(context.wrapper.name))({ comp: this });
 
-            this.ele.appendChild(this.wrapper.ele);
+        ) {
+
+            const wrapper_class = context.component_class.get(context.wrapper.name);
+
+            if (wrapper_class) {
+
+                this.wrapper = new wrapper_class();
+
+                this.wrapper.initialize({ comp: this });
+
+                this.ele.appendChild(this.wrapper.ele);
+            }
         }
 
         try {
@@ -238,7 +253,11 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     removeChild(cp: WickRTComponent) {
         if (cp.par == this) {
-            this.ch = this.ch.filter(c => c !== cp);
+            const index = this.ch.indexOf(cp);
+
+            if (index >= 0) {
+                this.ch.splice(index, 1);
+            }
             cp.par = null;
         }
     }
@@ -255,8 +274,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     }
 
     connect() {
-        this.CONNECTED = true;
-        this.ALLOW_UPDATE = true;
+        this.setStatus(Status.CONNECTED, Status.ALLOW_UPDATE);
         for (const child of this.ch)
             child.connect();
         this.onModelUpdate();
@@ -265,17 +283,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     disconnect() {
         for (const child of this.ch)
             child.disconnect();
-        this.ALLOW_UPDATE = false;
-        this.CONNECTED = false;
-    }
 
-    /** 
-     * ██████   ██████  ███    ███         ██     ██   ██ ████████ ███    ███ ██      
-     * ██   ██ ██    ██ ████  ████        ██      ██   ██    ██    ████  ████ ██      
-     * ██   ██ ██    ██ ██ ████ ██       ██       ███████    ██    ██ ████ ██ ██      
-     * ██   ██ ██    ██ ██  ██  ██      ██        ██   ██    ██    ██  ██  ██ ██      
-     * ██████   ██████  ██      ██     ██         ██   ██    ██    ██      ██ ███████                                                                                                                                                          
-     */
+        this.removeStatus(Status.CONNECTED, Status.ALLOW_UPDATE);
+    }
 
 
     ce(): HTMLElement {
@@ -296,38 +306,47 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 return ele;
             }
         }
-        throw new Error("WickRT :: NO template element for component: " + this.name);
+        throw new Error(`WickRT :: NO template element for component: ${this.name}. Was this component defined without a default HTML element export?`);
     }
 
     removeCSS() {
+        if (this.context.css_cache) {
 
-        const cache = this.context.css_cache.get(this.name);
+            const cache = this.context.css_cache.get(this.name);
 
-        if (cache) {
-            cache.count--;
-            if (cache.count <= 0) {
-                cache.css_ele.parentElement.removeChild(cache.css_ele);
-                this.context.css_cache.delete(this.name);
+            if (cache && cache.css_ele.parentElement) {
+                cache.count--;
+                if (cache.count <= 0) {
+                    cache.css_ele.parentElement.removeChild(cache.css_ele);
+                    this.context.css_cache.delete(this.name);
+                }
             }
         }
     }
 
     setCSS(style_string = this.getCSS()) {
 
-        if (style_string) {
+        if (style_string && this.context.css_cache) {
 
             if (!this.context.css_cache.has(this.name)) {
 
-                const { window: { document }, css_cache } = this.context,
-                    css_ele = document.createElement("style");
+                const { window, css_cache } = this.context;
+                if (window) {
+                    const { document } = window,
 
-                css_ele.innerHTML = style_string;
+                        css_ele = document.createElement("style");
 
-                document.head.appendChild(css_ele);
+                    css_ele.innerHTML = style_string;
 
-                css_cache.set(this.name, { css_ele, count: 1 });
-            } else
-                this.context.css_cache.get(this.name).count++;
+                    document.head.appendChild(css_ele);
+
+                    css_cache.set(this.name, { css_ele, count: 1 });
+                }
+            } else {
+                if (this.context.css_cache.has(this.name))
+                    //@ts-ignore
+                    this.context.css_cache.get(this.name).count++;
+            }
 
             this.ele.classList.add(this.name);
         }
@@ -363,7 +382,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     removeFromDOM() {
         //Prevent erroneous removal of scope.
-        if (this.CONNECTED == false) return;
+        if (!this.is(Status.CONNECTED)) return;
 
         //Lifecycle Events: Disconnecting <======================================================================
         this.disconnecting();
@@ -381,15 +400,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         this.disconnected();
     }
-
-    /***
-     * ████████ ██████   █████  ███    ██ ███████ ██ ████████ ██  ██████  ███    ██ ███████ 
-     *    ██    ██   ██ ██   ██ ████   ██ ██      ██    ██    ██ ██    ██ ████   ██ ██      
-     *    ██    ██████  ███████ ██ ██  ██ ███████ ██    ██    ██ ██    ██ ██ ██  ██ ███████ 
-     *    ██    ██   ██ ██   ██ ██  ██ ██      ██ ██    ██    ██ ██    ██ ██  ██ ██      ██ 
-     *    ██    ██   ██ ██   ██ ██   ████ ███████ ██    ██    ██  ██████  ██   ████ ███████
-     */
-
+    oTIC() { }
 
     oTI(row: number, col: number, DESCENDING: boolean, trs: Transition) { }
     oTO(row: number, col: number, DESCENDING: boolean, trs: Transition) { }
@@ -398,14 +409,14 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     onTransitionOutEnd() {
 
-        if (!this.TRANSITIONED_IN) {
+        if (!this.is(Status.TRANSITIONED_IN)) {
 
             //this.removeFromDOM();
 
-            if (this.DESTROY_AFTER_TRANSITION)
+            if (this.is(Status.DESTROY_AFTER_TRANSITION))
                 this.destructor();
 
-            this.DESTROY_AFTER_TRANSITION = false;
+            this.removeStatus(Status.DESTROY_AFTER_TRANSITION);
         }
 
         this.out_trs = null;
@@ -431,9 +442,10 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         for (const ch of this.ch)
             ch.transitionOut(row, col, DESCENDING, transition, false);
 
-        this.DESTROY_AFTER_TRANSITION = DESTROY_AFTER_TRANSITION;
+        if (DESTROY_AFTER_TRANSITION)
+            this.setStatus(Status.DESTROY_AFTER_TRANSITION);
 
-        this.TRANSITIONED_IN = false;
+        this.removeStatus(Status.TRANSITIONED_IN);
 
         let transition_time = 0;
 
@@ -500,21 +512,18 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         try {
             this.oTI(row, col, DESCENDING, trs.in);
-            this.TRANSITIONED_IN = true;
+            this.setStatus(Status.TRANSITIONED_IN);
         } catch (e) {
             console.log(e);
         }
-
     }
 
-    /***
-     * ███    ███  ██████  ██████  ███████ ██      
-     * ████  ████ ██    ██ ██   ██ ██      ██      
-     * ██ ████ ██ ██    ██ ██   ██ █████   ██      
-     * ██  ██  ██ ██    ██ ██   ██ ██      ██      
-     * ██      ██  ██████  ██████  ███████ ███████ 
-     */
+    transitionInEnd() {
+        for (const ch of this.ch)
+            ch.transitionInEnd();
 
+        this.oTIC();
+    }
 
     setModel(model: ObservableModel | any) {
 
@@ -568,7 +577,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         // Go through the model's props and test whether they are different then the 
         // currently cached variables
 
-        if (!this.ALLOW_UPDATE) return;
+        if (!this.is(Status.ALLOW_UPDATE)) return;
 
         if (model) {
 
@@ -587,29 +596,22 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             );
     }
 
-    /**
-     * ██    ██ ██████  ██████   █████  ████████ ███████ 
-     * ██    ██ ██   ██ ██   ██ ██   ██    ██    ██      
-     * ██    ██ ██████  ██   ██ ███████    ██    █████   
-     * ██    ██ ██      ██   ██ ██   ██    ██    ██      
-     *  ██████  ██      ██████  ██   ██    ██    ███████ 
-     */
-
     update(data: any, flags: number = 1, IMMEDIATE: boolean = false) {
 
-        if (!this.ALLOW_UPDATE) return;
+        if (!this.is(Status.ALLOW_UPDATE)) return;
 
         for (const name in data) {
 
             const val = data[name];
 
-
-            if (typeof val !== "undefined" && this.nlu) {
+            if (val !== undefined && this.nlu) {
 
                 const index = this.nlu[name];
 
-                if (flags && ((index >>> 24) & flags) == flags)
+                if (flags && ((index >>> 24) & flags) == flags) {
+
                     this.ua(index & 0xFFFFFF, val);
+                }
             }
         }
 
@@ -637,6 +639,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         if (attribute_value !== prev_val) {
 
             comp[attribute_index] = attribute_value;
+
             if (
                 !this.call_set.has(attribute_index)
                 &&
@@ -700,7 +703,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         const comp: { [key: string]: any; } = <any>this;
 
         for (const id of ids)
-            if (typeof comp[id] == "undefined")
+            if (comp[id] === undefined)
                 return false;
 
         return true;
@@ -736,7 +739,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
             const val = data[key];
 
-            if (typeof val !== "undefined" && this.nlu) {
+            if (val !== undefined && this.nlu) {
 
                 const index = this.nlu[key];
 
@@ -999,7 +1002,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 ele = node;
             };
 
-            ele.data = data;
+            ele.data = data + "";
         }
     }
 
@@ -1014,6 +1017,32 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 (<HTMLInputElement>ele).value = attribute_value;
             else
                 (<HTMLElement>ele).setAttribute(attribute_name, attribute_value);
+        }
+    }
+
+    set_class(
+        ele_index: number,
+        bool_expression: boolean,
+        classes: any
+    ) {
+
+        const bool = !!bool_expression;
+
+        let class_strings = [];
+
+        if (Array.isArray(classes))
+            class_strings = classes.flatMap(c => c.toString().split(" "));
+        else
+            class_strings = classes.toString().split(" ");
+
+
+        for (const ele of this.elu[ele_index] ?? []) {
+            if (ele instanceof HTMLElement) {
+                if (bool)
+                    ele.classList.add(...class_strings);
+                else
+                    ele.classList.remove(...class_strings);
+            }
         }
     }
 

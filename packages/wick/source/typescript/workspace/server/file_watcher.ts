@@ -46,7 +46,13 @@ export class FileWatcherHandler implements Sparky {
         if (!this.watcher) {
 
             logger.log(`Creating watcher for file [ ${this.path} ]`);
-            this.watcher = watch(this.path, (r: any) => (this.type = r, spark.queueUpdate(this)));
+
+            try {
+
+                this.watcher = watch(this.path, (r: any) => (this.type = r, spark.queueUpdate(this)));
+            } catch (e) {
+                logger.warn("Unable to watch path " + this.path);
+            }
         }
     }
 

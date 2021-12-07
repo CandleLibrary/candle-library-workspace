@@ -1,5 +1,5 @@
 import { copy, traverse } from '@candlelib/conflagrate';
-import { JSCallExpression, JSFormalParameters, JSIdentifier, JSIdentifierBinding, JSNode, JSNodeType } from '@candlelib/js';
+import { JSCallExpression, JSFormalParameters, JSFunctionDeclaration, JSFunctionExpression, JSIdentifier, JSIdentifierBinding, JSNode, JSNodeType } from '@candlelib/js';
 import {
     BINDING_VARIABLE_TYPE, HTMLNodeType, IndirectHook, JSHandler
 } from "../../types/all.js";
@@ -24,13 +24,13 @@ registerFeature(
             {
                 priority: 1,
 
-                async prepareJSNode(node, parent_node, skip, component, context, frame) {
+                async prepareJSNode(node: JSFunctionDeclaration | JSFunctionExpression, parent_node, skip, component, context, frame) {
 
                     const
                         [name_node] = node.nodes;
 
                     let
-                        name = (<JSIdentifier>name_node).value,
+                        name = name_node.value,
                         root_name = name;
 
                     if (!frame.IS_ROOT)
@@ -53,6 +53,7 @@ registerFeature(
                         const internal_method_name = {
                             "ontransitionin": "oTI",
                             "onin": "oTI",
+                            "ontrsdone": "oTIC",
                             "ontrsin": "oTI",
                             "onout": "oTO",
                             "ontransitionout": "oTO",
@@ -61,11 +62,11 @@ registerFeature(
                             "onload": "onload",
                             "onmount": "onload",
 
-                        }[name.toLocaleLowerCase().replace("on_", "on")] ?? "";
+                        }[name.toLowerCase().replace("on_", "on").replace(/_/g, "")] ?? "";
 
                         if (internal_method_name != "") {
                             // This should be an internally called method
-                            (<JSIdentifier>name_node).value = internal_method_name;
+                            name_node.value = internal_method_name;
                         } else {
 
                             build_system.addIndirectHook(

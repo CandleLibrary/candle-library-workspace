@@ -2,13 +2,43 @@ import { Animation } from "./anim.js";
 import { TransformTo } from "./transformto.js";
 import common_methods from "./common_methods.js";
 import { AnimationMethods } from "./types.js";
+import { AnimSequence } from './anim_sequence.js';
 
-let obj_map = new Map(), in_delay = 0;
+let obj_map: WeakMap<any, Map<string, AnimSequence>> = new WeakMap();
+
+function overrideExtantSequences(seq: AnimSequence) {
+    if (!obj_map.has(seq.obj))
+        obj_map.set(seq.obj, new Map);
+
+    const props = obj_map.get(seq.obj);
+
+    if (props) {
+        for (const [name] of seq.props) {
+            if (true == props.has(name))
+                props.get(name)?.props.delete(name);
+            props.set(name, seq);
+        }
+    }
+}
+
+function removeSequences(seq: AnimSequence) {
+
+    if (!obj_map.has(seq.obj))
+        return;
+
+    const props = obj_map.get(seq.obj);
+
+    if (props) {
+        for (const [name] of seq.props) {
+            if (props.get(name) == seq)
+                props.delete(name);
+        }
+    }
+}
 
 function $in(this: TransitionClass, ...data: any[]) {
-
     let
-        seq = null,
+        seq: AnimSequence | null = null,
         length = data.length,
         delay = 0;
 
@@ -16,6 +46,7 @@ function $in(this: TransitionClass, ...data: any[]) {
         delay = +data[length - 1], length--;
 
     for (let i = 0; i < length; i++) {
+
         let anim_data = data[i];
 
         if (typeof (anim_data) == "object") {
@@ -26,21 +57,16 @@ function $in(this: TransitionClass, ...data: any[]) {
                     easing = anim_data.easing;
                 seq = this.TT[anim_data.match](anim_data.obj, duration, easing);
             } else
-                seq = Animation.createSequence(anim_data);
+                seq = <any>Animation(anim_data);
 
             //Parse the object and convert into animation props. 
             if (seq) {
+
                 this.in_seq.push(seq);
+
                 this.in_duration = Math.max(this.in_duration, seq.duration);
-                if (this.OVERRIDE) {
 
-                    if (obj_map.get(seq.obj)) {
-                        let other_seq = obj_map.get(seq.obj);
-                        other_seq.removeProps(seq);
-                    }
-
-                    obj_map.set(seq.obj, seq);
-                }
+                if (this.OVERRIDE) overrideExtantSequences(seq);
             }
         }
     }
@@ -49,7 +75,6 @@ function $in(this: TransitionClass, ...data: any[]) {
 
     return this.in;
 }
-
 
 function $out(this: TransitionClass, ...data: any[]) {
     //Every time an animating component is added to the Animation stack delay and duration need to be calculated.
@@ -60,7 +85,7 @@ function $out(this: TransitionClass, ...data: any[]) {
 
     if (typeof (data[length - 1]) == "number") {
         if (typeof (data[length - 2]) == "number") {
-            in_delay = data[length - 2];
+            //in_delay = data[length - 2];
             delay = data[length - 1];
             length -= 2;
         } else
@@ -75,19 +100,15 @@ function $out(this: TransitionClass, ...data: any[]) {
             if (anim_data.match) {
                 this.TT[anim_data.match] = TransformTo(anim_data.obj);
             } else {
-                let seq = Animation.createSequence(anim_data);
+                let seq = <any>Animation(anim_data);
+
                 if (seq) {
+
                     this.out_seq.push(seq);
+
                     this.out_duration = Math.max(this.out_duration, seq.duration);
-                    if (this.OVERRIDE) {
 
-                        if (obj_map.get(seq.obj)) {
-                            let other_seq = obj_map.get(seq.obj);
-                            other_seq.removeProps(seq);
-                        }
-
-                        obj_map.set(seq.obj, seq);
-                    }
+                    if (this.OVERRIDE) overrideExtantSequences(seq);
                 }
 
                 this.in_delay = Math.max(this.in_delay, +delay);
@@ -108,9 +129,9 @@ export class TransitionClass {
 
     in_delay: number;
 
-    in_seq: any[];
+    in_seq: AnimSequence[];
 
-    out_seq: any[];
+    out_seq: AnimSequence[];
 
     TT: any;
 
@@ -161,16 +182,8 @@ export class TransitionClass {
     removeEventListener() { }
 
     destroy() {
-        let removeProps = function (seq: any) {
-            if (!seq.DESTROYED) {
-                if (obj_map.get(seq.obj) == seq)
-                    obj_map.delete(seq.obj);
-            }
-
-            seq.destroy();
-        };
-        this.in_seq.forEach(removeProps);
-        this.out_seq.forEach(removeProps);
+        this.in_seq.forEach(removeSequences);
+        this.out_seq.forEach(removeSequences);
         this.in_seq.length = 0;
         this.out_seq.length = 0;
         this.out = null;
@@ -184,7 +197,7 @@ export class TransitionClass {
 
     set duration(e) { };
 
-    run(t) {
+    run(t: number): boolean {
 
         for (let i = 0; i < this.out_seq.length; i++) {
             let seq = this.out_seq[i];
@@ -194,13 +207,15 @@ export class TransitionClass {
             }
         }
 
-        const in_t = Math.max(t - this.in_delay, 0);
+        const in_t = t - this.in_delay;
 
-        for (let i = 0; i < this.in_seq.length; i++) {
-            let seq = this.in_seq[i];
-            if (!seq.run(t) && !seq.FINISHED) {
-                seq.issueEvent("stopped");
-                seq.FINISHED = true;
+        if (in_t >= 0) {
+            for (let i = 0; i < this.in_seq.length; i++) {
+                let seq = this.in_seq[i];
+                if (!seq.run(in_t) && !seq.FINISHED) {
+                    seq.issueEvent("stopped");
+                    seq.FINISHED = true;
+                }
             }
         }
 

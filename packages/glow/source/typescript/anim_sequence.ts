@@ -3,10 +3,11 @@ import { AnimProp } from './props/anim_prop.js';
 import { getComputedCSS, getValueType, typeIsArray, setType, TransformType } from './common.js';
 import { VectorAnimProp } from './props/vector_anim_prop.js';
 import { Animation } from "./anim.js";
+import { AnimSequence as AS } from './types.js';
 
 // Stores animation data for a group of properties. Defines delay and repeat.
 
-export class AnimSequence {
+export class __AnimSequence__ {
     duration: number;
 
     CSS_ANIMATING: boolean;
@@ -16,6 +17,8 @@ export class AnimSequence {
     obj: any;
     type: TransformType;
     style: any;
+
+    FINISHED: boolean;
 
     constructor(
         obj: any,
@@ -29,6 +32,7 @@ export class AnimSequence {
         this.CSS_ANIMATING = false;
         this.duration = 0;
         this.props = new Map;
+        this.FINISHED = false;
 
         switch (this.type) {
             case TransformType.CSS_STYLE:
@@ -61,7 +65,7 @@ export class AnimSequence {
 
     // Removes AnimProps based on object of keys that should be removed from this sequence.
     removeProps(props: { [key: string]: any; }) {
-        if (props instanceof AnimSequence)
+        if (props instanceof __AnimSequence__)
             props = props.props;
 
         for (let name in props) {
@@ -182,3 +186,6 @@ export class AnimSequence {
         }
     }
 }
+
+
+export type AnimSequence = __AnimSequence__ & AS;

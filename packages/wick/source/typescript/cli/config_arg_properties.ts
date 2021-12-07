@@ -14,7 +14,9 @@ export const default_config: WickCompileConfig = {
 
 const transformCLI = async (arg: any, args: any) => {
 
+
     const input_path = <URI>URI.resolveRelative(args.trailing_arguments.slice(-1)[0]);
+    
 
     let js_path: URI = <URI>URI.resolveRelative("./wickonfig.js");
     let json_path: URI = <URI>URI.resolveRelative("./wickonfig.json");

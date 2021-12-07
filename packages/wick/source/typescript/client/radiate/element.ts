@@ -1,7 +1,7 @@
 import URI from '@candlelib/uri';
 import { Transition } from '@candlelib/glow';
 import { ComponentElement, WickRTComponent } from '../runtime/component/component.js';
-import { PageView } from './page.js';
+import { Page } from './page.js';
 
 /**
  * Class for element.
@@ -29,7 +29,7 @@ export class Element {
      *
      * @param      {HTMLElement}  element  The HTMLElement that this Element will be bound to. 
      */
-    constructor(element: ComponentElement, page: PageView | null = null) {
+    constructor(element: ComponentElement, page: Page | null = null) {
 
         this.id = element.id || element.classList[0];
 

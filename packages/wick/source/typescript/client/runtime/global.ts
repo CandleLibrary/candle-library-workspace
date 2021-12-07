@@ -1,12 +1,30 @@
 
 import GlowAnimation from '@candlelib/glow';
 import { Context, UserPresets } from "../../compiler/common/context.js";
+import { Router } from '../radiate/router.js';
 
 import { WickRTComponent } from "./component/component.js";
 
 export const global_object = (typeof global !== "undefined") ? global : window;
 
+export const enum WickEnvironment {
+    WICK = 1,
+
+    RADIATE = 2,
+
+    WORKSPACE = 4
+}
+
 export interface WickRuntime {
+
+    environment: WickEnvironment;
+    /**
+     * A promise that is fulfilled once the 
+     * workspace has been initialized. 
+     * 
+     * Only available in workspace environments
+     */
+    workspace_init_promise: Promise<any> | null;
 
     loadGlow(): Promise<typeof GlowAnimation>,
 
@@ -27,7 +45,7 @@ export interface WickRuntime {
     /**
      * Utilized by radiate system
      */
-    router: any;
+    router: Router | null;
 
     /**
      * Register component class
@@ -56,14 +74,40 @@ export interface WickRuntime {
 
     OVERRIDABLE_onComponentMetaChange(component_meta: any): void;
 
+    /**
+     * Asserts whether the WickEnvironnement flag is on 
+     * rt.environnement
+     * @param wick 
+     */
+    isEnv(wick: WickEnvironment): boolean;
+
+    /**
+     * Applies the WickEnvironment flag to rt.environment.
+     * @param env 
+     */
+    setEnvironment(env: WickEnvironment): void;
+
+    /**
+     * Adds the comp to root components array if the 
+     * mode if Workspace is set in rt.environment.
+     * 
+     * @param comp 
+     */
+    addRootComp(comp: WickRTComponent): void;
+
     init: () => Promise<void>;
 }
+
+let GLOW_CHECKED = false;
+let local_glow: any = null;
 
 const rt: WickRuntime = (() => {
 
     let glow = <any>null;
 
     return <WickRuntime>{
+
+        environment: WickEnvironment.WICK,
 
         async loadGlow(glow_url: string = "@candlelib/glow") {
             //Import glow module if it is not present
@@ -74,7 +118,14 @@ const rt: WickRuntime = (() => {
 
         root_components: [],
 
-        get glow(): typeof GlowAnimation { return glow; },
+        get glow(): typeof GlowAnimation | null {
+            if (!GLOW_CHECKED) {
+                //@ts-ignore
+                local_glow = globalThis["glow"];
+            }
+
+            return local_glow;
+        },
 
         get p() { return rt.context; },
 
@@ -98,6 +149,21 @@ const rt: WickRuntime = (() => {
 
         OVERRIDABLE_onComponentMetaChange() { },
 
+        addRootComp(comp: WickRTComponent) {
+            rt.root_components.push(comp);
+        },
+
+        setEnvironment(env: WickEnvironment) {
+            rt.environment |= env;
+        },
+
+        isEnv(env: WickEnvironment): boolean {
+            return (env & rt.environment) == env;
+        },
+
+
+        workspace_init_promise: null,
+
 
         setPresets: (preset_options: UserPresets) => {
 
@@ -120,6 +186,8 @@ const rt: WickRuntime = (() => {
         },
 
         init: <any>null,
+
+        worspace_init_promise: <any>null,
 
         addAPI(obj: { [key: string]: any; }) {
             if (rt.context.api)

@@ -63,7 +63,18 @@ export enum EditorCommand {
      * Apply a set of changes to affected components, allowing
      * a batch change operation to take place.
      */
-    APPLY_COMPONENT_CHANGES
+    APPLY_COMPONENT_CHANGES,
+
+    /**
+     * Client request for a list of plugin paths that should be 
+     * loaded into the client workspace
+     */
+    GET_PLUGIN_PATHS,
+    /**
+     * Server response with a list of plugin paths that should be 
+     * loaded into the client workspace
+     */
+    PLUGIN_PATHS_RESPONSE
 }
 
 export const enum StyleSourceType {
@@ -75,6 +86,18 @@ export interface CommandsMap {
 
     [EditorCommand.OK]: {
         command: EditorCommand.OK;
+    };
+
+    [EditorCommand.GET_PLUGIN_PATHS]: {
+        command: EditorCommand.GET_PLUGIN_PATHS;
+    };
+
+    [EditorCommand.PLUGIN_PATHS_RESPONSE]: {
+        command: EditorCommand.PLUGIN_PATHS_RESPONSE;
+        /**
+         * Local path and remote path tuples
+         */
+        plugins: [string, string][];
     };
 
     [EditorCommand.UNKNOWN]: {

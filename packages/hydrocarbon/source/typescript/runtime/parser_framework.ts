@@ -155,9 +155,10 @@ export async function ParserFramework<T, R, K extends keyof R>(
 
                 const lexer = fail_state.get_root_lexer();
 
-                const token = new Token(input_string, "",
+                const token = new Token(input_string,
                     lexer.token_length,
-                    lexer.token_offset
+                    lexer.token_offset,
+                    -1
                 );
 
                 const err = token.createError(`Unexpected token [${token.slice()}]`);

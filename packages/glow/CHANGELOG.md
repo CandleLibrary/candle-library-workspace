@@ -1,3 +1,9 @@
+## [v0.5.1] - 2021-12-07 
+
+- [2021-12-05]
+
+    Assigned `glow` to `globalThis`
+
 ## [v0.5.0] - 2021-12-04 
 
 - [2021-12-02]
@@ -7,4 +13,3 @@
 - [2021-11-25]
 
     Moved easing objects to `Animation.easing`. Added the same easing property to the transition `in` and `out` registration functions.
-

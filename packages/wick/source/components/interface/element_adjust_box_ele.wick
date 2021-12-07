@@ -1,0 +1,143 @@
+import { top, left, width, height, ele, css, component } from "@model";
+import {  getComponentNameFromElement } from "@api";
+import handle from "./handle.wick";
+
+
+
+let selectors = null;
+let rule = '.test { }';
+let err = null;
+
+const tooltip = 
+`A selector that matches the current element `;
+
+async function $styleHandle(css){
+    if(!css) return;
+
+    console.log("1")
+    
+    await css.load;
+
+    selectors = css.getRuleList();
+}
+
+export default <div id="main" class="main">
+    { component }
+    <container {data}>
+        <handle />
+    </container>
+</div>;
+
+var data = [{
+    ele: ele,
+    ele_updated: 1,
+    pos_type: "top-left",
+}, {
+    ele: ele,
+    ele_updated: 1,
+    pos_type: "top",
+}, {
+    ele: ele,
+    ele_updated: 1,
+    pos_type: "top-right",
+}, {
+    ele: ele,
+    ele_updated: 1,
+    pos_type: "right",
+}, {
+    ele: ele,
+    ele_updated: 1,
+    pos_type: "bottom-right",
+}, {
+    ele: ele,
+    ele_updated: 1,
+    pos_type: "bottom",
+}, {
+    ele: ele,
+    ele_updated: 1,
+    pos_type: "bottom-left",
+}, {
+    ele: ele,
+    ele_updated: 1,
+    pos_type: "left",
+}];
+
+function $update(width, height, left, top) {
+    
+    const div = "@#main";
+
+    div.style.width = (width-1) + "px";
+    div.style.height = (height-1) + "px";
+    div.style.left = (left-1) + "px";
+    div.style.top = (top-1) + "px";
+};
+
+<style>
+    root {
+        font-size:13px;
+        position:absolute;
+        width:150px;
+        height:150px;
+        color:black;
+        z-index:10000;
+        pointer-events:none;
+        border:1px solid rgb(100,100,200);
+    }
+
+    .css_selector {
+        margin:10px auto;
+        width:90%;
+        color:white;
+        background-color:rgb(60,60,180);
+        padding:2px;
+        border-radius:2px;
+        cursor:pointer;
+    }
+
+    .css_data {
+        padding:10px;
+        border-radius:2px;
+        position:sticky;
+        top:0;
+        margin:auto;
+        pointer-events:all;
+        width:350px;
+        height:200px;
+        background-color:white;
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+    }
+
+    #test, .lower-data {
+        position:absolute;
+        font-size:12px;
+        top:-21px;
+        left:-1px;
+        min-height:14px;
+        padding:3px;
+        background-color:rgb(255,128,128);
+        border-radius: 4px 4px 0px 0px
+    }
+
+    .lower-data{
+        top:unset;
+        bottom:-21px;
+    }
+
+    .color{
+        color:orange;
+        font-weight:600;
+    }
+</style>;
+
+import test from "@test"
+
+test: {
+    
+    selectors = [{
+        index: 0,
+        id: "thomas",
+
+    }];
+
+    assert(i, selectors.length == 0)
+}

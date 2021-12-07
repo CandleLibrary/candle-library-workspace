@@ -1,0 +1,13 @@
+import { selections } from "@model:flame-editor";
+import boxes from "./element_adjust_box_ele.wick";
+
+export default <div>
+    <div class="css_data">
+    </div>
+    <container
+    data={selections}
+    filter={ a.VALID && a.ACTIVE }>
+    <boxes />
+</container>
+</div>;
+

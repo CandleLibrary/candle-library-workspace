@@ -5,7 +5,7 @@
  *
  * Depending on the platform, caller will either map to requestAnimationFrame or it will be a setTimout.
  */
-const caller = (typeof (window) == "object" && window?.requestAnimationFrame) ? window.requestAnimationFrame : f => {
+const caller = (typeof (window) == "object" && window?.requestAnimationFrame) ? window.requestAnimationFrame : (f: any) => {
     setTimeout(() => f(perf.now()), 5);
 };
 

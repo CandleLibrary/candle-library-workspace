@@ -334,6 +334,7 @@ export const property_definitions = {
 	perspective: "<length>|none",
 	perspective_origin: "<position>",
 	transform_origin: "[<length-percentage>|left|center|right|top|bottom]|[[<length-percentage>|left|center|right]&&[<length-percentage>|top|center|bottom]]<length>?",
+	transform_style: "flat|preserve-3d",
 
 
 	/* Visual Effects */

@@ -1,0 +1,17 @@
+import {active_plugins} from "@model:flame-editor"
+import plugin from "./plugin_frame"
+
+export default <div>
+    <container data={active_plugins}>
+        <plugin/>
+    </container>
+</div>;
+
+<style>
+
+    root {
+        position:fixed;
+        pointer-events:all;
+        z-index: 100000;
+    }
+</style>

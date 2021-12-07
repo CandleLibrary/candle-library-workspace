@@ -1,32 +1,41 @@
-import { Router } from "../client/radiate/radiate.js";
+import { Router } from "../client/radiate/router.js";
+import { WickEnvironment } from '../client/runtime/global.js';
 import wick from './wick-runtime.js';
 
-let LINKER_LOADED = false;
+let ROUTER_LOAD_INITIATED = false;
 
 export default function radiate() {
 
-    if (LINKER_LOADED) return;
+    wick.rt.setEnvironment(WickEnvironment.RADIATE);
 
-    LINKER_LOADED = true;
+    if (ROUTER_LOAD_INITIATED) return;
+
+    ROUTER_LOAD_INITIATED = true;
 
     window.addEventListener("load",
         async () => {
 
-            try {
+            if (
+                wick.rt.isEnv(WickEnvironment.WORKSPACE)
+                &&
+                wick.rt.workspace_init_promise
+            )
+                await wick.rt.workspace_init_promise;
 
+
+            try {
 
                 if (wick.init_module_promise)
 
                     await wick.init_module_promise;
 
-                const router = new Router(wick);
+                wick.rt.router = new Router(wick);
 
-                //@ts-ignore
-                wick.rt.router = router;
-
-                const page = await router.loadNewPage(document.location + "", document);
-
-                router.loadPage(page, location.href + "", true);
+                const page = await wick.rt.router.loadNewPage(document.location + "", document);
+                if (page)
+                    wick.rt.router.loadPage(page, location.href + "", true);
+                else
+                    throw new Error("Unable to initialize page");
 
                 document.body.hidden = false;
             } catch (e) {
