@@ -3,7 +3,7 @@ import spark, { Sparky } from "@candlelib/spark";
 import { Context } from '../../../compiler/common/context.js';
 import { BINDING_FLAG, ObservableModel, ObservableWatcher } from "../../../types/all";
 import { WickContainer } from "./container.js";
-import { rt } from "../global.js";
+import { rt, WickEnvironment } from "../global.js";
 import {
     hydrateComponentElement, hydrateContainerElement
 } from "./html.js";
@@ -106,10 +106,16 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         context: Context = rt.context,
         element_affinity = 0
     ) {
-        this.name =
-            this.constructor?.edit_name
-            ??
-            this.constructor.name;
+        if (rt.isEnv(WickEnvironment.WORKSPACE)) {
+
+            this.name =
+                //@ts-ignore
+                this.constructor?.edit_name
+                ??
+                this.constructor.name;
+        } else {
+            this.name = this.constructor.name;
+        }
 
         this.ci = 0;
         this.ch = [];
@@ -208,10 +214,19 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             this.wrapper.setModel({ comp: this });
         } else if /*Prevent recursion, which will be infinite */ (
             context.wrapper && this.name !== context.wrapper.name
-        ) {
-            this.wrapper = new (context.component_class.get(context.wrapper.name))({ comp: this });
 
-            this.ele.appendChild(this.wrapper.ele);
+        ) {
+
+            const wrapper_class = context.component_class.get(context.wrapper.name);
+
+            if (wrapper_class) {
+
+                this.wrapper = new wrapper_class();
+
+                this.wrapper.initialize({ comp: this });
+
+                this.ele.appendChild(this.wrapper.ele);
+            }
         }
 
         try {
