@@ -1,6 +1,6 @@
 import { Context, UserPresets } from '../compiler/common/context.js';
 import { WickRTComponent } from '../client/runtime/component/component.js';
-import { rt } from "../client/runtime/global.js";
+import { rt, WickEnvironment } from "../client/runtime/global.js";
 import {
     Element_Is_Wick_Component,
     Element_Is_Wick_Template, hydrateComponentElements
@@ -9,6 +9,7 @@ import { loadModules } from "../client/runtime/load_modules.js";
 import { Observable } from '../client/runtime/observable/observable.js';
 import { ObservableArray } from '../client/runtime/observable/observable_array.js';
 import { ObservableScheme__ } from '../client/runtime/observable/observable_prototyped.js';
+import { Router } from '../client/index.js';
 
 let
     nop = (_: any) => !0,
@@ -33,6 +34,8 @@ let
     };
 
 const wick = Object.assign(wick_root, {
+
+    radiate: <Router | null>null,
 
     rt: rt,
 
@@ -89,16 +92,19 @@ const wick = Object.assign(wick_root, {
             const elements = gatherWickElements();
 
             for (const comp of hydrateComponentElements(elements)) {
+
                 comp.initialize();
+
                 comp.connect();
-                rt.root_components.push(comp);
+
+                if (rt.isEnv(WickEnvironment.WORKSPACE))
+                    rt.addRootComp(comp);
             }
         });
     },
 
     toString() {
-        return;
-        `
+        return `
       __           _    _ _____ _____  _   __      _   
      / _|         | |  | |_   _/  __ \| | / /     | |  
   ___| |___      _| |  | | | | | /  \/| |/ / _ __| |_ 

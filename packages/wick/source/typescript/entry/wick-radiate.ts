@@ -1,4 +1,5 @@
 import { Router } from "../client/radiate/radiate.js";
+import { WickEnvironment } from '../client/runtime/global.js';
 import wick from './wick-runtime.js';
 
 let LINKER_LOADED = false;
@@ -12,8 +13,15 @@ export default function radiate() {
     window.addEventListener("load",
         async () => {
 
-            try {
+            if (
+                wick.rt.isEnv(WickEnvironment.WORKSPACE)
+                &&
+                wick.rt.workspace_init_promise
+            )
+                await wick.rt.workspace_init_promise;
 
+
+            try {
 
                 if (wick.init_module_promise)
 
