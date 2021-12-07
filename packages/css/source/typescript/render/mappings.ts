@@ -53,15 +53,15 @@ export const css_mappings: NodeMappings<CSSNode, "type"> = <NodeMappings<CSSNode
         },
         {
             type: CSSNodeType.Not,
-            template: "\\not @nodes[0]",
+            template: "\\not m:s @nodes[0]",
         },
         {
             type: CSSNodeType.And,
-            template: "\\and @nodes[0]",
+            template: "\\and m:s @nodes[0]",
         },
         {
             type: CSSNodeType.Or,
-            template: "\\or @nodes[0]",
+            template: "\\or m:s @nodes[0]",
         },
         {
             type: CSSNodeType.Parenthesis,
@@ -77,11 +77,11 @@ export const css_mappings: NodeMappings<CSSNode, "type"> = <NodeMappings<CSSNode
         },
         {
             type: CSSNodeType.Media,
-            template: "\\@media @nodes[0] \\{ i:s @nodes...[m:n] i:e \\}",
+            template: "\\@media m:s @nodes[0] \\{ i:s o:n @nodes...[1, m:n] i:e o:n \\}",
         },
         {
             type: CSSNodeType.Query,
-            template: "@nodes...[ o:s ]",
+            template: "@nodes...[ m:s ]",
         },
         {
             type: CSSNodeType.MediaFeature,
