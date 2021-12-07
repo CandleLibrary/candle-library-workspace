@@ -15,6 +15,7 @@ export class AnimProp<T extends Animatable<T>> {
     end: boolean;
     keys: Key<T>[];
     starting_val: T;
+    last_key: number;
     curr_key: number;
     time_cache: number;
     type: any;
@@ -27,6 +28,7 @@ export class AnimProp<T extends Animatable<T>> {
         val_type: any,
         computed_css: CSSStyleDeclaration | null = getComputedCSS(obj)
     ) {
+        this.last_key = -1;
 
         this.type = val_type;
 
@@ -121,6 +123,7 @@ export class AnimProp<T extends Animatable<T>> {
             p4 = easing[5];
         }
 
+
         this.duration = Math.max(this.duration, <number>key.tic);
 
         const own_key =
@@ -156,9 +159,9 @@ export class AnimProp<T extends Animatable<T>> {
 
     getValueAtTime(tic: number = 0) {
 
-        let key_index = 0;
+        let key_index = Math.max(0, this.last_key);
 
-        let prev = null;
+        let prev = this.keys[key_index - 1] || null;
 
         let LAST = false;
 
@@ -166,12 +169,10 @@ export class AnimProp<T extends Animatable<T>> {
 
         let len = this.keys.length;
 
-        for (let i = 1; i < len; i++) {
+        for (let i = key_index + 1; i < len; i++) {
             prev = key;
             key = this.keys[i];
-
             if (tic < key.t_off) break;
-
             if (i == len - 1) LAST = true;
         }
 
@@ -206,5 +207,9 @@ export class AnimProp<T extends Animatable<T>> {
     toCSSString(time = 0, prop_name = "") {
         const value = this.getValueAtTime(time);
         return `${prop_name}:${value.toString()}`;
+    }
+
+    reset() {
+        this.last_key = -1;
     }
 }

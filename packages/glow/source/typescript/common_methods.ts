@@ -63,7 +63,7 @@ export default <AnimationMethods><any>{
         return this;
     },
 
-    addEventListener(event, listener) {
+    addEventListener(event: string, listener: (args: any) => void) {
         if (typeof (listener) === "function") {
             if (!this.events[event])
                 this.events[event] = [];
@@ -71,7 +71,7 @@ export default <AnimationMethods><any>{
         }
     },
 
-    removeEventListener(event, listener) {
+    removeEventListener(event: string, listener: (args: any) => void) {
         if (typeof (listener) === "function") {
             const events = this.events[event];
             if (events)

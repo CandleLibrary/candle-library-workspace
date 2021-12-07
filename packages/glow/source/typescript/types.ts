@@ -82,12 +82,12 @@ export interface AnimationMethods {
      *      - started
      * @param listener - The listening function that should be removed.
      */
-    removeEventListener(event: AnimationEvent, listener: () => void): void;
+    removeEventListener(event: AnimationEvent | string, listener: () => void): void;
 
     /**
      * For internal use. 
      */
-    issueEvent(event: AnimationEvent): void;
+    issueEvent(event: AnimationEvent | string): void;
 
     /**
      * For internal use. 
