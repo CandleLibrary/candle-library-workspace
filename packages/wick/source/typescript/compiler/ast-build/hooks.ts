@@ -3,8 +3,7 @@ import { exp, JSNode, stmt } from "@candlelib/js";
 import {
     BindingVariable, BINDING_FLAG,
     BINDING_VARIABLE_TYPE,
-    CompiledComponentClass,
-    HookTemplatePackage,
+    CompiledComponentClass, DefaultJSHandlerNodeType, HookTemplatePackage,
     IndirectHook,
     Node,
     STATIC_RESOLUTION_TYPE
@@ -12,13 +11,12 @@ import {
 import { ExtendedType } from "../../types/hook";
 import { getHookHandlers } from '../build_system.js';
 import {
-    Binding_Var_Is_Directly_Accessed,
-    getBindingStaticResolutionType,
-    getComponentBinding,
+    Binding_Var_Is_Directly_Accessed, getComponentBinding,
     getExternalName,
     Name_Is_A_Binding_Variable
 } from "../common/binding.js";
-import { getExpressionStaticResolutionType, getStaticValue, getStaticValueAstFromSourceAST, StaticDataPack } from "../data/static_resolution.js";
+import { ComponentData } from '../common/component.js';
+import { Context } from '../common/context.js';
 import {
     appendStmtToFrame,
     createBuildFrame,
@@ -28,8 +26,7 @@ import {
 import { ErrorHash } from "../common/hash_name.js";
 import { convertObjectToJSNode, Expression_Contains_Await, getPropertyAST } from "../common/js.js";
 import { BindingIdentifierBinding, BindingIdentifierReference } from "../common/js_hook_types.js";
-import { ComponentData } from '../common/component.js';
-import { Context } from '../common/context.js';
+import { getExpressionStaticResolutionType, getStaticValue, StaticDataPack } from "../data/static_resolution.js";
 
 
 export function addIndirectHook<T>(
@@ -155,7 +152,7 @@ export async function processHookForClass(
      * binding variable values are modified
      * @param ast 
      */
-    function addOnBindingUpdateAst(ast: JSNode, ...meta_binding_nodes: any[]) {
+    function addOnBindingUpdateAst(ast: DefaultJSHandlerNodeType, ...meta_binding_nodes: any[]) {
         pending_write_asts.push({
             ast, meta_binding_nodes: meta_binding_nodes
         });
@@ -166,21 +163,20 @@ export async function processHookForClass(
      * binding variable values are modified
      * @param ast 
      */
-    function addInitAST(ast: JSNode) { pending_init_asts.push(ast); }
+    function addInitAST(ast: DefaultJSHandlerNodeType) { pending_init_asts.push(ast); }
 
     /**
      * Code that should execute when one or more 
      * binding variable values are modified
      * @param ast 
      */
-    function addDestroyAST(ast: JSNode) { pending_destroy_asts.push(ast); }
+    function addDestroyAST(ast: DefaultJSHandlerNodeType) { pending_destroy_asts.push(ast); }
 
 
     const static_data_pack: StaticDataPack = {
         self: component,
         model: null,
         context: context,
-        parent: null,
         prev: null,
         root_element: component.HTML
     };
@@ -288,11 +284,11 @@ export async function processHookForClass(
             component_variables = [
 
                 ...collectBindingReferences(ast, component),
-                ...meta_binding_nodes.flatMap(n => collectBindingReferences(n, component))
+                ...meta_binding_nodes.flatMap((n: any) => collectBindingReferences(n, component))
             ],
 
             NO_LOCAL_BINDINGS = component_variables
-                .map(v => component.root_frame.binding_variables.get(v))
+                .map(v => <BindingVariable>component.root_frame.binding_variables?.get(v))
                 .every(Binding_Var_Is_Directly_Accessed),
 
             HAS_ASYNC = Expression_Contains_Await(ast);
@@ -357,7 +353,7 @@ export function processHookASTs(comp: ComponentData, comp_info: CompiledComponen
 
             const ids = representative.component_variables
                 .filter(v => (
-                    comp.root_frame.binding_variables.get(v).type &
+                    (<BindingVariable>comp.root_frame.binding_variables?.get(v)).type &
                     (
                         BINDING_VARIABLE_TYPE.INTERNAL_VARIABLE
                     )) > 0)
@@ -366,7 +362,7 @@ export function processHookASTs(comp: ComponentData, comp_info: CompiledComponen
             if (ids.length > 0)
                 appendStmtToFrame(frame, stmt(`if(!this.check(${ids}))return 0;`));
 
-            if (representative.component_variables.some(v => comp.root_frame.binding_variables.get(v).type == BINDING_VARIABLE_TYPE.MODEL_VARIABLE))
+            if (representative.component_variables.some(v => (<BindingVariable>comp.root_frame.binding_variables?.get(v)).type == BINDING_VARIABLE_TYPE.MODEL_VARIABLE))
                 appendStmtToFrame(frame, stmt(`if(!this.model)return 0;`));
 
             for (const member of group)
@@ -476,7 +472,7 @@ export async function addBindingRecord(
 
     if (!class_info.binding_records.has(name)) {
 
-        const binding = component.root_frame.binding_variables.get(name);
+        const binding = <BindingVariable>component.root_frame.binding_variables?.get(name);
         //Filter out binding variables that can be statically assigned. 
         if (
             (binding.type & (
