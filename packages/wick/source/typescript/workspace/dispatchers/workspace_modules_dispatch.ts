@@ -6,7 +6,7 @@ import URI from '@candlelib/uri';
 import { promises as fsp } from 'fs';
 import { compile_module } from '../server/compile_module.js';
 import { get_resolved_working_directory } from "./resolved_working_directory.js";
-import { logger } from "../logger.js";
+import { logger } from "../common/logger.js";
 
 export const workspace_modules_dispatch = <Dispatcher>{
     name: "Workspace Editor Modules",

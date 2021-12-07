@@ -7,7 +7,7 @@ import framework from "./parser_new.js";
 
 //@ts-ignore
 const { parse: css_parser, entry_points } = await framework;
-export const parse = function (string_data): CSSNode {
+export const parse = function (string_data: string): CSSNode {
 
     const { result, err } = css_parser(string_data, env, entry_points.css);
 
@@ -21,7 +21,7 @@ export const parse = function (string_data): CSSNode {
     //*/
 };
 
-export const properties = function (props): Map<string, CSSProperty> {
+export const properties = function (props: string): Map<string, CSSProperty> {
 
     const { result, err } = css_parser(props, env, entry_points.properties);
 
@@ -30,16 +30,16 @@ export const properties = function (props): Map<string, CSSProperty> {
     return result[0];
 };
 
-export const property = function (prop): CSSProperty {
+export const property = function (prop: string): CSSProperty {
 
-    const { result, err } = css_parser(prop, env, entry_points.rulez);
+    const { result, err } = css_parser(prop, env, entry_points.property);
 
     if (err) throw err;
 
     return result[0];
 };
 
-export const selector = function (selector): CSSNode {
+export const selector = function (selector: string): CSSNode {
 
     const { result, err } = css_parser(selector, env, entry_points.selector);
 

@@ -1,5 +1,5 @@
 import { copy, traverse } from '@candlelib/conflagrate';
-import { JSCallExpression, JSFormalParameters, JSIdentifier, JSIdentifierBinding, JSNode, JSNodeType } from '@candlelib/js';
+import { JSCallExpression, JSFormalParameters, JSFunctionDeclaration, JSFunctionExpression, JSIdentifier, JSIdentifierBinding, JSNode, JSNodeType } from '@candlelib/js';
 import {
     BINDING_VARIABLE_TYPE, HTMLNodeType, IndirectHook, JSHandler
 } from "../../types/all.js";
@@ -24,7 +24,7 @@ registerFeature(
             {
                 priority: 1,
 
-                async prepareJSNode(node, parent_node, skip, component, context, frame) {
+                async prepareJSNode(node: JSFunctionDeclaration | JSFunctionExpression, parent_node, skip, component, context, frame) {
 
                     const
                         [name_node] = node.nodes;
@@ -65,7 +65,7 @@ registerFeature(
 
                         if (internal_method_name != "") {
                             // This should be an internally called method
-                            (<JSIdentifier>name_node).value = internal_method_name;
+                            name_node.value = internal_method_name;
                         } else {
 
                             build_system.addIndirectHook(

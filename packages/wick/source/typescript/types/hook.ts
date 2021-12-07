@@ -13,7 +13,7 @@ interface filterFunction {
     (node: JSNode | CSSNode | HTMLNode | IndirectHook<any>): boolean;
 }
 
-type DefaultJSHandlerNodeType = (JSNode | CSSNode | HTMLNode | IndirectHook<any> | undefined | null);
+export type DefaultJSHandlerNodeType = (JSNode | CSSNode | HTMLNode | IndirectHook<any> | undefined | null);
 
 interface buildJSFunction<T, U = T> {
     description?: string;

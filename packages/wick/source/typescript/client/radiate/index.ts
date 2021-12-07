@@ -1,3 +1,3 @@
 export * from "./element.js";
 export * from "./page.js";
-export * from "./radiate.js";
+export * from "./router.js";

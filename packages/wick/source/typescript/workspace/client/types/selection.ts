@@ -4,7 +4,7 @@ import { CSSCache } from '../cache/css_cache';
  * User selected edit element. Coordinate in screen space. 
  */
 export interface EditorSelection {
-    ele: HTMLElement;
+    ele: HTMLElement | null;
 
     component: string;
 
@@ -58,7 +58,7 @@ export interface EditorSelection {
     /**
      * Style Information for the selected element
      */
-    css: CSSCache;
+    css: CSSCache | null;
 
     //transform information
 

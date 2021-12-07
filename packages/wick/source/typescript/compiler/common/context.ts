@@ -1,7 +1,7 @@
 import { JSNode } from '@candlelib/js';
 import { default as URI, default as URL } from "@candlelib/uri";
 import { PluginStore } from "../../plugin/plugin.js";
-import { WickRTComponent } from '../../runtime/component.js';
+import { WickRTComponent } from '../../client/runtime/component/component.js';
 import { ComponentClassStrings, ComponentStyle } from '../../types/component.js';
 import { WickCompileConfig } from "../../types/config.js";
 import { ComponentData } from './component.js';
@@ -170,7 +170,7 @@ export class Context {
     /**
      *  Prevent infinite recursion
      */
-    wrapper?: typeof WickRTComponent;
+    wrapper: typeof WickRTComponent | null;
 
     named_components: Map<string, ComponentData>;
 

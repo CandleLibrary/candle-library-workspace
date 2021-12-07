@@ -1,11 +1,11 @@
-//@ts-ignore
 import glow from '@candlelib/glow';
-import URI from '@candlelib/uri';
 import { Logger } from "@candlelib/log";
+import URI from '@candlelib/uri';
 import Wick, { gatherWickElements } from '../../entry/wick-runtime.js';
+import { Observable } from '../index.js';
 import { ComponentElement } from '../runtime/component/component.js';
 import { Element } from "./element.js";
-import { PageType, PageView } from "./page.js";
+import { Page, PageType } from "./page.js";
 
 type GlowAnimation = typeof glow;
 
@@ -14,7 +14,7 @@ const async_function = (async function () { }).constructor;
 const URL_HOST = { wurl: <URI | null>null };
 
 export {
-    PageView,
+    Page as PageView,
     Element
 };
 
@@ -57,20 +57,24 @@ function getModalContainer(router: Router): HTMLElement {
  */
 export class Router {
 
-    pages: any;
+    pages: Map<string, Page>;
     elements: any;
     component_constructors: any;
     models_constructors: any;
     current_url: any;
     current_query: any;
-    current_view: PageView | null;
-    finalizing_pages: any;
+    current_view: Page | null;
+    finalizing_pages: Page[];
     prev: any;
     IGNORE_NAVIGATION: boolean;
     glow: GlowAnimation;
     wick: typeof Wick;
-    modal_stack: PageView[];
+    modal_stack: Page[];
     prev_url: URI | null;
+
+    model: Observable<{
+        uri: URI | null;
+    }>;
 
     /**
      * Constructs the object.
@@ -79,7 +83,9 @@ export class Router {
 
         //Initialize CSS + Conflagrate Parsers
 
-        this.pages = {};
+        this.model = Observable({ uri: null });
+
+        this.pages = new Map;
 
         this.elements = {};
 
@@ -104,6 +110,12 @@ export class Router {
         this.glow = glow;
 
         this.wick = wick;
+
+        this.model.uri = new URI;
+
+
+        wick.rt.context.integrate_new_options({ models: { router: this.model } });
+
         wick.rt.context.processLink = (temp: HTMLElement) => {
             if (!temp.onclick) temp.onclick = (e: MouseEvent) => {
 
@@ -116,6 +128,7 @@ export class Router {
                 //TODO: allow preloading of pages and modals
 
                 history.pushState({}, "ignored title", link.href);
+
 
                 if (window)
                     window.onpopstate?.(<any>e);
@@ -140,12 +153,11 @@ export class Router {
         };
     }
 
-    finalizePageDisconnects(pages: PageView[] = this.finalizing_pages) {
+    finalizePageDisconnects() {
 
-        for (const page of pages)
+        for (const page of this.finalizing_pages)
 
             page.finalizeDisconnect();
-
 
         this.finalizing_pages.length = 0;
     }
@@ -186,7 +198,7 @@ export class Router {
         wurl: URI = new URI(location),
         pending_modal_reply = null
     ) {
-
+        this.model.uri = wurl;
 
         let
             url = wurl.toString(),
@@ -195,7 +207,9 @@ export class Router {
 
             page = null;
 
-        if ((page = this.pages[wurl.path])) {
+        if ((this.pages.has(wurl.path))) {
+
+            page = <Page>this.pages.get(wurl.path);
 
             page.reply = pending_modal_reply;
 
@@ -245,7 +259,7 @@ export class Router {
 
             iframe = document.createElement("iframe"),
 
-            page = new PageView(URL, <ComponentElement><any>iframe);
+            page = new Page(URL, <ComponentElement><any>iframe);
 
         iframe.src = url_string;
 
@@ -253,9 +267,9 @@ export class Router {
 
         page.type = PageType.WICK_MODAL;
 
-        this.pages[url_string] = page;
+        this.pages.set(url_string, page);
 
-        return this.pages[url_string];
+        return page;
     }
     /**
         Takes the DOM of another page and strips it, looking for 
@@ -272,24 +286,35 @@ export class Router {
      * @param {Bool} IS_SAME_PAGE -
      */
     async loadPage(
-        page: PageView,
+        page: Page,
         wurl: string | URI = new URI(document.location.href),
         IS_SAME_PAGE = false
     ) {
-
         if (typeof wurl == "string")
             wurl = new URI(wurl);
 
+        //Update the radiate API for components
+        this.wick.rt.setPresets({
+            api: {
+                router: {
+                    page_url: wurl
+                }
+            }
+        });
+
+        console.log(wurl);
+
+
         URL_HOST.wurl = wurl;
 
-        let transition = this.glow.createTransition();
+        let transition = this.glow.createTransition(true);
 
         let app_ele = document.getElementById("app");
 
         if (!app_ele)
             throw ("App element not found");
 
-        let finalizing_pages: PageView[] = [];
+        let finalizing_pages: Page[] = this.finalizing_pages;
 
         let current_view = this.current_view;
 
@@ -325,17 +350,21 @@ export class Router {
                     a.transitionOut(transition.out);
                 }
                 return r;
-            }, <PageView[]>[]);
+            }, <Page[]>[]);
 
             this.modal_stack.push(page);
 
             this.current_view = null;
 
             if (page.type != PageType.WICK_TRANSITIONING_MODAL) {
+
                 page.connect(getModalContainer(this), wurl);
+
                 page.transitionIn(transition.in);
 
-                transition.asyncPlay().then(() => { this.finalizePageDisconnects(finalizing_pages); });
+                await transition.asyncPlay();
+
+                this.finalizePageDisconnects();
 
                 return;
             }
@@ -380,7 +409,9 @@ export class Router {
 
         await transition.asyncPlay();
 
-        this.finalizePageDisconnects(finalizing_pages);
+        page.transitionComplete();
+
+        this.finalizePageDisconnects();
 
         for (const anchor of Array.from(document.querySelectorAll("a")))
             this.wick.rt.context.processLink(anchor);
@@ -422,13 +453,13 @@ export class Router {
           be could set as a modal on top of existing pages.
         */
         if (!app_source) {
-            console.warn("Page does not have an <app> element!");
+            logger.warn("Page does not have an <app> element!");
             return this.loadNonWickPage(url);
         }
 
         if (app_source && dom_app) {
 
-            var page: PageView | null = null;
+            var page: Page | null = null;
 
             gatherWickElements(<HTMLElement><any>DOM);
 
@@ -445,7 +476,7 @@ export class Router {
 
                 dom_app.classList.remove(...dom_app.classList.toString().split(" "));
 
-                page = new PageView(url, app_page);
+                page = new Page(url, app_page);
 
                 const wick_style = DOM.getElementById("wick-app-style");
 
@@ -461,9 +492,11 @@ export class Router {
                 if (wick_script)
                     await (async_function("wick", wick_script.innerHTML))(this.wick);
 
+                await this.wick.init_module_promise;
+
                 const wick_style = DOM.getElementById("wick-app-style");
 
-                page = new PageView(url, app_source);
+                page = new Page(url, app_source);
 
                 if (wick_style)
                     page.style = wick_style.cloneNode(true);
@@ -506,9 +539,7 @@ export class Router {
             if (app_source.dataset.no_buffer == "true")
                 NO_BUFFER = true;
 
-            if (!NO_BUFFER) this.pages[url.path] = page;
-
-
+            if (!NO_BUFFER) this.pages.set(url.path, page);
 
             return page;
         }
