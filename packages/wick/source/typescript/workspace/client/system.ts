@@ -1,26 +1,30 @@
 
-import { Logger } from '@candlelib/log';
-import { EditorCommand } from "../../types/editor_types.js";
-import { PatchType } from "../../types/patch";
-import ActionQueueRunner from './action_initiators.js';
-import { createSelection, getRuntimeComponentsFromName, updateActiveSelections } from './common_functions.js';
-import { EditorModel } from "./editor_model.js";
-import { Session } from '../common/session.js';
-import { EditedComponent, WorkspaceSystem } from "./types/workspace_system.js";
-import { WickLibrary } from '../../index.js';
+import { CSS_Transform2D } from '@candlelib/css';
 import { WickRTComponent } from "../../client/runtime/component/component.js";
 import { WickContainer } from "../../client/runtime/component/container";
-import { isGeneratorFunction } from 'util/types';
+import { String_Is_Wick_Hash_ID } from '../../client/runtime/component/html.js';
+import { rt, WickEnvironment } from '../../client/runtime/global.js';
+import { Context, WickLibrary } from '../../index.js';
+import { EditorCommand } from "../../types/editor_types.js";
+import { PatchType } from "../../types/patch";
+import { logger } from '../common/logger.js';
+import { Session } from '../common/session.js';
+import { createSelection, getRuntimeComponentsFromName, updateActiveSelections } from './common_functions.js';
+import { EditorModel } from "./editor_model.js";
+import { loadPlugins } from './plugin.js';
+import { EditedComponent, WorkspaceSystem } from "./types/workspace_system.js";
 
-const patch_logger = Logger.get("wick").get("patcher").activate();
+const patch_logger = logger.get("patch");
 export function revealEventIntercept(sys: WorkspaceSystem) {
     const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
-    event_intercept_ele.style.zIndex = "100000";
+    if (event_intercept_ele)
+        event_intercept_ele.style.zIndex = "100000";
 }
 
 export function hideEventIntercept(sys: WorkspaceSystem) {
     const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
-    event_intercept_ele.style.zIndex = "";
+    if (event_intercept_ele)
+        event_intercept_ele.style.zIndex = "";
 }
 export var active_system: WorkspaceSystem | null = null;
 export function activeSys() { return active_system; }
@@ -41,14 +45,37 @@ export function initSystem(
     ws_uri: string,
     page_wick?: WickLibrary,
     editor_wick?: WickLibrary,
-    edit_css?: any,
     editor_window?: Window,
     editor_frame?: HTMLElement
-): WorkspaceSystem {
+): WorkspaceSystem | null {
 
     if (active_system) return active_system;
 
-    active_system = <WorkspaceSystem>{
+    if (!editor_window || !editor_wick || !page_wick || !editor_frame)
+        return null;
+
+    editor_window.document.body.style.pointerEvents = "none";
+
+    const scratch_sheet = document.createElement("style");
+
+    scratch_sheet.id = "flame-scratch-sheet";
+
+    document.body.appendChild(scratch_sheet);
+
+    let sys = <WorkspaceSystem>{
+
+        toggle() {
+            editor_window.document.body.classList.toggle("off");
+            if (sys.off) {
+                sys.off = false;
+                editor_frame.style.pointerEvents = "all";
+            } else {
+                sys.off = true;
+                editor_frame.style.pointerEvents = "none";
+            }
+        },
+
+        off: false,
 
         active_selection: null,
 
@@ -60,14 +87,9 @@ export function initSystem(
             ui_components_load_time: 0
         },
 
-        comp_name_counter: 0,
-
         edit_view: null,
 
         editor_model: editor_wick.objects.Observable<EditorModel>(new EditorModel(editor_wick)),
-        text_info: "",
-        file_dir: ".",
-        comp_ext: ".wick",
 
         harness: null,
 
@@ -78,12 +100,10 @@ export function initSystem(
         cx: 0,
         cy: 0,
         cz: 0,
-        move_type: "relative",
         //End move
 
-        action_runner: null,
-        pending_history_state: null,
-        scratch_stylesheet: null,
+        // action_runner: null,
+        scratch_stylesheet: scratch_sheet.sheet,
         editor_window: editor_window,
         editor_document: editor_window.document,
         editor_body: editor_window.document.body,
@@ -102,38 +122,32 @@ export function initSystem(
             }]
         }),
         page_wick,
-        css: edit_css,
-        flags: { CSS_SELECTOR_KEEP_UNIQUE: true },
-        global: { default_pos_unit: "px" },
+        //global: { default_pos_unit: "px" },
         ui: {
             event_intercept_frame: null,
             transform: new Proxy(
-                new edit_css.CSS_Transform2D, {
+                new CSS_Transform2D, {
                 set: (obj, prop, val) => {
+                    //@ts-ignore
                     obj[prop] = val;
-                    if (active_system.edit_view)
-                        active_system.edit_view.style.transform = obj.toString();
+                    if (sys.edit_view)
+                        sys.edit_view.style.transform = obj.toString();
                     return true;
                 }
             })
         },
-        edit_css,
         editor_wick
     };
 
-    active_system.active_selection = createSelection(active_system);
+    sys.toggle();
 
-    active_system.action_runner = new ActionQueueRunner(active_system);
+    sys.active_selection = createSelection(sys);
 
-    const scratch_sheet = document.createElement("style");
+    initializeDefualtSessionDispatchHandlers(sys.session, page_wick, sys);
 
-    scratch_sheet.id = "flame-scratch-sheet";
+    loadPlugins(sys);
 
-    document.body.appendChild(scratch_sheet);
-
-    active_system.scratch_stylesheet = scratch_sheet.sheet;
-
-    initializeDefualtSessionDispatchHandlers(active_system.session, page_wick, active_system);
+    active_system = sys;
 
     return active_system;
 }
@@ -177,7 +191,7 @@ function initializeDefualtSessionDispatchHandlers(
 
                     if (to != from)
                         for (const match of matches) {
-                            if (match.container) {
+                            if ("container" in match) {
                                 for (const _class of match.container.comp_constructors) {
                                     if (_class.edit_name == from || _class.name == from)
                                         _class.edit_name = to;
@@ -337,16 +351,33 @@ function initializeDefualtSessionDispatchHandlers(
                                 for (const [name, flag] of Object.entries(match.nlu) as [string, number][]) {
                                     if (new_component.nlu[name] && new_component.nlu[name] != undefined)
                                         continue;
+
+                                    //@ts-ignore
                                     new_component.update({ [name]: match[i++] }, flag >>> 24);
                                 }
                             }
 
-
                             match.disconnect();
                             match.destructor();
 
+
+
                             if (removeRootComponent(match, page_wick))
                                 addRootComponent(new_component, page_wick);
+
+                            if (match.ele.classList.contains("radiate-page"))
+                                //Integrate new component into page.
+                                if (rt.isEnv(WickEnvironment.RADIATE) && rt.router) {
+                                    for (const [, page] of rt.router.pages) {
+                                        if (page.component == match) {
+                                            page.component = new_component;
+                                            page.ele = <any>new_component.ele;
+                                            page.ele?.classList.add("radiate-page");
+                                            new_component.transitionInEnd();
+                                            break;
+                                        }
+                                    }
+                                }
                         }
                     }
                 }
@@ -374,37 +405,36 @@ function updateCSSReferences(
     if (matches) for (const match of matches)
         match.ele.classList.add(to);
 
-    const old_css = context.css_cache.get(from);
+    if (context.css_cache) {
 
-    if (old_css) {
-        if (style)
-            old_css.css_ele.innerHTML = style;
-        else
-            old_css.css_ele.innerHTML = old_css.css_ele.innerHTML.replace(new RegExp(from, "g"), to);
-        context.css_cache.delete(from);
-        context.css_cache.set(to, old_css);
-    } else if (style) {
-        const css_ele = document.createElement("style");
-        css_ele.innerHTML = style;
-        document.head.appendChild(css_ele);
-        context.css_cache.set(to, { css_ele, count: matches.length });
-    }
 
-    if (matches) for (const match of matches) {
-        const class_name = Array.from(match.ele.classList);
 
-        for (const css of class_name) {
-            if (css != to && String_Is_Wick_Hash_ID(css))
-                match.ele.classList.remove(css);
+        const old_css = context.css_cache.get(from);
+
+        if (old_css) {
+            if (style)
+                old_css.css_ele.innerHTML = style;
+            else
+                old_css.css_ele.innerHTML = old_css.css_ele.innerHTML.replace(new RegExp(from, "g"), to);
+            context.css_cache.delete(from);
+            context.css_cache.set(to, old_css);
+        } else if (style) {
+            const css_ele = document.createElement("style");
+            css_ele.innerHTML = style;
+            document.head.appendChild(css_ele);
+            context.css_cache.set(to, { css_ele, count: matches.length });
+        }
+
+        if (matches) for (const match of matches) {
+            const class_name = Array.from(match.ele.classList);
+
+            for (const css of class_name) {
+                if (css != to && String_Is_Wick_Hash_ID(css))
+                    match.ele.classList.remove(css);
+            }
         }
     }
 }
-
-const comp_name_regex = /W[_\$a-zA-Z0-9]+/;
-export function String_Is_Wick_Hash_ID(str): boolean {
-    return !!str.match(comp_name_regex);
-}
-
 export function removeRootComponent(comp: WickRTComponent, wick: WickLibrary): boolean {
 
     const index = wick.rt.root_components.indexOf(comp);

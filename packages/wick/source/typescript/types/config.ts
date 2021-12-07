@@ -15,6 +15,14 @@ export interface EndpointMapper {
 
 
 export interface WickCompileConfig {
+
+	/**
+	 * A list of plugin names or paths to plugin 
+	 * components that will be integrated within 
+	 * the workspace environment.
+	 */
+	workspace_plugins?: string[],
+
 	/**
 	 * Allows the creation of component *endpoints*
 	 * based on href data in anchor `<a>` tags. 
@@ -54,4 +62,10 @@ export interface WickCompileConfig {
 	 * associated public files after transformation.
 	 */
 	deploy_dir?: string;
+	/**
+	 * @hidden
+	 * 
+	 * Internal Use
+	 */
+	__config_root__: string;
 }

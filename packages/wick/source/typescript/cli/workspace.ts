@@ -10,6 +10,7 @@ import {
 } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
 import { init_build_system } from '../compiler/init_build_system.js';
+import { logger } from '../workspace/common/logger.js';
 import { create_config_arg_properties } from './config_arg_properties.js';
 
 const
@@ -54,12 +55,12 @@ support components edited within a code editor.
 
         Logger.get("lantern").deactivate()
             .activate(log_level_arg.value);
-        Logger.get("wick").deactivate()
+        logger.deactivate()
             .activate(log_level_arg.value)
             .debug(`Using local network port [ ${port} ]`);
 
         await init_build_system();
 
-        (await import('../workspace/workspace_server.js'))
+        (await import('../workspace/server/server.js'))
             .initDevServer(port, config_arg.value, new URI(arg + '/'));
     };

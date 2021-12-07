@@ -14,17 +14,18 @@ import {
 import { Logger } from '@candlelib/log';
 import URI from '@candlelib/uri';
 import { Lexer } from "@candlelib/wind";
+import { ObservableWatcher } from '../../../types/all.js';
 import { EditorCommand } from '../../../types/editor_types.js';
 import { Change, ChangeType } from '../../../types/transition.js';
 import {
     getComponentNameFromElement, getElementWIndex, getRuntimeComponentsFromName, updateActiveSelections
 } from "../common_functions.js";
-import { WorkspaceSystem, StyleData } from "../types/workspace_system.js";
 import { TrackedCSSProp } from "../types/tracked_css_prop.js";
+import { StyleData, WorkspaceSystem } from "../types/workspace_system.js";
 
 const cache_logger = Logger.get("flame").get("css").activate();
 
-let global_cache = null;
+let global_cache: any = null;
 
 const unset_string = new CSS_String("unset"), unset_pos = {
     slice() { return "unset"; }
@@ -169,6 +170,10 @@ export class ValueHost implements ObservableModel {
     OBSERVABLE: true;
 
     watchers: ObservableWatcher[];
+
+    __value__: number;
+
+    unit: string;
 
 
     constructor() {

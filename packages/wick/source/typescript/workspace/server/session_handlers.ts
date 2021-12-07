@@ -4,9 +4,11 @@ import { promises as fsp } from "fs";
 import { rt } from '../../client/runtime/global.js';
 import { getCSSStringFromComponentStyle } from '../../compiler/ast-render/css.js';
 import { ComponentData } from '../../compiler/common/component.js';
+import { WickCompileConfig } from '../../index.js';
 import { EditorCommand, StyleSourceType } from '../../types/editor_types.js';
 import { Change, ChangeType } from '../../types/transition.js';
 import { CommandHandler } from '../common/session.js';
+import { workspace_plugins } from '../dispatchers/workspace_plugin_dispatch.js';
 import { ChangeToken, getAttributeChangeToken, getCSSChangeToken } from './change_token.js';
 import {
     alertSessionsOfComponentTransition, getPatch, getSourceHash
@@ -15,12 +17,13 @@ import { ServerSession } from './session.js';
 import { addBareComponent, addTransition, getComponent, getComponentLocation, getTransition, store, __sessions__ } from './store.js';
 
 
-export function initializeDefualtSessionDispatchHandlers(session: ServerSession) {
+export function initializeDefualtSessionDispatchHandlers(session: ServerSession, config: WickCompileConfig) {
     session.setHandler(EditorCommand.REGISTER_CLIENT_ENDPOINT, REGISTER_CLIENT_ENDPOINT);
     session.setHandler(EditorCommand.GET_COMPONENT_SOURCE, GET_COMPONENT_SOURCE);
     session.setHandler(EditorCommand.GET_COMPONENT_STYLE, GET_COMPONENT_STYLE);
     session.setHandler(EditorCommand.GET_COMPONENT_PATCH, GET_COMPONENT_PATCH);
     session.setHandler(EditorCommand.APPLY_COMPONENT_CHANGES, APPLY_COMPONENT_CHANGES);
+    session.setHandler(EditorCommand.GET_PLUGIN_PATHS, GET_PLUGIN_PATHS(config));
     return session;
 }
 
@@ -127,7 +130,7 @@ const APPLY_COMPONENT_CHANGES: CommandHandler<ServerSession, EditorCommand.APPLY
                     comp.location
                 );
 
-                addTransition({
+                /* addTransition({
                     new_id: new_component,
                     old_id: old_component,
                     new_location: comp.location + "",
@@ -135,7 +138,7 @@ const APPLY_COMPONENT_CHANGES: CommandHandler<ServerSession, EditorCommand.APPLY
                     changes: changes,
                     old_source: comp.source,
                     new_source: new_source
-                });
+                }); */
             } else {
                 throw new Error("Could not retrieve component");
             }
@@ -250,6 +253,17 @@ const GET_COMPONENT_PATCH: CommandHandler<ServerSession, EditorCommand.GET_COMPO
             patch: patch
         };
     };
+
+function GET_PLUGIN_PATHS(config: WickCompileConfig): CommandHandler<ServerSession, EditorCommand.GET_PLUGIN_PATHS> {
+    return async function (command: any, session: ServerSession) {
+        const paths: [string, string][] =
+            [...workspace_plugins.keys()].map(v => [v, "/plugin/" + v]);
+        return {
+            command: EditorCommand.PLUGIN_PATHS_RESPONSE,
+            plugins: paths
+        };
+    };
+}
 
 function getChangeLocation(change: {
     component: string; type: ChangeType.CSSRule;

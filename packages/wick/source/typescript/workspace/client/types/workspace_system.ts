@@ -1,9 +1,9 @@
 import { CSSNode, CSS_Transform2D } from "@candlelib/css";
 import URI from '@candlelib/uri';
+import { Observable, WickRTComponent } from '../../../client/index.js';
+import { WickLibrary } from '../../../index.js';
 import { Session } from '../../common/session.js';
-import ActionQueueRunner from '../action_initiators';
 import { EditorModel } from "../editor_model";
-import { HistoryState } from "./history_state";
 import { EditorSelection } from './selection';
 
 export interface StyleData {
@@ -40,7 +40,7 @@ export interface EditedComponent {
     /**
      * IFrame element the component mounts to
      */
-    frame?: HTMLElement;
+    frame?: HTMLElement | null;
     /**
      * Optional starting position x
      * 
@@ -76,6 +76,9 @@ export interface EditedComponent {
  * context. 
  */
 export interface WorkspaceSystem {
+
+    off: boolean;
+    toggle: () => void;
 
     /**
      * The websocket connection to the editor server
@@ -116,70 +119,46 @@ export interface WorkspaceSystem {
     };
 
     /**
-     * Unique counter to assign component
-     * names from. Increment once for each
-     * new component created.
-     */
-    comp_name_counter: number;
-
-    /**
-     * Server side root directory to place new 
-     * component files in.
-     */
-    file_dir: string,
-
-    /**
      * Primary model storing information used 
      * by all UI runtime components. 
      * 
      * Observable
      */
-    editor_model: EditorModel;
-
-    /*Default extension name to give new components */
-    comp_ext: string;
+    editor_model: Observable<EditorModel>;
 
     /**
      * Root component handling all other components edited within 
      * flame */
-    harness: WickRTComponent;
+    harness: WickRTComponent | null;
 
     /**
      * Root element containing the actively edited
      * components.
      */
-    edit_view: HTMLElement;
+    edit_view: HTMLElement | null;
 
-    active_selection: EditorSelection;
+    active_selection: EditorSelection | null;
 
-    pending_history_state: HistoryState;
-    text_info: string,
     dx: number,
     dy: number,
     dz: number,
     cx: number,
     cy: number,
     cz: number,
-    move_type: string,
-    css: any,
     scratch_stylesheet: CSSStyleSheet,
+
     editor_window: Window,
     editor_document: Document,
     editor_body: HTMLElement,
     editor_head: HTMLElement,
     editor_iframe: HTMLElement;
-    flags: {
-        CSS_SELECTOR_KEEP_UNIQUE?: boolean;
-        DUBUG_DISPLAY_STARTUP_METRICS?: boolean;
-    },
-    global: {
-        default_pos_unit: string;
-    },
+    //global: {
+    //    default_pos_unit: string;
+    //},
     ui: {
-        event_intercept_frame: HTMLDivElement;
+        event_intercept_frame: HTMLDivElement | null;
         transform: CSS_Transform2D;
     },
-    edit_css: any,
     /**
      * The wick module instance for the Editor interface
      */
@@ -189,5 +168,5 @@ export interface WorkspaceSystem {
      */
     page_wick: WickLibrary,
 
-    action_runner: ActionQueueRunner;
+    //action_runner: ActionQueueRunner;
 }

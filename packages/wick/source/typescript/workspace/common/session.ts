@@ -30,7 +30,7 @@ export class Session {
 
     dispatches: Map<EditorCommand, CommandHandler<any>>;
 
-    constructor(ws: WS | string, logger: Logger = Logger.get("flame-client").get("session").activate()) {
+    constructor(ws: WS | string, logger: Logger = Logger.get("wick").get("session").get("client").activate()) {
 
         this.logger = logger;
 
@@ -54,7 +54,8 @@ export class Session {
         this.opened = Date.now();
     }
 
-    setHandler<T extends keyof CommandsMap = Commands>(command: T, handler: CommandHandler<any, T>) {
+    setHandler<T extends Commands>(command: T, handler: CommandHandler<any, T>) {
+        //@ts-ignore
         this.dispatches.set(command, handler);
     }
 
@@ -88,7 +89,7 @@ export class Session {
     ): Promise<CommandsMap[R]> {
 
         const nonce = this.nonce++;
-        const promise = new Promise(res => { this.awaitable_callback.set(nonce, res); });
+        const promise = <any>new Promise(res => { this.awaitable_callback.set(nonce, res); });
 
         this.send_command(obj, nonce);
 
@@ -113,7 +114,7 @@ export class Session {
         this.logger.error(error);
     }
 
-    get_message_string(msg) {
+    get_message_string(msg: { data: any; }) {
         return msg.data;
     }
 
@@ -129,7 +130,9 @@ export class Session {
 
             this.awaitable_callback.delete(nonce);
 
-            return callback(data);
+            if (callback)
+                return callback(data);
+
         } else if (this.dispatches.has(data.command)) {
             //@ts-ignore
             const reply = await this.dispatches.get(data.command)(data, this);

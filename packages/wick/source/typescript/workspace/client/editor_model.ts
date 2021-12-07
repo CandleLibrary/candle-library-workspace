@@ -1,19 +1,7 @@
-import * as ACTIONS from "./actions/action.js";
+import { Observable, WickRTComponent } from '../../client/index.js';
+import { ObservableScheme } from '../../client/runtime/observable/observable_prototyped.js';
+import { WickLibrary } from '../../index.js';
 import { EditorSelection } from "./types/selection.js";
-
-export enum EditorToolState {
-
-    UNSET = "unset",
-    COLOR = "color",
-    COMPONENT = "component",
-    MARGIN = "margin",
-    BORDER = "border",
-    PADDING = "padding",
-    DIMENSIONS = "dimensions",
-    POSITION = "position",
-    TRANSFORM = "transform",
-    ELEMENT = "element"
-}
 
 export interface DrawObject {
     type: "horizontal_line" | "vertical_line" | "infinite_line" | "box" | "none",
@@ -22,20 +10,43 @@ export interface DrawObject {
     py1: number;
     py2: number;
 }
+
+
+export class PluginFrame {
+    name: string;
+    src: string;
+    private constructor(
+        name: string,
+        src: string
+    ) {
+        this.name = name;
+        this.src = src;
+    }
+    static create(
+        name: string,
+        src: string
+    ) {
+        return Observable(new PluginFrame(
+            name,
+            src
+        ));
+    }
+};
+
 export class EditorModel {
     data: any;
     selection_box: any;
-    comp: WickRTComponent;
+    comp: WickRTComponent | null;
     ele: any;
     sc: number;
-    selected_comp: WickRTComponent;
+    selected_comp: WickRTComponent | null;
     //selected_ele: HTMLElement;
-    selected_element: HTMLElement;
+    selected_element: HTMLElement | null;
     ACTIONS: any;
     POINTER_DN: boolean;
     selections: EditorSelection[];
+    active_plugins: Observable<PluginFrame>[];
     draw_objects: DrawObject[];
-    state: EditorToolState;
     constructor(editor_wick: WickLibrary) {
         this.comp = null;
         this.ele = null;
@@ -43,16 +54,18 @@ export class EditorModel {
         this.selected_comp = null;
         this.selected_element = null;
         this.selection_box = null;
+        this.active_plugins = [];
         this.selections = [<EditorSelection><unknown>{
-            model: editor_wick.objects.ObservableScheme<EditorSelection>({
+            model: ObservableScheme<EditorSelection>({
                 ACTIVE: false,
                 VALID: true,
                 actual_height: 0,
                 actual_left: 0,
                 actual_top: 0,
                 actual_width: 0,
-                comp: null,
+                component: "",
                 ele: null,
+                css: null,
                 width: 0,
                 height: 0,
                 left: 0,
@@ -72,11 +85,9 @@ export class EditorModel {
                 sz: 0,
             })
         }];
-        this.ACTIONS = ACTIONS;
         this.POINTER_DN = false;
-        this.state = EditorToolState.UNSET;
         this.draw_objects = [<DrawObject><unknown>{
-            model: editor_wick.objects.ObservableScheme<DrawObject>({
+            model: ObservableScheme<DrawObject>({
                 px1: 0,
                 py1: 0,
                 px2: 0,

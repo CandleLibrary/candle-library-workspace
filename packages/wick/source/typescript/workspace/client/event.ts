@@ -1,16 +1,11 @@
 import spark from '@candlelib/spark';
-import {
-    ActionRefType,
-    areActionsRunning
-} from "./action_initiators.js";
-import { CSSCache, getCSSCache } from './cache/css_cache.js';
+import { getCSSCache } from './cache/css_cache.js';
 import {
     getSelectionFromPoint, invalidateAllSelections, invalidateInactiveSelections, updateSelections
 } from "./common_functions.js";
-import { DrawObject, EditorToolState } from "./editor_model.js";
-import history from "./history.js";
-import { WorkspaceSystem } from "./types/workspace_system";
+import { DrawObject } from "./editor_model.js";
 import { ButtonType, InputHandler } from "./types/input";
+import { WorkspaceSystem } from "./types/workspace_system";
 
 
 
@@ -19,7 +14,9 @@ const default_handler: InputHandler = <InputHandler>{
     up(e, sys) {
         const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
 
-        event_intercept_ele.style.pointerEvents = "none";
+        //Check for an active 
+        if (event_intercept_ele)
+            event_intercept_ele.style.pointerEvents = "none";
 
         if (e.ctrlKey)
             invalidateInactiveSelections(sys);
@@ -28,31 +25,35 @@ const default_handler: InputHandler = <InputHandler>{
 
         const sel = getSelectionFromPoint(e.x, e.y, sys);
 
-        if (!sel.ACTIVE) {
-            sel.ACTIVE = true;
-            sys.active_selection.ele = sel.ele;
-            sys.active_selection.ACTIVE = true;
-            sys.active_selection.css = getCSSCache(sys, sel.ele);
-            sys.active_selection.px = sel.px;
-            sys.active_selection.py = sel.py;
-            sys.active_selection.left = sel.left;
-            sys.active_selection.top = sel.top;
-            sys.active_selection.width = sel.width;
-            sys.active_selection.height = sel.height;
-            sys.active_selection.actual_left = sel.actual_left;
-            sys.active_selection.actual_top = sel.actual_top;
-            sys.active_selection.actual_width = sel.actual_width;
-            sys.active_selection.actual_height = sel.actual_height;
-            sel.css = sys.active_selection.css;
-        }
+        if (sys.active_selection)
+            if (!sel.ACTIVE) {
+                sel.ACTIVE = true;
+                sys.active_selection.ele = sel.ele;
+                sys.active_selection.ACTIVE = true;
+                sys.active_selection.css = getCSSCache(sys, sel.ele);
+                sys.active_selection.px = sel.px;
+                sys.active_selection.py = sel.py;
+                sys.active_selection.left = sel.left;
+                sys.active_selection.top = sel.top;
+                sys.active_selection.width = sel.width;
+                sys.active_selection.height = sel.height;
+                sys.active_selection.actual_left = sel.actual_left;
+                sys.active_selection.actual_top = sel.actual_top;
+                sys.active_selection.actual_width = sel.actual_width;
+                sys.active_selection.actual_height = sel.actual_height;
+                sel.css = sys.active_selection.css;
+            }
+        if (event_intercept_ele)
+            event_intercept_ele.style.pointerEvents = "";
 
-        event_intercept_ele.style.pointerEvents = "";
+        // Load Handler with data
+
+
 
         return default_handler;
     },
     drag(e, button: ButtonType, sys) {
 
-        if (areActionsRunning()) return action_input_handler.down(e, sys);
 
         if (button == ButtonType.MIDDLE) return drag_handler.drag(e, button, sys);
 
@@ -60,19 +61,17 @@ const default_handler: InputHandler = <InputHandler>{
     },
     move(e, sys) {
 
-        if (areActionsRunning()) return action_input_handler.move(e, sys);
-
         const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
-
-        event_intercept_ele.style.pointerEvents = "none";
+        if (event_intercept_ele)
+            event_intercept_ele.style.pointerEvents = "none";
 
         invalidateInactiveSelections(sys);
 
         getSelectionFromPoint(e.x, e.y, sys);
 
         updateSelections(sys);
-
-        event_intercept_ele.style.pointerEvents = "";
+        if (event_intercept_ele)
+            event_intercept_ele.style.pointerEvents = "";
 
         return default_handler;
     },
@@ -88,16 +87,16 @@ const default_handler: InputHandler = <InputHandler>{
         // transform.py -= ((((py - y) * old_scale) - ((py - y) * new_scale))) / (old_scale);
 
         const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
-
-        event_intercept_ele.style.pointerEvents = "none";
+        if (event_intercept_ele)
+            event_intercept_ele.style.pointerEvents = "none";
 
         //  invalidateInactiveSelections(sys);
 
         //getSelectionFromPoint(e.x, e.y, sys);
 
         updateSelections(sys);
-
-        event_intercept_ele.style.pointerEvents = "";
+        if (event_intercept_ele)
+            event_intercept_ele.style.pointerEvents = "";
 
         // sys.editor_model.sc++;
 
@@ -117,7 +116,7 @@ const default_handler: InputHandler = <InputHandler>{
     }
 };
 
-let draw_box: DrawObject = null;
+let draw_box: DrawObject | null = null;
 
 const draw_box_handler: InputHandler = <InputHandler>{
     down(e, sys) { return default_handler; },
@@ -187,86 +186,10 @@ const drag_handler: InputHandler = <InputHandler>{
     wheel(e, sys) { return default_handler; }
 };
 
-const action_input_handler: InputHandler = <InputHandler>{
-    down(e, sys) {
-
-        const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
-
-        event_intercept_ele.style.zIndex = "100000";
-
-        sys.action_runner.addAction(ActionRefType.INIT_UPDATE);
-
-        updateSelections(sys);
-
-        return action_input_handler;
-    },
-    up(e, sys) {
-
-        const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
-
-        event_intercept_ele.style.zIndex = "";
-
-        sys.action_runner.addAction(ActionRefType.END);
-
-        updateSelections(sys);
-
-        return default_handler;
-    },
-    drag(e, b, sys) {
-
-        const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
-
-        event_intercept_ele.style.zIndex = "100000";
-
-        sys.action_runner.addAction(ActionRefType.UPDATE);
-
-        updateSelections(sys);
-
-        return action_input_handler;
-    },
-    move(e, sys) { return action_input_handler.drag(e, 0, sys); },
-    wheel(e, sys) { return action_input_handler; }
-};
-
 let active_input_handler = default_handler;
 
 function keypressEventResponder(e: KeyboardEvent, sys: WorkspaceSystem): boolean {
-
-    if (e.ctrlKey) {
-        if (e.key == "z") {
-
-            if (e.shiftKey) history.ROLLFORWARD_EDIT_STATE(sys);
-            else history.ROLLBACK_EDIT_STATE(sys);
-            return true;
-        }
-    } else {
-        switch (e.key) {
-            case "c":
-                sys.editor_model.state = EditorToolState.COMPONENT;
-                return true;
-            case "e":
-                sys.editor_model.state = EditorToolState.ELEMENT;
-                return true;
-            case "p":
-                sys.editor_model.state = EditorToolState.POSITION;
-                return true;
-            case "b":
-                sys.editor_model.state = EditorToolState.BORDER;
-                return true;
-            case "m":
-                sys.editor_model.state = EditorToolState.MARGIN;
-                return true;
-            case "d":
-                sys.editor_model.state = EditorToolState.DIMENSIONS;
-                return true;
-            case "o":
-                sys.editor_model.state = EditorToolState.COLOR;
-                return true;
-            case "v":
-                sys.editor_model.state = EditorToolState.PADDING;
-                return true;
-        }
-    }
+    return false;
 };
 
 let POINTER_DOWN = false, DRAG_BUTTON = 0;
@@ -332,7 +255,8 @@ export function initializeEvents(
     const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
 
     //edited_window.document.addEventListener("pointermove", e => pointerMoveEventResponder(e, sys));
-
+    if (!event_intercept_ele)
+        return;
     event_intercept_ele.addEventListener("pointermove", e => {
 
         sys.editor_iframe.style.pointerEvents = "none";
