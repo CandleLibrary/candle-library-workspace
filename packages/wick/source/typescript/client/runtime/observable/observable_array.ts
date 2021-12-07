@@ -42,10 +42,8 @@ const ArrayContainerProxySettings = {
 
 export class ObservableArray<T> extends ObservableContainerBase<T> {
     //Default model to assign new objects to
-    model: ObservableData;
-
+    model?: ObservableData;
     data: T[];
-
     key: string;
 
     constructor(data: any[] = []) {
@@ -54,14 +52,16 @@ export class ObservableArray<T> extends ObservableContainerBase<T> {
 
         this.key = "";
 
+        this.model = undefined;
+
+        this.data = [];
+
         if (data[0] && data[0].model) {
 
             if (data[0].model) this.model = data[0].model;
 
             data = data.slice(1);
         }
-
-        this.data = [];
 
         if (Array.isArray(data) && data.length > 0)
             this.insert(data);
@@ -91,7 +91,7 @@ export class ObservableArray<T> extends ObservableContainerBase<T> {
         this.scheduleUpdate();
     }
 
-    __defaultReturn__(USE_ARRAY) {
+    __defaultReturn__(USE_ARRAY: boolean) {
 
         return this;
     }

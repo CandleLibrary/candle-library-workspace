@@ -2,18 +2,16 @@ import { ObservableBase, _SealedProperty_ } from "./base.js";
 import { ObservableArray } from "./observable_array.js";
 
 export class ObservableData extends ObservableBase {
-
-    prop_array: any[];
-    prop_offset: number;
-    look_up: { [key: string]: any; };
+    
+    look_up: Map<string, any>;
 
     constructor(data: any) {
 
         super();
 
-        _SealedProperty_(this, "prop_array", []);
-        _SealedProperty_(this, "prop_offset", 0);
-        _SealedProperty_(this, "look_up", {});
+        this.look_up = new Map;
+
+        _SealedProperty_(this, "look_up", this.look_up);
 
         if (data)
             for (let name in data)
@@ -26,8 +24,6 @@ export class ObservableData extends ObservableBase {
 
     set(data: any, prop_name: string = "") {
 
-
-
         if (typeof data == "undefined")
             return false;
 
@@ -35,11 +31,9 @@ export class ObservableData extends ObservableBase {
 
         for (let prop_name in data) {
 
-            let index = this.look_up[prop_name];
+            let prop = this.look_up.get(prop_name);
 
-            if (index !== undefined) {
-
-                let prop = this.prop_array[index];
+            if (prop !== undefined) {
 
                 if (typeof (prop) == "object") {
 
@@ -49,8 +43,11 @@ export class ObservableData extends ObservableBase {
                     }
 
                 } else if (prop !== data[prop_name]) {
-                    this.prop_array[index] = data[prop_name];
+
+                    this.look_up.set(prop_name, prop)
+                    
                     this.scheduleUpdate();
+                    
                     out = true;
                 }
             } else {
@@ -63,27 +60,25 @@ export class ObservableData extends ObservableBase {
     }
     createProp(name: string, value: any) {
 
-        let index = this.prop_offset++;
-
-        this.look_up[name] = index;
-
         switch (typeof (value)) {
 
             case "object":
                 if (value) {
 
                     if (Array.isArray(value))
-                        this.prop_array.push(new ObservableArray(value));
+                        this.look_up.set(name, new ObservableArray(value))
                     else {
                         if (value instanceof ObservableBase)
-                            this.prop_array.push(value);
+                            this.look_up.set(name, value);
                         else
                             //@ts-ignore
-                            this.prop_array.push(new Observable(value));
+                            this.look_up.set(name, new Observable(value));
                     }
 
-                    this.prop_array[index].prop_name = name;
-                    this.prop_array[index].par = this;
+                    const prop = this.look_up.get(name);
+
+                    prop.prop_name = name;
+                    prop.par = this;
 
                     Object.defineProperty(this, name, {
 
@@ -91,14 +86,14 @@ export class ObservableData extends ObservableBase {
 
                         enumerable: true,
 
-                        get: function () { return this.getHook(name, this.prop_array[index]); },
+                        get: function () { return this.getHook(name, this.look_up.get(name)); },
 
                         set: (v) => { }
                     });
                     break;
                 }
             default:
-                this.prop_array.push(value);
+                this.look_up.set(name, value);
 
                 Object.defineProperty(this, name, {
 
@@ -106,14 +101,14 @@ export class ObservableData extends ObservableBase {
 
                     enumerable: true,
 
-                    get: function () { return this.getHook(name, this.prop_array[index]); },
+                    get: function () { return this.getHook(name, this.look_up.get(name)); },
 
                     set: function (value) {
 
-                        let val = this.prop_array[index];
+                        const prop = this.look_up.get(name);
 
-                        if (val !== value) {
-                            this.prop_array[index] = this.setHook(name, value);
+                        if (prop !== value) {
+                            this.look_up.set(name, this.setHook(name, value))
                             this.scheduleUpdate(name);
                         }
                     }
@@ -134,9 +129,7 @@ export class ObservableData extends ObservableBase {
     toJSON(HOST = true) {
         let data: { [key: string]: any; } = {};
 
-        for (let name in this.look_up) {
-            let index = this.look_up[name];
-            let prop = this.prop_array[index];
+        for (let [name, prop] of this.look_up) {
 
             if (prop) {
                 if (prop instanceof ObservableBase)
@@ -156,5 +149,6 @@ export function Observable<T>(data: T): ObservableData & T | ObservableArray<any
         return <ObservableArray<T> & T>new ObservableArray<any>(data);
 
     return <ObservableData & T>new ObservableData(data);
-
 }
+
+export type Observable<T> = ObservableData & T | ObservableArray<any> & T 

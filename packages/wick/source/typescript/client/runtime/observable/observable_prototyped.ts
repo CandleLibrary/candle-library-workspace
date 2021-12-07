@@ -9,7 +9,7 @@ import { ObservableBase, _FrozenProperty_, _SealedProperty_ } from "./base.js";
  *   @protected
  *   @memberof module:wick~internals.model
  */
-function CreateSchemedProperty(object, scheme, schema_name, index) {
+function CreateSchemedProperty(object: any, model: any, schema_name: string) {
     if (object[schema_name])
         return;
 
@@ -17,7 +17,7 @@ function CreateSchemedProperty(object, scheme, schema_name, index) {
         configurable: false,
         enumerable: true,
         get: function () {
-            return this.getHook(schema_name, this.prop_array[index]);
+            return this.getHook(schema_name, this.prop_array.get(schema_name));
         },
         set: function (value) {
 
@@ -27,8 +27,8 @@ function CreateSchemedProperty(object, scheme, schema_name, index) {
 
             scheme.verify(val, result);
 
-            if (result.valid && this.prop_array[index] != val) {
-                this.prop_array[index] = this.setHook(schema_name, val);
+            if (result.valid && this.prop_array.get(schema_name) != val) {
+                this.prop_array.set(schema_name, this.setHook(schema_name, val));
                 this.scheduleUpdate(schema_name);
                 this._changed_ = true;
             }
@@ -41,23 +41,29 @@ function CreateSchemedProperty(object, scheme, schema_name, index) {
     @protected
     @memberof module:wick~internals.model
 */
-function CreateModelProperty(object, model, schema_name, index) {
+function CreateModelProperty(object: any, model: any, schema_name: string, index: number) {
 
     Object.defineProperty(object, schema_name, {
         configurable: false,
         enumerable: true,
         get: function () {
 
-            let m = this.prop_array[index];
+            let m = this.prop_array.get(schema_name);
 
             if (!m) {
+
                 let address = this.address.slice();
-                address.push(index);
+
+                address.push(this.prop_array.size);
+
                 m = new model(null, this.root, address);
                 m.par = this;
+
                 m.prop_name = schema_name;
+
                 m.MUTATION_ID = this.MUTATION_ID;
-                this.prop_array[index] = m;
+
+                this.prop_array.set(schema_name, m);
             }
 
             return this.getHook(schema_name, m);
@@ -86,11 +92,15 @@ export class ObservableScheme__<T = any> extends ObservableBase {
     schema: any;
     look_up: any;
     prop_offset: number;
+
+    prop_array: Map<string, any>;
     static schema: any;
 
     constructor(data: T, _schema_ = null) {
 
         super();
+
+        this.prop_array = new Map;
 
         if (this.constructor === ObservableScheme__)
             this.constructor = (class extends ObservableScheme__ { });
@@ -160,6 +170,7 @@ export class ObservableScheme__<T = any> extends ObservableBase {
                         }
 
                         look_up[schema_name] = count;
+
                         count++;
                     }
 
@@ -174,21 +185,21 @@ export class ObservableScheme__<T = any> extends ObservableBase {
                     //Start the process over with a newly minted Model that has the properties defined in the Schema
                     return new schema.__FinalConstructor__(data);
                 }
-
+                _SealedProperty_(prototype, "prop_array", this.prop_array);
                 _FrozenProperty_(prototype, "schema", schema);
             } else
                 //@ts-ignore
                 return new ObservableData(data);
         }
 
-        Object.defineProperty(this, "prop_array", { value: new Array(this.prop_offset), enumerable: false, configurable: false, writable: true });
+        //Object.defineProperty(this, "prop_array", { value: new Array(this.prop_offset), enumerable: false, configurable: false, writable: true });
 
         if (data) this.set(data);
     }
 
     destroy() { }
 
-    set(data) {
+    set(data: any) {
 
         if (!data)
             return false;
@@ -203,6 +214,7 @@ export class ObservableScheme__<T = any> extends ObservableBase {
 
             if (index !== undefined) {
 
+                //@ts-ignore
                 let prop = this[prop_name];
 
                 if (typeof (prop) == "object") {
@@ -211,6 +223,7 @@ export class ObservableScheme__<T = any> extends ObservableBase {
                         this.scheduleUpdate(prop_name);
 
                 } else {
+                    //@ts-ignore
                     this[prop_name] = data_prop;
                 }
             }

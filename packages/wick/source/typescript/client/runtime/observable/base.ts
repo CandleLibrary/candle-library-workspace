@@ -16,27 +16,35 @@ class ObservableBase implements ObservableModel, Sparky {
 
     OBSERVABLE: true;
 
-    fv;
+    fv: any;
     _SCHD_: number;
 
     _cv_: any[];
-    par: ObservableBase;
-
-    prop_array: any[];
+    par: ObservableBase | null;
 
     prop_name: string;
+
     observers: ObservableWatcher[];
 
     data: any;
 
     constructor() {
-        _SealedProperty_(this, "OBSERVABLE", true);
-        _SealedProperty_(this, "_SCHD_", 0);
-        _SealedProperty_(this, "_cv_", []);
-        _SealedProperty_(this, "fv", null);
-        _SealedProperty_(this, "par", null);
-        _SealedProperty_(this, "prop_name", "");
-        _SealedProperty_(this, "observers", []);
+
+        this.OBSERVABLE = true;
+        this._cv_ = [];
+        this.observers = [];
+        this.fv = null;
+        this.par = null;
+        this.prop_name = "";
+        this._SCHD_ = 0;
+
+        _SealedProperty_(this, "OBSERVABLE", this.OBSERVABLE);
+        _SealedProperty_(this, "_SCHD_", this._SCHD_);
+        _SealedProperty_(this, "_cv_", this._cv_);
+        _SealedProperty_(this, "fv", this.fv);
+        _SealedProperty_(this, "par", this.par);
+        _SealedProperty_(this, "prop_name", this.prop_name);
+        _SealedProperty_(this, "observers", this.observers);
     }
 
 
