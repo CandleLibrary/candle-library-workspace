@@ -89,7 +89,7 @@ export default <AnimationMethods><any>{
 
     issueEvent(event: string) {
         if (this.events[event])
-            this.events[event] = this.events[event].filter(e => e(this) !== false);
+            this.events[event] = this.events[event].filter((e: any) => e(this) !== false);
     },
 
     observeStop(): Promise<null> {
@@ -98,9 +98,9 @@ export default <AnimationMethods><any>{
                 this.scheduledUpdate(0, 0);
 
             if (this.duration < 1)
-                return res();
+                return res(this);
 
-            this.addEventListener("stopped", () => (res(), false));
+            this.addEventListener("stopped", () => (res(this), false));
         });
     },
 

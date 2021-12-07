@@ -22,15 +22,15 @@ export interface AnimationMethods {
      * for each repeat.
      * @param SHUTTLE defaults to `true`.
      */
-    shuttle(SHUTTLE?: boolean): void;
+    shuttle(SHUTTLE?: boolean): AnimationMethods;
 
-    set(i: number): void;
+    set(i: number): AnimationMethods;
 
     /**
      * 
      * @param i the the ratio of the animation play from 0 to 1. Accepts negative values
      */
-    step(i: number): void;
+    step(i: number): AnimationMethods;
 
     /**
      * Play the animation. 
@@ -40,7 +40,7 @@ export interface AnimationMethods {
      * 
      * @param from Offset ratio to start the animation, default is 0.
      */
-    play(scale?: number, from?: number): void;
+    play(scale?: number, from?: number): AnimationMethods;
 
     /**
      * Play the animation and return promise that resolves after animation
@@ -51,7 +51,7 @@ export interface AnimationMethods {
      * 
      * @param from Offset ratio to start the animation, default is 0.
      */
-    asyncPlay(scale?: number, from?: number): Promise<void>;
+    asyncPlay(scale?: number, from?: number): Promise<AnimationMethods>;
 
     /**
      * Stops animation
@@ -62,7 +62,7 @@ export interface AnimationMethods {
      * Repeteadly play the animation for `count` times.
      * @param count number of times to repeat the animation.
      */
-    repeat(count: number): void;
+    repeat(count: number): AnimationMethods;
 
     /**
      * Remove object from the 
@@ -72,7 +72,7 @@ export interface AnimationMethods {
      *      - started
      * @param listener - The listening function that should be removed.
      */
-    addEventListener(event: AnimationEvent, listener: () => void): void;
+    addEventListener(event: AnimationEvent, listener: () => void): AnimationMethods;
 
     /**
      * Remove object from the 
@@ -82,12 +82,12 @@ export interface AnimationMethods {
      *      - started
      * @param listener - The listening function that should be removed.
      */
-    removeEventListener(event: AnimationEvent | string, listener: () => void): void;
+    removeEventListener(event: AnimationEvent | string, listener: () => void): AnimationMethods;
 
     /**
      * For internal use. 
      */
-    issueEvent(event: AnimationEvent | string): void;
+    issueEvent(event: AnimationEvent | string): AnimationMethods;
 
     /**
      * For internal use. 
