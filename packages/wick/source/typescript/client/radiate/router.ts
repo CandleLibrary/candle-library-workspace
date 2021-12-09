@@ -115,7 +115,32 @@ export class Router {
 
             page_uir: null,
 
-            setLocation: (string: string) => this.parseURL(string)
+            setHashSilently: (string: string) => {
+                history.replaceState(null, "", document.location.pathname + '#' + string);
+                this.current_url.hash = string;
+            },
+
+            setHash: (string: string) => {
+                document.location.hash = string;
+            },
+
+            getHash: (): string => {
+                return document.location.hash;
+            },
+
+            setLocation: (string: string) => {
+
+                let url = new URI(string);
+
+                if (!url.host) {
+                    url.host = URI.GLOBAL.host;
+                    url.port = URI.GLOBAL.port;
+                    if (!url.protocol)
+                        url.protocol = URI.GLOBAL.protocol;
+                }
+
+                this.parseURL(url);
+            }
         };
 
         wick.rt.context.processLink = (temp: HTMLElement) => {
@@ -204,7 +229,9 @@ export class Router {
         let
             url = wurl.toString(),
 
-            IS_SAME_PAGE = (this.current_url == url),
+            IS_SAME_URL = (
+                (this.current_url + "") == (wurl + "")
+            ),
 
             page = null;
 
@@ -215,7 +242,7 @@ export class Router {
             page.reply = pending_modal_reply;
 
             if (
-                IS_SAME_PAGE
+                IS_SAME_URL
                 &&
                 this.current_view == page
                 &&
@@ -225,7 +252,10 @@ export class Router {
 
                 URL_HOST.wurl = wurl;
 
-                logger.log("missing same-page resolution");
+                if (wurl.hash && wurl.hash != document.location.hash) {
+                    document.location.hash = wurl.hash;
+                    logger.log("hash updated");
+                }
 
                 return;
             }
@@ -248,7 +278,7 @@ export class Router {
         }
 
         if (page)
-            this.loadPage(page, wurl, IS_SAME_PAGE);
+            this.loadPage(page, wurl, IS_SAME_URL);
     }
 
     /**
@@ -368,7 +398,7 @@ export class Router {
         } else {
             this.prev_url = wurl;
             this.current_view = page;
-            this.current_url = wurl.toString();
+            this.current_url = new URI(wurl);
 
             for (const modal of this.modal_stack) {
 
