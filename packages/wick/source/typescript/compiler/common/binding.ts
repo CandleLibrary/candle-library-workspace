@@ -339,6 +339,9 @@ export function getCompiledBindingVariableName(
                     return `${comp_name}.context.api.${external_name}`;
                 return `${comp_name}.context.api.${module_name}.module.${external_name}`;
 
+            case BINDING_VARIABLE_TYPE.STORE_VARIABLE:
+                return `${comp_name}.context.api.store.${external_name}`;
+
             case BINDING_VARIABLE_TYPE.UNDECLARED:
                 const global_names = getSetOfEnvironmentGlobalNames();
                 if (global_names.has(external_name))
@@ -347,6 +350,7 @@ export function getCompiledBindingVariableName(
 
             case BINDING_VARIABLE_TYPE.MODEL_VARIABLE:
                 return `${comp_name}.model.${external_name}`;
+
 
             case BINDING_VARIABLE_TYPE.MODEL_DIRECT:
                 return `${comp_name}.model`;

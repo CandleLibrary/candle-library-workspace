@@ -47,6 +47,8 @@ export enum BINDING_VARIABLE_TYPE {
     CONSTANT_DATA_SOURCE = 16384,
     DYNAMIC_DATA_SOURCE = 32768,
 
+    STORE_VARIABLE = 65536,
+
     /**
      * Variables that are replaced with direct
      * property access on the associated object
