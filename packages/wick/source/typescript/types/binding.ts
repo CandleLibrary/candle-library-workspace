@@ -61,6 +61,12 @@ export enum BINDING_VARIABLE_TYPE {
     DIRECT_ACCESS = 16 | 64 | 128,
 }
 
+export const enum FLAG_ID_OFFSET {
+    VALUE = 22,
+
+    MASK = 0x3FFFFF
+}
+
 /**
  * These flags govern how data can move
  * through the boundaries of a component

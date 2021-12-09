@@ -2,7 +2,7 @@ import { Transition } from '@candlelib/glow';
 import spark, { Sparky } from "@candlelib/spark";
 import { Environment, envIs } from '../../../common/env.js';
 import { Context } from '../../../compiler/common/context.js';
-import { BINDING_FLAG, ObservableModel, ObservableWatcher } from "../../../types/all";
+import { BINDING_FLAG, ObservableModel, ObservableWatcher, FLAG_ID_OFFSET } from "../../../types/all";
 import { rt } from "../global.js";
 import { Status } from './component_status.js';
 import { WickContainer } from "./container.js";
@@ -648,9 +648,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                 const index = this.nlu[name];
 
-                if (flags && ((index >>> 24) & flags) == flags) {
+                if (flags && ((index >>> FLAG_ID_OFFSET.VALUE) & flags) == flags) {
 
-                    this.ua(index & 0xFFFFFF, val);
+                    this.ua(index & FLAG_ID_OFFSET.MASK, val);
                 }
             }
         }
@@ -759,7 +759,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     updateFromParent(local_index: number, attribute_value: any, flags: number) {
 
-        if (flags >> 24 == this.ci + 1)
+        if (flags >> FLAG_ID_OFFSET.VALUE == this.ci + 1)
             return;
 
         this.active_flags |= BINDING_FLAG.FROM_PARENT;
@@ -783,10 +783,10 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                 const index = this.nlu[key];
 
-                if (((index >>> 24) & BINDING_FLAG.ALLOW_UPDATE_FROM_CHILD)) {
+                if (((index >>> FLAG_ID_OFFSET.VALUE) & BINDING_FLAG.ALLOW_UPDATE_FROM_CHILD)) {
                     let cd = this.call_depth;
                     this.call_depth = 0;
-                    this.ua(index & 0xFFFFFF, val);
+                    this.ua(index & FLAG_ID_OFFSET.MASK, val);
                     this.call_depth = cd;
                 }
             }
