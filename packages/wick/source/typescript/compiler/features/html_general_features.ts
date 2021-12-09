@@ -251,12 +251,6 @@ registerFeature(
 
                             new_node.component_name = new_node.component.name;
 
-                            //@ts-ignore
-                            new_node.attributes.push({
-                                type: HTMLNodeType.HTMLAttribute,
-                                name: "expat",
-                                value: ComponentHash(index + comp.name)
-                            });
 
                             if (hasAttribute("radiate_element", node)) {
                                 new_node.attributes.push({
@@ -341,13 +335,6 @@ registerFeature(
 
 
                                 node.attributes = new_attributes;
-
-                                //@ts-ignore
-                                node.attributes.push({
-                                    type: HTMLNodeType.HTMLAttribute,
-                                    name: "expat",
-                                    value: ComponentHash(index + comp.name + name)
-                                });
 
 
                                 if (hasAttribute("radiate_element", node)) {

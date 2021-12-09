@@ -200,7 +200,6 @@ export class Router {
         wurl: URI = new URI(location),
         pending_modal_reply = null
     ) {
-        this.model.uri = wurl;
 
         let
             url = wurl.toString(),
