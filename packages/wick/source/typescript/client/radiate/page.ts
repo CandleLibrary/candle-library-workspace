@@ -4,6 +4,7 @@ import { ComponentElement, WickRTComponent } from '../runtime/component/componen
 import { hydrateComponentElements } from '../runtime/component/html.js';
 import { Element } from './element.js';
 import { rt, WickEnvironment } from '../runtime/global.js';
+import { Environment, envIs } from '../../common/env.js';
 
 export const enum PageType {
     WICK_PAGE,
@@ -56,7 +57,7 @@ export class Page {
                 if (comp) {
                     comp.initialize().connect();
 
-                    if (rt.isEnv(WickEnvironment.WORKSPACE))
+                    if (envIs(Environment.WORKSPACE))
                         rt.addRootComp(comp);
                 }
             }

@@ -9,6 +9,7 @@ import {
     getPackageJsonObject,
 } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
+import { Environment, setEnv } from '../common/env.js';
 import { init_build_system } from '../compiler/init_build_system.js';
 import { logger } from '../workspace/common/logger.js';
 import { create_config_arg_properties } from './config_arg_properties.js';
@@ -58,6 +59,8 @@ support components edited within a code editor.
         logger.deactivate()
             .activate(log_level_arg.value)
             .debug(`Using local network port [ ${port} ]`);
+
+        setEnv(Environment.WORKSPACE);
 
         await init_build_system();
 

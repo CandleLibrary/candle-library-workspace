@@ -16,6 +16,7 @@ import { EditorModel } from "./editor_model.js";
 import { loadPlugins } from './plugin.js';
 import { setRegisterHook } from "../../client/runtime/component/component.js";
 import { EditedComponent, WorkspaceSystem } from "./types/workspace_system.js";
+import { Environment, envIs } from '../../common/env.js';
 
 const patch_logger = logger.get("patch");
 export function revealEventIntercept(sys: WorkspaceSystem) {
@@ -203,7 +204,7 @@ function initializeDefualtSessionDispatchHandlers(
             if (name == old_name)
                 session.send_command({ command: EditorCommand.GET_COMPONENT_PATCH, to: new_name, from: old_name });
             else
-                session.send_command({ command: EditorCommand.GET_COMPONENT_PATCH, to: old_name, from: old_name });
+                session.send_command({ command: EditorCommand.GET_COMPONENT_PATCH, to: name, from: name });
         }
     });
 
@@ -405,7 +406,7 @@ function initializeDefualtSessionDispatchHandlers(
                             if (match.ele.classList.contains("radiate-page")) {
 
                                 //Integrate new component into page.
-                                if (rt.isEnv(WickEnvironment.RADIATE) && rt.router) {
+                                if (envIs(Environment.RADIATE) && rt.router) {
                                     for (const [, page] of rt.router.pages) {
                                         if (page.component == match) {
                                             page.component = new_component;

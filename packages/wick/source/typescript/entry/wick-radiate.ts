@@ -1,12 +1,12 @@
 import { Router } from "../client/radiate/router.js";
-import { WickEnvironment } from '../client/runtime/global.js';
+import { Environment, envIs, setEnv } from '../common/env.js';
 import wick from './wick-runtime.js';
 
 let ROUTER_LOAD_INITIATED = false;
 
 export default function radiate() {
 
-    wick.rt.setEnvironment(WickEnvironment.RADIATE);
+    setEnv(Environment.RADIATE);
 
     if (ROUTER_LOAD_INITIATED) return;
 
@@ -16,7 +16,7 @@ export default function radiate() {
         async () => {
 
             if (
-                wick.rt.isEnv(WickEnvironment.WORKSPACE)
+                envIs(Environment.WORKSPACE)
                 &&
                 wick.rt.workspace_init_promise
             )
