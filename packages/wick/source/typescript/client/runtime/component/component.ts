@@ -636,7 +636,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             );
     }
 
-    update(data: any, flags: number = 1, IMMEDIATE: boolean = false) {
+    update(data: any, flags: BINDING_FLAG = 1, IMMEDIATE: boolean = false) {
 
         if (!this.is(Status.ALLOW_UPDATE)) return;
 
