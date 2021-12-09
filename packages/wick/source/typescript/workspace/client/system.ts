@@ -18,7 +18,7 @@ import { setRegisterHook } from "../../client/runtime/component/component.js";
 import { EditedComponent, WorkspaceSystem } from "./types/workspace_system.js";
 import { Environment, envIs } from '../../common/env.js';
 
-const patch_logger = logger.get("patch");
+const patch_logger = logger.get("patch").activate();
 export function revealEventIntercept(sys: WorkspaceSystem) {
     const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
     if (event_intercept_ele)
