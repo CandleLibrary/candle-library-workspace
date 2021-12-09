@@ -388,11 +388,10 @@ function initializeDefualtSessionDispatchHandlers(
                                 let i = 0;
 
                                 for (const [name, flag] of Object.entries(match.nlu) as [string, number][]) {
-                                    if (new_component.nlu[name] && new_component.nlu[name] != undefined)
-                                        continue;
-
-                                    //@ts-ignore
-                                    new_component.update({ [name]: match[i++] }, flag >>> 24);
+                                    if (new_component.nlu[name] && new_component.nlu[name] != undefined) {
+                                        //@ts-ignore
+                                        new_component.update({ [name]: match[i++] }, new_component.nlu[name] >>> 24);
+                                    }
                                 }
                             }
 
