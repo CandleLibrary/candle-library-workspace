@@ -177,11 +177,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.polling_id = -1;
         this.context = context;
 
-        const parent = parent_chain[parent_chain.length - 1];
-
-        if (parent)
-            parent.addChild(this);
-
         //Create or assign global model whose name matches the default_model_name;
         if (default_model_name) {
 
@@ -217,6 +212,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         if (this.is(Status.INITIALIZED))
             return this;
 
+        this.connect();
+
         this.setStatus(Status.INITIALIZED);
 
         this.model = model;
@@ -229,6 +226,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.async_init();
 
         this.setModel(model);
+
+        this.disconnect();
 
         return this;
     }
@@ -285,6 +284,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     addChild(cp: WickRTComponent) {
 
+        if (cp == this)
+            throw new Error("Invalid parent child connection");
+
         for (const ch of this.ch)
             if (ch == cp) continue;
 
@@ -295,14 +297,22 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     connect() {
         this.setStatus(Status.CONNECTED, Status.ALLOW_UPDATE);
+
         for (const child of this.ch)
             child.connect();
+
+        if (this.originator)
+            this.originator.connect();
+
         this.onModelUpdate();
     }
 
     disconnect() {
         for (const child of this.ch)
             child.disconnect();
+
+        if (this.originator)
+            this.originator.disconnect();
 
         this.removeStatus(Status.CONNECTED, Status.ALLOW_UPDATE);
     }
@@ -537,7 +547,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     transitionIn(row: number, col: number, DESCENDING: boolean, trs: Transition) {
 
         for (const ch of this.ch)
-            ch.transitionIn(row, col, DESCENDING, trs);
+            if (!ch.is(Status.CONTAINER_COMPONENT))
+                ch.transitionIn(row, col, DESCENDING, trs);
 
         try {
             this.oTI(row, col, DESCENDING, trs.in);
