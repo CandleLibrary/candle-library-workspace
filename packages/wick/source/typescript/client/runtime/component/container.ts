@@ -2,7 +2,7 @@ import { Transition } from "@candlelib/glow";
 import spark, { Sparky } from "@candlelib/spark";
 import { WickRTComponent } from "./component.js";
 import { ObservableModel, ObservableWatcher } from "../../../types/model";
-import { hydrateComponentElements } from "./html.js";
+import { hydrateComponentElements, hydrateTemplateElement } from "./html.js";
 import { rt } from "../global.js";
 import { Status } from './component_status.js';
 
@@ -1063,7 +1063,12 @@ export class WickContainer implements Sparky, ObservableWatcher {
 
                     if (j == cstr_l - 1 || (evaluator && evaluator(model))) {
 
-                        component = <ContainerComponent>new this.comp_constructors[j](null, null, [this.parent]);
+                        component = <ContainerComponent>hydrateTemplateElement(this.comp_constructors[j].name);
+
+                        if (!component)
+                            throw new Error("Unable create container component");
+
+                        this.parent.addChild(component);
 
                         component.setStatus(Status.CONTAINER_COMPONENT);
 

@@ -119,6 +119,7 @@ export function hydrateComponentElement(
 
     let names = getComponentNames(hydrate_candidate), affinity = 0;
 
+    const parent = parent_chain[parent_chain.length - 1];
 
     const u = undefined;
 
@@ -132,8 +133,7 @@ export function hydrateComponentElement(
 
             if (!last_comp && existing_comp) {
                 last_comp = existing_comp;
-                parent_chain = parent_chain.concat(last_comp);
-                affinity++;
+                //parent_chain = parent_chain.concat(last_comp);
             } else {
 
                 let comp: WickRTComponent = new (comp_class)(<any>hydrate_candidate, last_comp, parent_chain, u, u);
@@ -147,6 +147,9 @@ export function hydrateComponentElement(
         } else
             Logger.get("wick").activate(LogLevel.WARN).warn(`WickRT :: Could not find component data for ${component_name}`);
     }
+
+    if (parent && last_comp && last_comp != parent)
+        parent.addChild(last_comp);
 
     return last_comp;
 }
