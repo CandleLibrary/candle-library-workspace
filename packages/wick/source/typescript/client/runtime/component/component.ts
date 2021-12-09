@@ -1,13 +1,14 @@
 import { Transition } from '@candlelib/glow';
 import spark, { Sparky } from "@candlelib/spark";
+import { Environment, envIs } from '../../../common/env.js';
 import { Context } from '../../../compiler/common/context.js';
 import { BINDING_FLAG, ObservableModel, ObservableWatcher } from "../../../types/all";
+import { rt } from "../global.js";
+import { Status } from './component_status.js';
 import { WickContainer } from "./container.js";
-import { rt, WickEnvironment } from "../global.js";
 import {
     hydrateComponentElement, hydrateContainerElement
 } from "./html.js";
-import { Status } from './component_status.js';
 
 
 type BindingUpdateFunction = (...rest: any[]) => void;
@@ -17,6 +18,43 @@ export type ComponentElement = HTMLElement & { wick_component: WickRTComponent; 
 const enum DATA_DIRECTION {
     DOWN = 1,
     UP = 2
+}
+
+const registry = new Map;
+
+let new_component_type_hook = (_: any) => _;
+
+export function registerComponent(comp: WickRTComponent) {
+
+    if (!envIs(Environment.WORKSPACE))
+        return;
+
+    if (!registry.has(comp.name)) {
+        registry.set(comp.name, new Set);
+        new_component_type_hook(comp.name);
+    }
+
+    registry.get(comp.name).add(comp);
+}
+
+export function unregisterComponent(comp: WickRTComponent) {
+
+    if (!envIs(Environment.WORKSPACE))
+        return;
+
+    if (!registry.has(comp.name))
+        return;
+
+    const set = registry.get(comp.name);
+
+    set.delete(comp);
+
+    if (set.size == 0)
+        registry.delete(comp.name);
+}
+
+export function setRegisterHook(fn: (arg: any) => any) {
+    new_component_type_hook = fn;
 }
 
 export class WickRTComponent implements Sparky, ObservableWatcher {
@@ -64,14 +102,14 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     name: string;
 
-    protected wrapper: WickRTComponent | null;
+    originator: WickRTComponent | null;
+
+    host: WickRTComponent | null;
 
     active_flags: number;
     update_state: number;
 
     call_depth: number;
-
-    affinity: number;
 
     out_trs: any;
 
@@ -101,38 +139,30 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     constructor(
         existing_element = null,
-        wrapper: WickRTComponent | null = null,
+        originator: WickRTComponent | null = null,
         parent_chain: WickRTComponent[] = [],
         default_model_name = "",
-        context: Context = rt.context,
-        element_affinity = 0
+        context: Context = rt.context
     ) {
-        if (rt.isEnv(WickEnvironment.WORKSPACE)) {
-
-            this.name =
-                //@ts-ignore
-                this.constructor?.edit_name
-                ??
-                this.constructor.name;
-        } else {
-            this.name = this.constructor.name;
-        }
-        this.status = 0;
-        this.ci = 0;
+        this.name = this.constructor.name;
         this.ch = [];
         this.elu = [];
         this.ctr = [];
         this.pui = [];
         this.nui = [];
-        this.model = null;
-        this.call_set = new Map();
         this.binding_call_set = [];
+        this.call_set = new Map();
         this.updated_attributes = new Set();
+
+        this.model = null;
+        this.originator = null;
+        this.host = null;
 
         this.update_state = 0;
         this.active_flags = 0;
         this.call_depth = 0;
-        this.affinity = element_affinity;
+        this.status = 0;
+        this.ci = 0;
 
         //@ts-ignore
         this.up = this.updateParent;
@@ -161,7 +191,10 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             this.model = context.models[default_model_name];
         }
 
-        this.wrapper = wrapper;
+        if (originator) {
+            this.originator = originator;
+            originator.host = this;
+        }
 
         if (existing_element) {
             this.ele = existing_element;
@@ -173,6 +206,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.ele.dataset.wrtc = this.name;
 
         this.init_interfaces(this);
+
+        registerComponent(this);
     }
 
     init_interfaces(c: any) { }
@@ -200,30 +235,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     hydrate() {
 
-        const context = this.context, wrapper = this.wrapper;
-
-        if (wrapper && this.wrapper) {
-
-            this.ele.appendChild(this.wrapper.ele);
-
-            this.wrapper.setModel({ comp: this });
-        } else if /*Prevent recursion, which will be infinite */ (
-            context.wrapper && this.name !== context.wrapper.name
-
-        ) {
-
-            const wrapper_class = context.component_class.get(context.wrapper.name);
-
-            if (wrapper_class) {
-
-                this.wrapper = new wrapper_class();
-
-                this.wrapper.initialize({ comp: this });
-
-                this.ele.appendChild(this.wrapper.ele);
-            }
-        }
-
         try {
             this.c();
         } catch (e) {
@@ -242,11 +253,20 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         if (this.model)
             this.setModel(null);
 
-        if (this.wrapper)
-            this.wrapper.destructor();
+        if (this.originator) {
+            this.originator.host = null;
+            this.originator.destructor();
+        }
+
+        if (this.host) {
+            this.host.originator = null;
+            this.host.destructor();
+        }
 
         if (this.par)
             this.par.removeChild(this);
+
+        unregisterComponent(this);
 
         this.removeCSS();
     }
@@ -410,6 +430,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     onTransitionOutEnd() {
 
         if (!this.is(Status.TRANSITIONED_IN)) {
+            this.setStatus(Status.TRANSITIONED_OUT);
 
             //this.removeFromDOM();
 
@@ -450,19 +471,25 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         let transition_time = 0;
 
         if (transition) {
+            const len = transition.out_seq.length;
 
             this.oTO(row, col, DESCENDING, transition.out);
 
-            transition.addEventListener(
-                <any>"stopped",
-                this.onTransitionOutEnd.bind(this)
-            );
+            if (len != transition.out_seq.length) {
 
-            try {
-                transition_time = transition.out_duration;
-            } catch (e) {
-                console.log(e);
-            }
+
+                transition.addEventListener(
+                    <any>"stopped",
+                    this.onTransitionOutEnd.bind(this)
+                );
+
+                try {
+                    transition_time = transition.out_duration;
+                } catch (e) {
+                    console.log(e);
+                }
+            } else this.onTransitionOutEnd();
+
         } else if (!this.out_trs)
             this.onTransitionOutEnd();
 
@@ -473,10 +500,12 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     se(index: number, ele: HTMLElement | Text) {
 
-        if (!this.elu[index])
-            this.elu[index] = [];
+        this.elu.push([ele]);
 
-        this.elu[index].push(ele);
+        //if (!this.elu[index])
+        //this.elu[index] = [];
+        //
+        //this.elu[index].push(ele);
     }
 
     re(index: number, ele: HTMLElement | Text) {
@@ -853,7 +882,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         component_chain: WickRTComponent[] = [this]
     ): number {
 
-        let sk = 0, PROCESS_CHILDREN = true;
+        let sk = 0, PROCESS_CHILDREN = true, affinity = component_chain.length - 1;
 
         let scope_component: WickRTComponent = this;
 
@@ -876,12 +905,19 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
             this.se(0, ele);
 
+            if (class_members["claim"]) {
+                if (+(parseInt(class_members["claim"])) != affinity)
+                    this.setStatus(Status.FOREIGN_HOST);
+            }
+
         } else {
 
 
-            if (class_members["own"]) {
-                if (+(parseInt(class_members["own"]) || -1) != this.affinity)
+            if (class_members["claim"]) {
+                if (+(parseInt(class_members["claim"])) != affinity) {
+                    this.setStatus(Status.FOREIGN_HOST);
                     return 0;
+                }
             }
 
             // Binding Text Node
@@ -891,11 +927,10 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                 this.integrateElement(child, false, component_chain);
 
-                if (class_members["id"])
-                    this.se(parseInt((class_members["id"] || "0")), child);
-
-
                 ele.replaceWith(child);
+
+                this.se(this.elu.length, child);
+
 
                 return 0;
 
@@ -906,12 +941,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                 ele.replaceWith(text);
 
-                if (class_members["id"])
-                    this.se(parseInt((class_members["id"] || "0")), text);
-
-
-                //@ts-ignore
-                ele = text;
+                this.se(this.elu.length, text);
 
                 return 0;
 
@@ -936,7 +966,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 } else if (class_members["r"]) {
 
                     const
-                        index = +(class_members["r"] || -1),
+                        index = +(class_members["r"]),
                         lu_index = index % 50,
                         comp_index = (index / 50) | 0;
 
@@ -955,18 +985,16 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 else if (class_members["c"] && this.ele !== ele) {
 
                     hydrateComponentElement(ele, component_chain);
-
-                    PROCESS_CHILDREN = false;
                 }
+
             }
 
-            if (class_members["id"])
-                this.se(parseInt((class_members["id"] || "0")), ele);
+            this.se(this.elu.length, ele);
+
         }
 
 
-        if (PROCESS_CHILDREN)
-            iterateElementChildren(ele, scope_component, component_chain);
+        iterateElementChildren(ele, scope_component, component_chain);
 
         return sk;
     }
@@ -1015,6 +1043,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         for (const ele of this.elu[ele_index] ?? []) {
             if (attribute_name == "value")
                 (<HTMLInputElement>ele).value = attribute_value;
+            else if (attribute_name == "class")
+                (<HTMLElement>ele).classList.add(...attribute_value.split(" "));
             else
                 (<HTMLElement>ele).setAttribute(attribute_name, attribute_value);
         }

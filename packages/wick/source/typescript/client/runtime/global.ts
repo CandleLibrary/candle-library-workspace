@@ -74,12 +74,6 @@ export interface WickRuntime {
 
     OVERRIDABLE_onComponentMetaChange(component_meta: any): void;
 
-    /**
-     * Asserts whether the WickEnvironnement flag is on 
-     * rt.environnement
-     * @param wick 
-     */
-    isEnv(wick: WickEnvironment): boolean;
 
     /**
      * Applies the WickEnvironment flag to rt.environment.
@@ -155,10 +149,6 @@ const rt: WickRuntime = (() => {
 
         setEnvironment(env: WickEnvironment) {
             rt.environment |= env;
-        },
-
-        isEnv(env: WickEnvironment): boolean {
-            return (env & rt.environment) == env;
         },
 
 
