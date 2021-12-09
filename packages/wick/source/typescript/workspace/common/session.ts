@@ -41,7 +41,7 @@ export class Session {
             this.connection = ws;
 
 
-        this.ACTIVE = true;
+        this.ACTIVE = false;
 
         this.awaitable_callback = new Map;
 
@@ -98,11 +98,7 @@ export class Session {
 
     open_handler() {
 
-        const path = document.location.pathname || "/";
-
         this.logger.log(`Connection to [ ${this.connection.url} ] established`);
-
-        this.send_command({ command: EditorCommand.REGISTER_CLIENT_ENDPOINT, endpoint: path });
 
         this.ACTIVE = true;
     }

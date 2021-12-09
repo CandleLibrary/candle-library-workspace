@@ -14,11 +14,11 @@ import {
     alertSessionsOfComponentTransition, getPatch, getSourceHash
 } from './component_tools.js';
 import { ServerSession } from './session.js';
-import { addBareComponent, addTransition, getComponent, getComponentLocation, getTransition, store, __sessions__ } from './store.js';
+import { addBareComponent, getComponent, getComponentLocation, store, __sessions__ } from './store.js';
 
 
 export function initializeDefualtSessionDispatchHandlers(session: ServerSession, config: WickCompileConfig) {
-    session.setHandler(EditorCommand.REGISTER_CLIENT_ENDPOINT, REGISTER_CLIENT_ENDPOINT);
+    session.setHandler(EditorCommand.REGISTER_CLIENT_COMPONENT, REGISTER_CLIENT_COMPONENT);
     session.setHandler(EditorCommand.GET_COMPONENT_SOURCE, GET_COMPONENT_SOURCE);
     session.setHandler(EditorCommand.GET_COMPONENT_STYLE, GET_COMPONENT_STYLE);
     session.setHandler(EditorCommand.GET_COMPONENT_PATCH, GET_COMPONENT_PATCH);
@@ -130,15 +130,6 @@ const APPLY_COMPONENT_CHANGES: CommandHandler<ServerSession, EditorCommand.APPLY
                     comp.location
                 );
 
-                /* addTransition({
-                    new_id: new_component,
-                    old_id: old_component,
-                    new_location: comp.location + "",
-                    old_location: comp.location + "",
-                    changes: changes,
-                    old_source: comp.source,
-                    new_source: new_source
-                }); */
             } else {
                 throw new Error("Could not retrieve component");
             }
@@ -149,18 +140,18 @@ const APPLY_COMPONENT_CHANGES: CommandHandler<ServerSession, EditorCommand.APPLY
         return { command: EditorCommand.OK };
     };
 
-const REGISTER_CLIENT_ENDPOINT: CommandHandler<ServerSession, EditorCommand.REGISTER_CLIENT_ENDPOINT>
+const REGISTER_CLIENT_COMPONENT: CommandHandler<ServerSession, EditorCommand.REGISTER_CLIENT_COMPONENT>
     = async function (command, session: ServerSession) {
 
-        const { endpoint } = command;
+        const { comp_name } = command;
 
-        const { comp } = store.endpoints?.get(endpoint) ?? {};
+        const { component } = store.component_ref_map?.get(comp_name) ?? {};
 
-        if (comp) {
-            session.logger.log(`Registering client with endpoint [ ${endpoint} ]`);
-            session.connect_file_watchers(comp);
+        if (component) {
+            session.logger.log(`Registering client with component at [ ${component.location} ]`);
+            session.connect_file_watchers(component);
         } else {
-            session.logger.warn(`Failed to register client with endpoint [ ${endpoint} ]`);
+            session.logger.warn(`Failed to register client with component [ ${comp_name} ]`);
         }
 
     };
@@ -223,20 +214,6 @@ const GET_COMPONENT_PATCH: CommandHandler<ServerSession, EditorCommand.GET_COMPO
         // Need to receive the class data necessary to 
         // do an in place replacement of component data
         const { from, to } = command;
-
-        if (from == to)
-            return {
-                command: EditorCommand.NOT_ALLOWED
-            };
-
-        const transition = getTransition(from, to);
-
-        if (!transition)
-            return {
-                command: EditorCommand.UNKNOWN
-            };
-
-        const changes = transition.changes;
 
         const patch = await getPatch(
             from,

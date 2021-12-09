@@ -5,7 +5,7 @@ import { FSWatcher, watch } from "fs";
 import { rt } from '../../client/runtime/global.js';
 import { createComponent } from '../../compiler/create_component.js';
 import { Session } from '../common/session.js';
-import { swap_component_data } from './component_tools.js';
+import { reloadComponent, swap_component_data } from './component_tools.js';
 import { addComponent, store } from './store.js';
 export const logger = Logger.createLogger("flame");
 let watchers: Map<string, FileWatcherHandler> = new Map();
@@ -71,45 +71,10 @@ export class FileWatcherHandler implements Sparky {
 
         this.type = "";
 
-        const location = new URI(this.path);
+        const path = this.path;
 
-        const comp = await createComponent(location, rt.context);
+        const sessions = this.sessions;
 
-        if (comp)
-            if (comp.HAS_ERRORS) {
-
-                logger.warn(`Component ${comp.name} [${comp.location}] has the following problems: `);
-
-                for (const error of rt.context.getErrors(comp) ?? [])
-                    logger.warn(error);
-
-                rt.context.clearWarnings(comp);
-                rt.context.clearErrors(comp);
-                rt.context.components.delete(comp.name);
-
-            } else {
-
-                //Update any endpoint that have a matching source path.
-                if (store.page_components?.has(this.path)) {
-                    for (const path of store.page_components.get(this.path)?.endpoints ?? []) {
-                        //Update endpoints with this component 
-                        store.endpoints?.set(path, { comp });
-                        logger.log(`Updating endpoint [ ${path} ]`);
-                    }
-                }
-
-                addComponent(comp);
-
-                const cmp = store.components?.get(this.path);
-
-                if (cmp) {
-
-                    const { comp: existing } = cmp;
-
-                    if (existing.name != comp.name) {
-                        swap_component_data(comp, existing, this.sessions);
-                    }
-                }
-            }
+        await reloadComponent(path, sessions);
     }
 }
