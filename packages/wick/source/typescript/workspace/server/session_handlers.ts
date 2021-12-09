@@ -145,11 +145,11 @@ const REGISTER_CLIENT_COMPONENT: CommandHandler<ServerSession, EditorCommand.REG
 
         const { comp_name } = command;
 
-        const { component } = store.component_ref_map?.get(comp_name) ?? {};
+        const comp = rt.context.components.get(comp_name);
 
-        if (component) {
-            session.logger.log(`Registering client with component at [ ${component.location} ]`);
-            session.connect_file_watchers(component);
+        if (comp) {
+            session.logger.log(`Registering client with component at [ ${comp.location} ]`);
+            session.connect_file_watchers(comp);
         } else {
             session.logger.warn(`Failed to register client with component [ ${comp_name} ]`);
         }
