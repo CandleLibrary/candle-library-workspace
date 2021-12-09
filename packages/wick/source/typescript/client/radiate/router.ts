@@ -323,14 +323,12 @@ export class Router {
         wurl: string | URI = new URI(document.location.href),
         IS_SAME_PAGE = false
     ) {
+
         if (typeof wurl == "string")
             wurl = new URI(wurl);
 
         //Update the radiate API for components
         this.wick.rt.context.api.router.page_url = wurl;
-
-        console.log(wurl);
-
 
         URL_HOST.wurl = wurl;
 
