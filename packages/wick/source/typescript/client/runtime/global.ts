@@ -5,19 +5,8 @@ import { Router } from '../radiate/router.js';
 
 import { WickRTComponent } from "./component/component.js";
 
-export const global_object = (typeof global !== "undefined") ? global : window;
-
-export const enum WickEnvironment {
-    WICK = 1,
-
-    RADIATE = 2,
-
-    WORKSPACE = 4
-}
 
 export interface WickRuntime {
-
-    environment: WickEnvironment;
     /**
      * A promise that is fulfilled once the 
      * workspace has been initialized. 
@@ -75,11 +64,7 @@ export interface WickRuntime {
     OVERRIDABLE_onComponentMetaChange(component_meta: any): void;
 
 
-    /**
-     * Applies the WickEnvironment flag to rt.environment.
-     * @param env 
-     */
-    setEnvironment(env: WickEnvironment): void;
+
 
     /**
      * Adds the comp to root components array if the 
@@ -100,8 +85,6 @@ const rt: WickRuntime = (() => {
     let glow = <any>null;
 
     return <WickRuntime>{
-
-        environment: WickEnvironment.WICK,
 
         async loadGlow(glow_url: string = "@candlelib/glow") {
             //Import glow module if it is not present
@@ -145,10 +128,6 @@ const rt: WickRuntime = (() => {
 
         addRootComp(comp: WickRTComponent) {
             rt.root_components.push(comp);
-        },
-
-        setEnvironment(env: WickEnvironment) {
-            rt.environment |= env;
         },
 
 
