@@ -30,7 +30,7 @@ import {
     Node_Is_Binding_Identifier
 } from "../common/binding.js";
 import { setPos } from "../common/common.js";
-import { ComponentData } from '../common/component.js';
+import { ComponentData, ORIGINATOR_ID } from '../common/component.js';
 import { Context } from '../common/context.js';
 import {
     appendStmtToFrame,
@@ -448,7 +448,12 @@ export async function finalizeBindingExpression(
                     mutate(<any>parse_js_exp(`${self_ref}.ctr[${node.value.slice(5)}]`));
                     skip();
                 } else if (node.value.slice(0, 4) == ("$$ch")) {
-                    mutate(<any>parse_js_exp(`${self_ref}.ch[${node.value.slice(4)}]`));
+                    const val = parseInt(node.value.slice(4));
+                    if (val == ORIGINATOR_ID) {
+                        mutate(<any>parse_js_exp(`${self_ref}.originator`));
+                    } else {
+                        mutate(<any>parse_js_exp(`${self_ref}.ch[${val}]`));
+                    }
                     skip();
                 } else if (node.value.slice(0, 4) == "$$bi") {
                     const binding = getComponentBinding(node.value.slice(4), component);

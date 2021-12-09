@@ -136,8 +136,6 @@ registerFeature(
                                     comp = context.components.get(component.local_component_names.get(ch.tag));
 
                                 component.local_component_names.set(comp?.name, comp?.name);
-
-                                ch.child_id = component.children.push(1) - 1;
                             }
 
                             ctr.components.push(comp);

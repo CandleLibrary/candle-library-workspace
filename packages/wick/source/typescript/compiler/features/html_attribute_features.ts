@@ -73,7 +73,11 @@ registerFeature(
 
                 const { ast, child_comp_id } = node.value[0];
 
-                const exp = build_system.js.stmt(`this.ch[${child_comp_id}].setModel();`);
+                let exp: any = null;
+
+                exp = build_system.js.stmt(`$$ch${child_comp_id}.setModel();`);
+
+
 
                 exp.nodes[0].nodes[1].nodes[0] = ast;
 
@@ -134,10 +138,12 @@ registerFeature(
 
                     const child_comp_id = ele.child_component_index;
 
-                    if (child_binding) {
+                    if (child_binding && typeof child_comp_id == "number") {
 
-                        const exp = build_system.js.stmt(`this.ch[${child_comp_id}]
-                            .update({ "${child_binding.external_name}":1}, ${BINDING_FLAG.FROM_PARENT});`);
+                        let exp: any = null;
+
+                        exp = build_system.js.stmt(`$$ch${child_comp_id}
+                                .update({ "${child_binding.external_name}":1}, ${BINDING_FLAG.FROM_PARENT});`);
 
                         exp.nodes[0].nodes[1].nodes[0].nodes[0].nodes[1] = ast;
 

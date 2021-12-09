@@ -237,7 +237,9 @@ registerFeature(
 
                         if (node.type == AttributeHook && (child_binding.flags & BINDING_FLAG.FROM_PARENT) > 0) {
 
-                            const exp = build_system.js.stmt(`this.ch[${child_id}].ufp(${child_binding.class_index}, _, f);`);
+                            let exp: any = null;
+
+                            exp = build_system.js.stmt(`$$${child_id}.ufp(${child_binding.class_index}, _, f);`);
 
                             exp.nodes[0].nodes[1].nodes[1] = createBindingReference(par_binding);
 
@@ -247,8 +249,9 @@ registerFeature(
 
                         } else if ((child_binding.flags & BINDING_FLAG.ALLOW_EXPORT_TO_PARENT) > 0) {
 
+                            let exp: any = null;
 
-                            const exp = build_system.js.stmt(`this.ch[${child_id}].spm(${child_binding.class_index}, ${getBindingClassIndexID(par_binding)}, ${child_id})`);
+                            exp = build_system.js.stmt(`$$ch${child_id}.spm(${child_binding.class_index}, ${getBindingClassIndexID(par_binding)}, ${child_id})`);
 
                             registerClassBinding(addInit, par_binding);
 

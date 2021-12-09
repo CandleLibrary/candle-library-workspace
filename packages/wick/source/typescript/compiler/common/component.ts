@@ -21,6 +21,8 @@ export interface CompileWarning {
     loc?: Token;
 }
 
+export const ORIGINATOR_ID = 99010101099;
+
 /**
  * A message emitted from a compile process
  * indicating some problem that does not affect
@@ -72,7 +74,7 @@ export class ComponentData {
     /**
      * Child Components
      */
-    children: number[];
+    child_index: number;
 
     /**
      * Name of a model defined in context that will be auto assigned to the
@@ -220,7 +222,7 @@ export class ComponentData {
 
         this.INLINE_HTML = [];
 
-        this.children = [];
+        this.child_index = 0;
 
         this.root_ele_claims = [];
 
@@ -253,7 +255,6 @@ export class ComponentData {
 
         new_comp.CSS = this.CSS.slice();
         new_comp.INLINE_HTML = this.INLINE_HTML.slice();
-        new_comp.children = this.children.slice();
         new_comp.root_ele_claims = this.root_ele_claims.slice();
         new_comp.indirect_hooks = this.indirect_hooks.slice();
         new_comp.HTML = this.HTML;
@@ -263,6 +264,7 @@ export class ComponentData {
 
 
 
+        new_comp.child_index = this.child_index;
         new_comp.ele_hash = this.ele_hash;
         new_comp.text_hash = this.text_hash;
         new_comp.css_hash = this.css_hash;
