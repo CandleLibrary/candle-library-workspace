@@ -110,6 +110,19 @@ export function hydrateComponentElements(pending_component_elements: HTMLElement
     return components.filter(i => i !== null);
 }
 
+export function hydrateTemplateElement(comp_name: string) {
+    const template = rt.templates.get(comp_name);
+
+    if (!template)
+
+        throw new Error("Unable to acquire template for " + comp_name);
+
+    const
+        doc = template.content.cloneNode(true),
+        ele = <HTMLElement>doc.firstElementChild;
+
+    return hydrateComponentElement(ele);
+}
 
 export function hydrateComponentElement(
     hydrate_candidate: HTMLElement,
