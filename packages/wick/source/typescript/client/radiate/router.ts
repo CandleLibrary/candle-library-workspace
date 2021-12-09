@@ -219,6 +219,8 @@ export class Router {
                 IS_SAME_PAGE
                 &&
                 this.current_view == page
+                &&
+                this.modal_stack.length == 0
 
             ) {
 
@@ -343,20 +345,18 @@ export class Router {
                 } else if (a !== page) {
                     a.primeDisconnect();
                     finalizing_pages.push(a);
-                    a.transitionOut(transition.out);
+                    a.transitionOut(transition);
                 }
                 return r;
             }, <Page[]>[]);
 
             this.modal_stack.push(page);
 
-            this.current_view = null;
-
             if (page.type != PageType.WICK_TRANSITIONING_MODAL) {
 
                 page.connect(getModalContainer(this), wurl);
 
-                page.transitionIn(transition.in);
+                page.transitionIn(transition);
 
                 await transition.asyncPlay();
 
@@ -375,7 +375,7 @@ export class Router {
 
                 modal.primeDisconnect();
 
-                modal.transitionOut(transition.out);
+                modal.transitionOut(transition);
 
                 finalizing_pages.push(modal);
             }
@@ -498,13 +498,9 @@ export class Router {
                     page.style = wick_style.cloneNode(true);
             }
 
-            if (app_source.dataset.modal == "true" || pending_modal_reply) {
+            if (app_source.classList.contains("modal") || pending_modal_reply) {
 
                 page.setType(PageType.WICK_MODAL, this);
-                let modal: ComponentElement = <ComponentElement>document.createElement("radiate-modal");
-                modal.innerHTML = app_source.innerHTML;
-                app_source.innerHTML = "";
-                app_source = modal;
 
                 page.reply = pending_modal_reply;
 
