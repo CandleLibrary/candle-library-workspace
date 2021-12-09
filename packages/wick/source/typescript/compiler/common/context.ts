@@ -389,6 +389,9 @@ export class Context {
 
         if (this.api) {
 
+            if (name == "store" || name == "router")
+                return;
+
             //if (name in this.api)
             //    return;
 

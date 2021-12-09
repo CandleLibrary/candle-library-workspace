@@ -83,8 +83,6 @@ export class Router {
 
         //Initialize CSS + Conflagrate Parsers
 
-        this.model = Observable({ uri: null });
-
         this.pages = new Map;
 
         this.elements = {};
@@ -111,10 +109,14 @@ export class Router {
 
         this.wick = wick;
 
-        this.model.uri = new URI;
+        wick.rt.context.api.router = {
 
+            default: null,
 
-        wick.rt.context.integrate_new_options({ models: { router: this.model } });
+            page_uir: null,
+
+            setLocation: (string: string) => this.parseURL(string)
+        };
 
         wick.rt.context.processLink = (temp: HTMLElement) => {
             if (!temp.onclick) temp.onclick = (e: MouseEvent) => {
@@ -294,13 +296,7 @@ export class Router {
             wurl = new URI(wurl);
 
         //Update the radiate API for components
-        this.wick.rt.setPresets({
-            api: {
-                router: {
-                    page_url: wurl
-                }
-            }
-        });
+        this.wick.rt.context.api.router.page_url = wurl;
 
         console.log(wurl);
 
