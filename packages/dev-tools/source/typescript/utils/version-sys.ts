@@ -504,7 +504,7 @@ git switch $STAGED_VERSION_BRANCH
 
 # Merge Changes
 
-git merge --squash -X theirs $CURR_COMMIT
+git merge --allow-unrelated-histories --squash -X theirs $CURR_COMMIT
 
 LAST_VER_LOG=$(echo $(git --no-pager log --no-decorate HEAD^! ))
 
