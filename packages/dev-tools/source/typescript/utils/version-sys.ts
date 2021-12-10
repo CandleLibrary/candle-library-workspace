@@ -536,6 +536,10 @@ echo "Updating staged with QoL files"
 
 git add .
 
+echo "Pre commit log"
+
+git status --staged
+
 VER_PLUS=$(expr $LAST_VER_DIGITS + 1)
 
 # Perform stage commit 
