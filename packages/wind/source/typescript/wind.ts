@@ -189,7 +189,10 @@ export class Lexer implements LexerType {
         if (marker instanceof Lexer) {
             if (marker.str !== this.str)
                 throw new Error("Cannot sync Lexers that tokenize different strings!");
+            const masked_values = this.masked_values;
             marker.copy(this);
+            this.masked_values = masked_values;
+
         }
 
         return this;
