@@ -428,6 +428,7 @@ async function createCommitBounty(pkg: DevPkg, dep: Dependency, version: string 
     const logs = getChangeLog(dep);
 
     if (logs.length > 0) {
+        pkg_logger(dep).log(`Found ${logs.length} new logs for CHANGELOG.md`);
         //append to change log
 
         const
@@ -435,9 +436,6 @@ async function createCommitBounty(pkg: DevPkg, dep: Dependency, version: string 
 
         await writeFile(resolve(pkg._workspace_location, "change_log_addition.md"), change_log_entry + "\n\n");
     }
-
-    const change_log = getChangeLog(dep);
-    const cl_data = change_log.join("\n");
 
     await writeFile(resolve(pkg._workspace_location, "commit.bounty"),
         `#! /bin/bash 
@@ -490,15 +488,18 @@ done
 }
 
 async function createCommitVersionBountyHunter(
-    curr_commit: string,
+    dev_commit: string,
     prev_commit: string,
     ...bounty_paths: Dependency[]
 ) {
     await writeFile(URI.resolveRelative("./root.commit.bounty") + "",
         `#! /bin/bash
 
-CURR_COMMIT="${curr_commit}"
+DEV_COMMIT="${dev_commit}"
 PREV_COMMIT="${prev_commit}"
+
+echo "Development Commit to be merged $DEV_COMMIT"
+echo "Previous version commit $PREV_COMMIT"
 
 # Move to staged version branch
 
@@ -506,11 +507,11 @@ git switch $STAGED_VERSION_BRANCH
 
 # Merge Changes
 
-git merge --allow-unrelated-histories --squash -X theirs --no-commit $CURR_COMMIT
+git merge --allow-unrelated-histories --squash -X theirs --no-commit $DEV_COMMIT
 
 echo "Resetting changes to changelogs"
 
-git restore \\*CHANGELOG.md
+git restore --source=$PREV_COMMIT \\*CHANGELOG.md
 
 LAST_VER_LOG=$(echo $(git --no-pager log --no-decorate HEAD^! ))
 
@@ -538,7 +539,7 @@ git commit -m "Project Version $VER_PLUS
 
 ${bounty_paths.map((p, i) => `${p.name} @v${p.version_data.new_version}`).join("\n")}
 
-origin:$CURR_COMMIT"
+origin:$DEV_COMMIT"
 `, { mode: 0o777 });
 }
 /**
@@ -635,11 +636,14 @@ export async function validateEligibilityPackages(
             for (const key in pkg?.dependencies ?? {})
                 if (dependencies.has(key)) {
                     const dep = dependencies.get(key);
+                    if (dep) {
 
-
-                    pkg.dependencies[key] = dep.version_data.NEW_VERSION_REQUIRED
-                        ? dep.version_data.new_version
-                        : dep.version_data.latest_version;
+                        pkg.dependencies[key] = dep.version_data.NEW_VERSION_REQUIRED
+                            ? dep.version_data.new_version
+                            : dep.version_data.latest_version;
+                    } else {
+                        throw new Error(`Unable to resolve dependency ${key} from package ${pkg.name}`);
+                    }
                 }
 
             const logger = pkg_logger(dep);
@@ -660,7 +664,7 @@ export async function validateEligibilityPackages(
                 logger.log(`Creating a publish.bounty for ${dep.name}@${dep.version_data.new_version}`);
                 if (!DRY_RUN) await createPublishBounty(pkg, dep);;
 
-                logger.log(`Creating A commit.bounty for ${dep.name}@${dep.version_data.new_version}`);
+                logger.log(`Creating a commit.bounty for ${dep.name}@${dep.version_data.new_version}`);
                 if (!DRY_RUN) await createCommitBounty(pkg, dep);
             } else {
                 dev_logger.log(`No version change required for ${dep.name} at v${dep.version_data.latest_version}`);
@@ -670,17 +674,15 @@ export async function validateEligibilityPackages(
                 logger.log(`Preserving package.json v${dep.version_data.latest_version}`);
                 if (!DRY_RUN) await writeFile(resolve(pkg._workspace_location, "package.temp.json"), json);
 
-                logger.log(`Creating A commit.bounty for ${dep.name}@${dep.version_data.latest_version}`);
+                logger.log(`Creating Aa commit.bounty for ${dep.name}@${dep.version_data.latest_version}`);
                 if (!DRY_RUN) await createCommitBounty(pkg, dep, dep.version_data.latest_version);
             }
-
-
         }
     }
 
     if (updated.size > 0) {
-        await createCommitVersionBountyHunter(curr_origin_commit, prev_origin_commit, ...updated);
-        await createPublishVersionBountyHunter(...updated);
+        await createCommitVersionBountyHunter(curr_origin_commit, prev_origin_commit, ...processed);
+        await createPublishVersionBountyHunter(...processed);
     }
 
     return true;
