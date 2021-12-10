@@ -61,7 +61,11 @@ export function testPackage(pkg: DevPkg): Promise<boolean> {
         const CWD = pkg._workspace_location;
 
         const test = pkg.scripts.test;
+
+        let time_out: NodeJS.Timeout | null = null;
         const p = exec(test, { cwd: CWD, env: process.env }, (err, out, stderr) => {
+            if (time_out)
+                clearTimeout(time_out);
             if (err) {
                 dev_logger.get(`testing [${pkg.name}]`).error("Package failed testing");
                 dev_logger.get(`testing [${pkg.name}]`).error(out + "\n" + stderr);
@@ -70,7 +74,7 @@ export function testPackage(pkg: DevPkg): Promise<boolean> {
                 res(true);
         });
 
-        setTimeout(() => {
+        time_out = setTimeout(() => {
             dev_logger.get(`testing [${pkg.name}] `).error("Testing timed out after 5 minutes");
             p.kill();
             res(false);
@@ -158,7 +162,11 @@ export async function getPackageDependencies(
     return dependencies;
 }
 
-export async function createDepend(dep_pkg: string | DevPkg | null, prev_commit: string = "", BUMP = false): Promise<Dependency> {
+export async function createDepend(
+    dep_pkg: string | DevPkg | null,
+    prev_commit: string = "",
+    BUMP = false
+): Promise<Dependency | null> {
 
     if (typeof dep_pkg == "string")
         dep_pkg = await getPackageData(dep_pkg);
@@ -187,11 +195,15 @@ export async function createDepend(dep_pkg: string | DevPkg | null, prev_commit:
             current_version: dep_pkg.version,
             commits,
             DIRTY_REPO,
-            PROCESSED: false,
-            version_data: null
+            PROCESSED: false
         };
 
-        dep.version_data = await getNewVersionNumber(dep, BUMP);
+        const version_data = await getNewVersionNumber(dep, "", false, BUMP);
+
+        if (!version_data)
+            throw new Error(`Unable to acquire version data for ${dep.name}`);
+
+        dep.version_data = version_data;
 
         return dep;
     }
@@ -209,7 +221,13 @@ export async function createDepend(dep_pkg: string | DevPkg | null, prev_commit:
  * @param PRE_RELEASE 
  * @returns 
  */
-export function getNewVersionNumber(dep: Dependency, release_channel = "", RELEASE = false, BUMP = false) {
+export function getNewVersionNumber(dep: Dependency, release_channel = "", RELEASE = false, BUMP = false): Promise<{
+    new_version: string;
+    git_version: string;
+    pkg_version: string;
+    latest_version: string;
+    NEW_VERSION_REQUIRED: boolean;
+}> {
     //Traverse commits and attempt to find version commits
     return new Promise((res, reject) => {
 
@@ -698,7 +716,7 @@ export async function validateEligibilityPackages(
                 logger.log(`Preserving package.json v${dep.version_data.latest_version}`);
                 if (!DRY_RUN) await writeFile(resolve(pkg._workspace_location, "package.temp.json"), json);
 
-                logger.log(`Creating Aa commit.bounty for ${dep.name}@${dep.version_data.latest_version}`);
+                logger.log(`Creating a commit.bounty for ${dep.name}@${dep.version_data.latest_version}`);
                 if (!DRY_RUN) await createCommitBounty(pkg, dep, dep.version_data.latest_version);
             }
         }
@@ -781,8 +799,6 @@ export async function validateEligibility(
                             (depend.version_data.NEW_VERSION_REQUIRED
                                 &&
                                 depend.version_data.new_version != versionToString(val))
-                            ||
-                            BUMP
                         ) {
                             dep.version_data.NEW_VERSION_REQUIRED = true;
                             dep.package.dependencies[key] = depend.version_data.new_version;
