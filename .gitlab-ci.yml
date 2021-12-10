@@ -118,6 +118,7 @@ version_ts_modules:
       - packages/**/*.bounty
       - packages/**/*.temp.json
       - packages/**/change_log_temp.md
+      - packages/**/change_log_addition.md
 
   dependencies:
     - fetch_dependencies
