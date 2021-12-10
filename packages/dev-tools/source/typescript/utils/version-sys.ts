@@ -162,7 +162,11 @@ export async function getPackageDependencies(
     return dependencies;
 }
 
-export async function createDepend(dep_pkg: string | DevPkg | null, prev_commit: string = "", BUMP = false): Promise<Dependency | null> {
+export async function createDepend(
+    dep_pkg: string | DevPkg | null,
+    prev_commit: string = "",
+    BUMP = false
+): Promise<Dependency | null> {
 
     if (typeof dep_pkg == "string")
         dep_pkg = await getPackageData(dep_pkg);
@@ -795,8 +799,6 @@ export async function validateEligibility(
                             (depend.version_data.NEW_VERSION_REQUIRED
                                 &&
                                 depend.version_data.new_version != versionToString(val))
-                            ||
-                            BUMP
                         ) {
                             dep.version_data.NEW_VERSION_REQUIRED = true;
                             dep.package.dependencies[key] = depend.version_data.new_version;
