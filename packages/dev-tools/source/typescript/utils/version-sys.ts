@@ -70,6 +70,12 @@ export function testPackage(pkg: DevPkg): Promise<boolean> {
                 res(true);
         });
 
+        setTimeout(() => {
+            dev_logger.get(`testing [${pkg.name}] `).error("Testing timed out after 5 minutes");
+            p.kill();
+            res(false);
+        }, 5 * 60 * 1000);
+
         p.on("error", (err) => {
             dev_logger.get(`testing [${pkg.name}]`).error(err);
         });
@@ -91,7 +97,8 @@ export async function* getPackageDependenciesGen(
     prev_tracked_commit: string,
     dep: Dependency,
     getDependencyNames: (d: DevPkg) => Iterable<string>,
-    dependencies: Dependencies = new Map([[dep.name, dep]])
+    dependencies: Dependencies = new Map([[dep.name, dep]]),
+    BUMP = false
 ): AsyncGenerator<{ dep: Dependency, dependencies: Dependencies; }, Dependencies> {
 
     if (!dep)
@@ -109,13 +116,13 @@ export async function* getPackageDependenciesGen(
 
                 dev_logger.log(`Get dependency ${dependent_name}`);
 
-                const dep = await createDepend(dep_pkg, prev_tracked_commit);
+                const dep = await createDepend(dep_pkg, prev_tracked_commit, BUMP);
 
                 dependencies.set(dependent_name, dep);
 
                 (<Dependency>dependencies.get(dependent_name)).reference_count++;
 
-                yield* (await getPackageDependenciesGen(prev_tracked_commit, dep, getDependencyNames, dependencies));
+                yield* (await getPackageDependenciesGen(prev_tracked_commit, dep, getDependencyNames, dependencies, BUMP));
 
 
             } else {
@@ -141,16 +148,17 @@ export async function getPackageDependencies(
     prev_tracked_commit: string,
     dep: Dependency,
     getDependencyNames: (d: DevPkg) => Iterable<string>,
-    dependencies: Dependencies = new Map([[dep.name, dep]])
+    dependencies: Dependencies = new Map([[dep.name, dep]]),
+    BUMP = false
 ) {
 
-    for await (const _ of getPackageDependenciesGen(prev_tracked_commit, dep, getDependencyNames, dependencies)) { };
+    for await (const _ of getPackageDependenciesGen(prev_tracked_commit, dep, getDependencyNames, dependencies, BUMP)) { };
 
 
     return dependencies;
 }
 
-export async function createDepend(dep_pkg: string | DevPkg | null, prev_commit: string = ""): Promise<Dependency> {
+export async function createDepend(dep_pkg: string | DevPkg | null, prev_commit: string = "", BUMP = false): Promise<Dependency> {
 
     if (typeof dep_pkg == "string")
         dep_pkg = await getPackageData(dep_pkg);
@@ -183,7 +191,7 @@ export async function createDepend(dep_pkg: string | DevPkg | null, prev_commit:
             version_data: null
         };
 
-        dep.version_data = await getNewVersionNumber(dep);
+        dep.version_data = await getNewVersionNumber(dep, BUMP);
 
         return dep;
     }
@@ -201,7 +209,7 @@ export async function createDepend(dep_pkg: string | DevPkg | null, prev_commit:
  * @param PRE_RELEASE 
  * @returns 
  */
-export function getNewVersionNumber(dep: Dependency, release_channel = "", RELEASE = false) {
+export function getNewVersionNumber(dep: Dependency, release_channel = "", RELEASE = false, BUMP = false) {
     //Traverse commits and attempt to find version commits
     return new Promise((res, reject) => {
 
@@ -271,7 +279,7 @@ export function getNewVersionNumber(dep: Dependency, release_channel = "", RELEA
                 git_version: versionToString(npm_version),
                 pkg_version: versionToString(pkg_version),
                 latest_version: versionToString(latest_version),
-                NEW_VERSION_REQUIRED: commit_drift > 0
+                NEW_VERSION_REQUIRED: BUMP || commit_drift > 0
             });
         });
     });
@@ -630,7 +638,7 @@ export async function validateEligibilityPackages(
         }
     }
 
-    const target_packages = await Promise.all(packages.map(str => createDepend(str, prev_origin_commit)));
+    const target_packages = await Promise.all(packages.map(str => createDepend(str, prev_origin_commit, BUMP)));
     const dependencies: Dependencies = new Map(target_packages.map(p => [p.name, p]));
 
     let processed: Set<Dependency> = new Set();
@@ -726,7 +734,7 @@ export async function validateEligibility(
 
     let CAN_VERSION = true;
 
-    let iter = await getPackageDependenciesGen(prev_tracked_commit, primary_repo, getDependencyNames, global_packages);
+    let iter = await getPackageDependenciesGen(prev_tracked_commit, primary_repo, getDependencyNames, global_packages, BUMP);
 
     let val = await iter.next();
 
