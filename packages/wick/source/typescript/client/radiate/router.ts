@@ -72,9 +72,7 @@ export class Router {
     modal_stack: Page[];
     prev_url: URI | null;
 
-    model: Observable<{
-        uri: URI | null;
-    }>;
+    head_sigs: Set<string>;
 
     /**
      * Constructs the object.
@@ -109,6 +107,8 @@ export class Router {
 
         this.wick = wick;
 
+        this.head_sigs = new Set;
+
         wick.rt.context.api.router = {
 
             default: null,
@@ -128,13 +128,21 @@ export class Router {
                 return document.location.hash;
             },
 
+            closeModal: (data: any) => this.closeModal(data),
+
             setLocation: (string: string) => {
 
                 let url = new URI(string);
 
                 if (!url.host) {
+
+                    if (url.IS_RELATIVE) {
+                        const { path } = <URI>URI.resolveRelative(url.path, this.current_url);
+                        url.path = path;
+                    }
                     url.host = URI.GLOBAL.host;
                     url.port = URI.GLOBAL.port;
+
                     if (!url.protocol)
                         url.protocol = URI.GLOBAL.protocol;
                 }
@@ -196,24 +204,28 @@ export class Router {
 
         let modal = this.modal_stack[top];
 
-        modal.SHOULD_CLOSE = true;
-
-        if (modal.reply)
-            modal.reply(data);
-
-        modal.reply = null;
-
-        let next_modal = this.modal_stack[top - 1];
-
-        if (next_modal)
-            return this.loadPage(next_modal);
+        if (modal) {
 
 
-        if (this.prev_url)
+            modal.SHOULD_CLOSE = true;
 
-            return this.parseURL(this.prev_url.toString(), this.prev_url);
+            if (modal.reply)
+                modal.reply(data);
 
-        return new URI(this.current_url);
+            modal.reply = null;
+
+            let next_modal = this.modal_stack[top - 1];
+
+            if (next_modal)
+                return this.loadPage(next_modal);
+
+
+            if (this.prev_url)
+
+                return this.parseURL(this.prev_url.toString(), this.prev_url);
+
+        }
+        return new URI(this.current_url + "");
     }
 
     /*
@@ -352,7 +364,7 @@ export class Router {
 
             let u = new URL(this.prev_url?.toString() ?? this.current_url.toString());
 
-            u.hash = `modal://${wurl + ""}`;
+            u.hash = `modal:${wurl.path}`;
 
             history.replaceState({
                 modal_state: true,
@@ -394,8 +406,8 @@ export class Router {
 
 
         } else {
-            this.prev_url = wurl;
             this.current_view = page;
+            this.prev_url = new URI(wurl);
             this.current_url = new URI(wurl);
 
             for (const modal of this.modal_stack) {
@@ -410,29 +422,37 @@ export class Router {
             this.modal_stack.length = 0;
         }
 
-        if (current_view && current_view != page) {
+        if (!IS_SAME_PAGE)
 
-            //Set all components 
+            if (current_view && current_view != page) {
 
-            current_view.primeDisconnect();
+                //Set all components 
 
-            page.connect(app_ele, wurl, current_view);
+                current_view.primeDisconnect();
 
-            current_view.transitionOut(transition);
+                page.connect(app_ele, wurl, current_view);
 
-            finalizing_pages.push(current_view);
+                current_view.transitionOut(transition);
 
-            page.transitionIn(transition);
+                finalizing_pages.push(current_view);
 
-        } else if (!current_view) {
-            page.connect(app_ele, wurl);
+                page.transitionIn(transition);
 
-            page.transitionIn(transition);
-        }
+            } else if (!current_view) {
+                page.connect(app_ele, wurl);
+
+                page.transitionIn(transition);
+            }
+
+        transition.set(10);
+
+        if (!IS_SAME_PAGE)
+            page.transitionStart();
 
         await transition.asyncPlay();
-
-        page.transitionComplete();
+        
+        if (!IS_SAME_PAGE)
+            page.transitionComplete();
 
         this.finalizePageDisconnects();
 
@@ -501,6 +521,8 @@ export class Router {
 
                 page = new Page(url, app_page);
 
+                Array.from(DOM.head.children).map(c => this.head_sigs.add(c.outerHTML));
+
                 const wick_style = DOM.getElementById("wick-app-style");
 
                 if (wick_style)
@@ -512,6 +534,18 @@ export class Router {
                 // 
                 const wick_script = DOM.getElementById("wick-component-script");
 
+                const head_children = Array.from(DOM.head.children);
+
+                document.head.append(...head_children.filter(e => {
+                    return (
+                        e.tagName == "LINK" ||
+                        e.tagName == "META"
+                    ) && !this.head_sigs.has(e.outerHTML);
+                }).map(c => (this.head_sigs.add(c.outerHTML), c)));
+
+
+                const page_title = head_children.filter(e => e.tagName == "TITLE")[0];
+
                 if (wick_script)
                     await (async_function("wick", wick_script.innerHTML))(this.wick);
 
@@ -519,7 +553,7 @@ export class Router {
 
                 const wick_style = DOM.getElementById("wick-app-style");
 
-                page = new Page(url, app_source);
+                page = new Page(url, app_source, page_title);
 
                 if (wick_style)
                     page.style = wick_style.cloneNode(true);
