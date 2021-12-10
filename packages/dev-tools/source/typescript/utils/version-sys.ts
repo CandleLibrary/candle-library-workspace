@@ -602,6 +602,12 @@ export async function validateEligibilityPackages(
      */
     packages: string[],
     getDependencyNames: (arg: DevPkg) => string[],
+    /**
+     * Move all packages to the next valid version with
+     * indifference to any local modifications to the package
+     * contents.
+     */
+    BUMP: boolean = false,
     DRY_RUN: boolean = false,
 ): Promise<boolean> {
 
@@ -630,7 +636,7 @@ export async function validateEligibilityPackages(
     let processed: Set<Dependency> = new Set();
 
     const updated: Set<Dependency> = new Set();
-    for (const depend_set of await Promise.all(target_packages.map(pkg => validateEligibility(prev_origin_commit, pkg, getDependencyNames, DRY_RUN, dependencies)))) {
+    for (const depend_set of await Promise.all(target_packages.map(pkg => validateEligibility(prev_origin_commit, pkg, getDependencyNames, DRY_RUN, BUMP, dependencies)))) {
 
         for (const dep of depend_set) {
 
@@ -707,6 +713,7 @@ export async function validateEligibility(
      */
     getDependencyNames: (arg: DevPkg) => string[],
     DRY_RUN: boolean = false,
+    BUMP: boolean = false,
     global_packages: Dependencies = new Map([[primary_repo?.name ?? "undefined", primary_repo]])
 ) {
 
@@ -766,6 +773,8 @@ export async function validateEligibility(
                             (depend.version_data.NEW_VERSION_REQUIRED
                                 &&
                                 depend.version_data.new_version != versionToString(val))
+                            ||
+                            BUMP
                         ) {
                             dep.version_data.NEW_VERSION_REQUIRED = true;
                             dep.package.dependencies[key] = depend.version_data.new_version;
