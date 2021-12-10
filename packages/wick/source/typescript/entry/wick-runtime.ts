@@ -96,8 +96,6 @@ const wick = Object.assign(wick_root, {
 
                 comp.initialize();
 
-                comp.connect();
-
                 if (envIs(Environment.WORKSPACE))
                     rt.addRootComp(comp);
             }
