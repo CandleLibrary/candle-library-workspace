@@ -38,7 +38,7 @@ export interface Dependency {
      */
     PROCESSED: boolean;
 
-    version_data: {
+    version_data?: {
         new_version: string;
         git_version: string;
         pkg_version: string;
