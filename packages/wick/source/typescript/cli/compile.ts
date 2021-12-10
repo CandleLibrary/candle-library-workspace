@@ -104,7 +104,8 @@ static site that can be optionally hydrated with associated support scripts.`
             let pending_resources: Promise<any>[] = [];
             //Update resources
             pending_resources.push(...([
-                "image", "images", "img", "imgs", "pics", "pictures",
+                "image", "images", "img", "imgs", "pics", "pictures", "css", "styles",
+                'scripts', "webfonts"
             ].map(async source_dir => {
 
                 const source = URI.resolveRelative("./" + source_dir + "/", root_directory + "/");
@@ -132,9 +133,9 @@ static site that can be optionally hydrated with associated support scripts.`
 
                 const url = new URI(m.url);
 
-                if (!url.IS_RELATIVE && !url.host) {
+                if (!url.host) {
                     //Resolve the URI to a path relative to CWD
-                    m.url = "./src/pack.js";
+                    m.url = URI.resolveRelative("./src/pack.js", root_directory) + "";
                 }
             }
 
@@ -168,7 +169,7 @@ static site that can be optionally hydrated with associated support scripts.`
                             pending_page_components.push(new Promise(async e => {
 
                                 const { USE_RADIATE_RUNTIME: A, USE_WICK_RUNTIME: B }
-                                    = await writeEndpoint(component, context, endpoint, output_directory);
+                                    = await writeEndpoint(component, context, endpoint, output_directory, root_directory);
 
                                 USE_RADIATE_RUNTIME ||= A;
 
@@ -244,7 +245,8 @@ async function writeEndpoint(
     component: ComponentData,
     context: Context,
     endpoint_path: string,
-    output_directory: URI
+    output_directory: URI,
+    root_directory: URI
 ): Promise<{
     USE_RADIATE_RUNTIME: boolean;
     USE_WICK_RUNTIME: boolean;
@@ -258,7 +260,7 @@ async function writeEndpoint(
         USE_WICK_RUNTIME,
         output_path,
         page_source
-    } = await renderEndpointPage(component, context, endpoint_path, output_directory);
+    } = await renderEndpointPage(component, context, endpoint_path, output_directory, root_directory);
 
     try {
         await fsp.mkdir(new URI(output_path).dir, { recursive: true });
@@ -293,7 +295,8 @@ async function renderEndpointPage(
     component: ComponentData,
     context: Context,
     endpoint: string,
-    output_directory: URI
+    output_directory: URI,
+    input_directory: URI,
 ): Promise<{
     USE_RADIATE_RUNTIME: boolean;
     USE_WICK_RUNTIME: boolean;
@@ -306,28 +309,43 @@ async function renderEndpointPage(
         USE_WICK_RUNTIME: boolean = !component.RADIATE;
 
     const
-        hooks = Object.assign({}, USE_RADIATE_RUNTIME ? default_radiate_hooks : default_wick_hooks);
+        hooks = Object.assign({}, USE_RADIATE_RUNTIME ? default_radiate_hooks : default_wick_hooks),
+        ep = <URI>URI.resolveRelative("./" + endpoint.replace(/$(\/|\.\/)/, ""), output_directory),
+        pack_path = ep.getRelativeTo(<URI>URI.resolveRelative("./src/pack.js", output_directory));
 
     if (USE_RADIATE_RUNTIME)
         hooks.init_script_render = function () {
             return `
-				import {radiate} from "./src/pack.js";
+				import {radiate} from "${pack_path}";
 				radiate.default();`;
         };
     else
         hooks.init_script_render = function () {
             return `
-			import {wick} from "./src/pack.js";
+			import {wick} from "${pack_path}";
 			wick.hydrate();`;
         };
+
+    hooks.resolve_import_path = (str: string) => {
+        const root_path = <URI>URI.resolveRelative(str, input_directory);
+        const relative_path = input_directory.getRelativeTo(root_path);
+        return ep.getRelativeTo(<URI>URI.resolveRelative(relative_path, output_directory)) + "";
+    };
 
     const { page: page_source } = await RenderPage(
         component,
         context,
-        undefined,
+        {
+            ALLOW_STATIC_REPLACE: false,
+            INTEGRATED_CSS: false,
+            INTEGRATED_HTML: false,
+            INTEGRATE_COMPONENTS: true,
+            STATIC_RENDERED_CSS: true,
+            STATIC_RENDERED_HTML: true,
+        },
         hooks
-    ),
-        ep = URI.resolveRelative("./" + endpoint.replace(/$(\/|\.\/)/, ""), output_directory);
+    );
+
     if (ep.path.slice(-1)[0] == "/")
         ep.path += "index.html";
     else if (!ep.ext)
