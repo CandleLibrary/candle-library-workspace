@@ -76,6 +76,11 @@ have failing tests.`,
 
     const DRY_RUN = !!dry_run.value;
 
+    const BUMP = !!process.env.BUMP_VERSION;
+
+    if (BUMP)
+        dev_logger.log("\nBumping all versions!\n");
+
     if (DRY_RUN)
         dev_logger.log("\nDry Run: No changes will be recorded.\n");
 
@@ -87,7 +92,7 @@ have failing tests.`,
 
                 if (!await validateEligibilityPackages(wksp_pkg.devPackages, (pkg) => {
                     return Object.getOwnPropertyNames(pkg?.dependencies ?? {}).filter(n => wksp_pkg.devPackages.includes(n));
-                }, false)) {
+                }, BUMP, false)) {
                     dev_logger.log("Unable to version packages");
                 };
             } catch (E) {
