@@ -1,6 +1,6 @@
 import { Token } from '@candlelib/hydrocarbon';
 import { default as URI, default as URL } from "@candlelib/uri";
-import { WickRTComponent } from "../../runtime/component.js";
+import { WickRTComponent } from "../../client/runtime/component/component.js";
 import { FunctionFrame, HTMLNode, IndirectHook, IntermediateHook } from "../../types/all.js";
 import { ComponentStyle } from "../../types/component";
 import { TemplateHTMLNode } from "../../types/html";
