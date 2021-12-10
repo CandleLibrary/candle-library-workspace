@@ -446,6 +446,7 @@ echo "Applying changelog update to ${dep.name}"
 
 # Update changelog
 touch ./change_log_addition.md
+touch ./CHANGELOG.md
 echo -n "$( cat ./CHANGELOG.md || '' )" >> ./change_log_addition.md
 mv -f ./change_log_addition.md ./CHANGELOG.md
 
@@ -530,6 +531,10 @@ for script in \${bounty_paths[@]}; do
         $script
     fi
 done
+
+echo "Updating staged with QoL files"
+
+git add .
 
 VER_PLUS=$(expr $LAST_VER_DIGITS + 1)
 
