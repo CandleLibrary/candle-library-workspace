@@ -490,17 +490,17 @@ done
 
 async function createCommitVersionBountyHunter(
     dev_commit: string,
-    prev_commit: string,
+    prev_dev_commit: string,
     ...bounty_paths: Dependency[]
 ) {
     await writeFile(URI.resolveRelative("./root.commit.bounty") + "",
         `#! /bin/bash
 
 DEV_COMMIT="${dev_commit}"
-PREV_COMMIT="${prev_commit}"
+PREV_DEV_COMMIT="${prev_dev_commit}"
 
 echo "Development Commit to be merged $DEV_COMMIT"
-echo "Previous version commit $PREV_COMMIT"
+echo "Previous Merged Development Commit  $PREV_DEV_COMMIT"
 
 # Move to staged version branch
 
@@ -512,7 +512,7 @@ git merge --allow-unrelated-histories --squash -X theirs --no-commit $DEV_COMMIT
 
 echo "Resetting changes to changelogs"
 
-git restore --source=$PREV_COMMIT \\*CHANGELOG.md
+git restore --source=HEAD \\*CHANGELOG.md
 
 LAST_VER_LOG=$(echo $(git --no-pager log --no-decorate HEAD^! ))
 
@@ -520,7 +520,7 @@ export LAST_VER_LOG
 
 LAST_VER_DIGITS=$(node -e "console.log(process.env.LAST_VER_LOG.match(/Version\\s*(\\d+)/)[1])")
 
-echo "Last Version $LAST_VER_DIGITS origin commit: $PREV_COMMIT"
+echo "Last Version $LAST_VER_DIGITS origin commit: $PREV_DEV_COMMIT"
 
 # Collect Commit Bounties 
 
@@ -538,7 +538,7 @@ git add .
 
 echo "Pre commit log"
 
-git status --staged
+git status
 
 VER_PLUS=$(expr $LAST_VER_DIGITS + 1)
 
@@ -678,6 +678,7 @@ export async function validateEligibilityPackages(
             } else {
                 dev_logger.log(`No version change required for ${dep.name} at v${dep.version_data.latest_version}`);
 
+                pkg.version = dep.version_data.latest_version;
                 const json = JSON.stringify(Object.assign({}, pkg, { _workspace_location: undefined }), null, 4);
 
                 logger.log(`Preserving package.json v${dep.version_data.latest_version}`);
