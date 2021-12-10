@@ -46,6 +46,24 @@ export class CSS_Gradient {
             if (l.ty == l.types.id) {
                 switch (l.tx) {
 
+                    case "radial-gradient": {
+                        //TODO: Implement real parse and object for radial gradient.
+                        const r = l.copy();
+
+                        l.next().a("(");
+
+
+                        while (!l.END && l.ch != ")") { l.next(); }
+
+                        l.a(")");
+
+                        let grad = l.slice(r);
+
+
+                        return grad;
+                    }
+                        break;
+
                     case "linear-gradient":
                         l.next().a("(");
                         let dir, num, rot = null;
