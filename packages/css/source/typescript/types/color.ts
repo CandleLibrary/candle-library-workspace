@@ -277,14 +277,13 @@ export default class CSS_Color extends Float64Array {
                 pk.IWS = false;
 
 
-                while (!(pk.ty & (type.new_line | type.ws)) && !pk.END && pk.ch !== ";") {
+                while (!(pk.ty & (type.new_line | type.sym | type.ws)) && !pk.END && pk.ch !== ";") {
                     pk.next();
                 }
 
                 var value = pk.slice(l);
                 l.sync(pk);
                 l.tl = 0;
-                l.next();
 
                 let num = parseInt(value, 16);
 
@@ -316,7 +315,9 @@ export default class CSS_Color extends Float64Array {
                     out.g = (num >> 8) & 0xFF;
                     out.b = (num) & 0xFF;
                 }
+
                 l.next();
+
                 break;
 
             case "r":
