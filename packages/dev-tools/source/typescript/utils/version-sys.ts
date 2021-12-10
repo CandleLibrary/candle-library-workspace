@@ -261,10 +261,10 @@ export function getNewVersionNumber(dep: Dependency, release_channel = "", RELEA
 
             new_version.channel = release_channel;
 
-            if (commit_drift > 0) {
-                pkg_logger(dep).log(`Determined latest version for ${dep.name}: ${versionToString(latest_version)} `);
-                pkg_logger(dep).log(`Determined next version for ${dep.name}: ${versionToString(new_version)} `);
-            }
+
+            pkg_logger(dep).log(`Determined latest version for ${dep.name}: ${versionToString(latest_version)} `);
+            pkg_logger(dep).log(`Determined next version for ${dep.name}: ${versionToString(new_version)} `);
+
 
             res({
                 new_version: versionToString(new_version),
@@ -430,27 +430,28 @@ async function createCommitBounty(pkg: DevPkg, dep: Dependency, version: string 
     if (logs.length > 0) {
         //append to change log
 
-        let previous_change_log: string = "";
+        const
+            change_log_entry = `## [v${version}] - ${createISODateString()} \n\n` + logs.join("\n\n");
 
-        try {
-            previous_change_log = await readFile(resolve(pkg._workspace_location, "CHANGELOG.md"), { encoding: "utf8" });
-        } catch (e) { }
-
-        const change_log_entry = `## [v${version}] - ${createISODateString()} \n\n` + logs.join("\n\n");
-
-        await writeFile(resolve(pkg._workspace_location, "change_log_temp.md"), change_log_entry + "\n\n" + previous_change_log);
+        await writeFile(resolve(pkg._workspace_location, "change_log_addition.md"), change_log_entry + "\n\n");
     }
 
     const change_log = getChangeLog(dep);
+    const cl_data = change_log.join("\n");
 
     await writeFile(resolve(pkg._workspace_location, "commit.bounty"),
         `#! /bin/bash 
 
 cd $(dirname "$0")
 
+echo "Applying changelog update to ${dep.name}"
+
 # Update changelog
-touch ./change_log_temp.md
-mv -f ./change_log_temp.md ./CHANGELOG.md
+touch ./change_log_addition.md
+echo -n "$( cat ./CHANGELOG.md || '' )" >> ./change_log_addition.md
+mv -f ./change_log_addition.md ./CHANGELOG.md
+
+echo "Applying package.json update to ${dep.name}"
 
 # Update package.json
 if test -f ./package.temp.json; then
@@ -505,7 +506,11 @@ git switch $STAGED_VERSION_BRANCH
 
 # Merge Changes
 
-git merge --allow-unrelated-histories --squash -X theirs $CURR_COMMIT
+git merge --allow-unrelated-histories --squash -X theirs --no-commit $CURR_COMMIT
+
+echo "Resetting changes to changelogs"
+
+git restore \\*CHANGELOG.md
 
 LAST_VER_LOG=$(echo $(git --no-pager log --no-decorate HEAD^! ))
 
