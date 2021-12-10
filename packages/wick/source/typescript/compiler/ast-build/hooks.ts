@@ -6,7 +6,8 @@ import {
     CompiledComponentClass, DefaultJSHandlerNodeType, HookTemplatePackage,
     IndirectHook,
     Node,
-    STATIC_RESOLUTION_TYPE
+    STATIC_RESOLUTION_TYPE,
+    FLAG_ID_OFFSET
 } from "../../types/all.js";
 import { ExtendedType } from "../../types/hook";
 import { getHookHandlers } from '../build_system.js';
@@ -448,7 +449,7 @@ function processBindingVariables(
     ) class_info.lu_public_variables.push(
         <any>getPropertyAST(
             getExternalName(binding),
-            ((((binding.flags | BINDING_FLAG.DEFAULT_BINDING_STATE) << 24) | index) >>> 0) + ""
+            ((((binding.flags | BINDING_FLAG.DEFAULT_BINDING_STATE) << FLAG_ID_OFFSET.VALUE) | index) >>> 0) + ""
         )
     );
 
