@@ -33,7 +33,7 @@ export default function radiate() {
 
                 const page = await wick.rt.router.loadNewPage(document.location + "", document);
                 if (page)
-                    wick.rt.router.loadPage(page, location.href + "", true);
+                    wick.rt.router.loadPage(page, location.href + "", false);
                 else
                     throw new Error("Unable to initialize page");
 
