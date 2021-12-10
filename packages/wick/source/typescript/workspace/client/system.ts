@@ -5,7 +5,7 @@ import { WickRTComponent } from "../../client/runtime/component/component.js";
 import { Status } from '../../client/runtime/component/component_status.js';
 import { WickContainer } from "../../client/runtime/component/container";
 import { String_Is_Wick_Hash_ID } from '../../client/runtime/component/html.js';
-import { rt, WickEnvironment } from '../../client/runtime/global.js';
+import { rt, } from '../../client/runtime/global.js';
 import { Context, WickLibrary } from '../../index.js';
 import { EditorCommand } from "../../types/editor_types.js";
 import { PatchType } from "../../types/patch";
@@ -17,6 +17,7 @@ import { loadPlugins } from './plugin.js';
 import { setRegisterHook } from "../../client/runtime/component/component.js";
 import { EditedComponent, WorkspaceSystem } from "./types/workspace_system.js";
 import { Environment, envIs } from '../../common/env.js';
+import { FLAG_ID_OFFSET } from "../../types/all.js";
 
 const patch_logger = logger.get("patch").activate();
 export function revealEventIntercept(sys: WorkspaceSystem) {
@@ -411,7 +412,10 @@ function initializeDefualtSessionDispatchHandlers(
                                             page.component = new_component;
                                             page.ele = <any>new_component.ele;
                                             page.ele?.classList.add("radiate-page");
-                                            new_component.transitionIn(0, 0, false, glow.createTransition(true));
+                                            const trs = glow.createTransition(true);
+                                            new_component.transitionIn(0, 0, false, trs);
+                                            trs.set(10000000);
+                                            new_component.transitionInEnd();
                                             break;
                                         }
                                     }

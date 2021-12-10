@@ -48,6 +48,11 @@ export enum BINDING_VARIABLE_TYPE {
     DYNAMIC_DATA_SOURCE = 32768,
 
     STORE_VARIABLE = 65536,
+    /**
+     * Values that are update from listeners 
+     * attached to the window or document. 
+     */
+    SESSION_VARIABLE = 131072,
 
     /**
      * Variables that are replaced with direct
@@ -74,11 +79,14 @@ export const enum FLAG_ID_OFFSET {
 export const enum BINDING_FLAG {
 
     DEFAULT_BINDING_STATE = 1,
+
     FROM_PARENT = 2,
 
     FROM_PRESETS = 4,
 
     FROM_OUTSIDE = 8,
+
+    FROM_SESSION = 256,
 
     ALLOW_EXPORT_TO_PARENT = 16,
 

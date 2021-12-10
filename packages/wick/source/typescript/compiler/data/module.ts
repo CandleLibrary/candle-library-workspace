@@ -239,6 +239,9 @@ export async function importResource(
             ref_type = BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE; flag = BINDING_FLAG.FROM_PARENT;
             break;
 
+        case "@session":
+            ref_type = BINDING_VARIABLE_TYPE.SESSION_VARIABLE; flag = BINDING_FLAG.FROM_SESSION;
+            break;
         case "@api":
             ref_type = BINDING_VARIABLE_TYPE.MODULE_MEMBER_VARIABLE; flag = BINDING_FLAG.FROM_OUTSIDE;
             break;

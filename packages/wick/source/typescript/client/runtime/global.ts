@@ -1,6 +1,8 @@
 
 import GlowAnimation from '@candlelib/glow';
+import { registerWatcherComponent, unregisterWatcherComponent } from '../../common/session_watchers.js';
 import { Context, UserPresets } from "../../compiler/common/context.js";
+import { TemplateHTMLNode } from '../../index.js';
 import { Router } from '../radiate/router.js';
 
 import { WickRTComponent } from "./component/component.js";
@@ -57,7 +59,7 @@ export interface WickRuntime {
     /**
      * Template elements mapped to component names
      */
-    templates: Map<string, HTMLElement>;
+    templates: Map<string, HTMLTemplateElement>;
 
     OVERRIDABLE_onComponentCreate(component_instance: WickRTComponent): void;
 
@@ -92,6 +94,10 @@ const rt: WickRuntime = (() => {
 
             return glow;
         },
+
+        registerSession: registerWatcherComponent,
+
+        unregisterSession: unregisterWatcherComponent,
 
         root_components: [],
 
