@@ -89,7 +89,8 @@ registerFeature(
                                 (i): i is JSIdentifierBinding => i.type == JSNodeType.IdentifierBinding
                             ) ?? [];
 
-                            const name = "__" + function_frame.ast.nodes[0].value.slice(1) + "__";
+                            const name = "_" + component.frames.length + "_";
+                            // const name = "__" + function_frame.ast.nodes[0].value.slice(1) + "__";
 
                             function_frame.ast.nodes[0].value = name;
 
