@@ -1,7 +1,7 @@
 {
     "name": "@candlelib/dev-tools",
     "type": "module",
-    "version": "0.7.18",
+    "version": "0.7.25",
     "description": "Development Tools for Candle Library",
     "main": "./build/index.js",
     "license": "MIT",
@@ -16,9 +16,6 @@
         "@candlelib/log": "0.3.4",
         "@candlelib/paraffin": "0.1.28",
         "@candlelib/uri": "0.3.6",
-        "@types/node": "*"
-    },
-    "devDependencies": {
         "@types/node": "*"
     },
     "devDependencies": {

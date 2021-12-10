@@ -314,7 +314,6 @@ export function getCompiledBindingVariableName(
     comp_name: string = "this"
 ) {
     const external_name = getExternalName(binding);
-    const internal_name = getInternalName(binding);
     const module_name = getModuleName(binding);
     if (!binding || binding.type == BINDING_VARIABLE_TYPE.UNDECLARED) {
         const global_names = getSetOfEnvironmentGlobalNames();
@@ -338,6 +337,9 @@ export function getCompiledBindingVariableName(
                 if (!module_name)
                     return `${comp_name}.context.api.${external_name}`;
                 return `${comp_name}.context.api.${module_name}.module.${external_name}`;
+
+            case BINDING_VARIABLE_TYPE.STORE_VARIABLE:
+                return `${comp_name}.context.api.store.${external_name}`;
 
             case BINDING_VARIABLE_TYPE.UNDECLARED:
                 const global_names = getSetOfEnvironmentGlobalNames();
@@ -366,7 +368,10 @@ export function getCompiledBindingVariableName(
                 return "'---INVALID US OF STATIC BINDING---'";
 
             default:
-                return `${comp_name}[${comp_info.binding_records.get(binding.internal_name)?.index ?? -1}]`;
+                if (comp_info)
+                    return `${comp_name}[${comp_info.binding_records.get(binding.internal_name)?.index ?? -1}]`;
+                else
+                    throw new Error("comp_info not defined");
         }
     else
         return name;

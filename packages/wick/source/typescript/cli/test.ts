@@ -26,7 +26,6 @@ import { workspace_modules_dispatch } from '../workspace/dispatchers/workspace_m
 import { loadComponentsFromDirectory } from '../workspace/server/load_directory.js';
 import { getDependentComponents } from "../workspace/server/webpage.js";
 import { create_config_arg_properties } from "./config_arg_properties.js";
-import { init_build_system } from '../compiler/init_build_system.js';
 
 class WickBrowserRunner extends BrowserRunner {
     constructor(...args: []) {

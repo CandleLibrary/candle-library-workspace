@@ -4,6 +4,7 @@ import { ComponentElement, WickRTComponent } from '../runtime/component/componen
 import { hydrateComponentElements } from '../runtime/component/html.js';
 import { Element } from './element.js';
 import { rt, WickEnvironment } from '../runtime/global.js';
+import { Environment, envIs } from '../../common/env.js';
 
 export const enum PageType {
     WICK_PAGE,
@@ -27,10 +28,10 @@ export class Page {
     SHOULD_CLOSE: boolean;
     style: any;
     reply: any;
-
+    title?: HTMLTitleElement;
     page_component_name: string;
 
-    constructor(URL: URI, app_page: ComponentElement) {
+    constructor(URL: URI, app_page: ComponentElement, title?: HTMLTitleElement) {
 
         app_page.classList.add("radiate-page");
 
@@ -45,7 +46,7 @@ export class Page {
         this.CONNECTED = false;
         this.SHOULD_CLOSE = false;
         this.style = null;
-
+        this.title = title;
         this.init_components();
     }
 
@@ -54,9 +55,10 @@ export class Page {
         if (this.ele) {
             for (const comp of hydrateComponentElements([this.ele])) {
                 if (comp) {
-                    comp.initialize().connect();
 
-                    if (rt.isEnv(WickEnvironment.WORKSPACE))
+                    comp.initialize();
+
+                    if (envIs(Environment.WORKSPACE))
                         rt.addRootComp(comp);
                 }
             }
@@ -126,8 +128,12 @@ export class Page {
         if (this.style && !this.style.parentElement)
             document.head.appendChild(this.style);
 
+        if (this.title)
+            document.title = this.title.innerText;
+
         if (this.ele) {
 
+            this.ele.classList.add('radiate-init', "radiate-hide");
 
             this.CONNECTED = true;
 
@@ -150,6 +156,12 @@ export class Page {
         for (const element of this.eles)
             element.down(data, src);
     }
+
+    transitionStart() {
+        if (this.ele)
+            this.ele.classList.remove('radiate-hide');
+    }
+
     transitionOut(transition: Transition) {
         if (this.component) {
             this.component.transitionOut(0, 0, false, transition);
@@ -159,7 +171,11 @@ export class Page {
     transitionIn(transition: Transition) {
         if (this.component)
             this.component.transitionIn(0, 0, false, transition);
+
+        if (this.ele)
+            this.ele.classList.remove('radiate-init');
     }
+
     transitionComplete() {
         if (this.component)
             this.component.transitionInEnd();

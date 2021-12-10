@@ -1,23 +1,14 @@
 
 import GlowAnimation from '@candlelib/glow';
+import { registerWatcherComponent, unregisterWatcherComponent } from '../../common/session_watchers.js';
 import { Context, UserPresets } from "../../compiler/common/context.js";
+import { TemplateHTMLNode } from '../../index.js';
 import { Router } from '../radiate/router.js';
 
 import { WickRTComponent } from "./component/component.js";
 
-export const global_object = (typeof global !== "undefined") ? global : window;
-
-export const enum WickEnvironment {
-    WICK = 1,
-
-    RADIATE = 2,
-
-    WORKSPACE = 4
-}
 
 export interface WickRuntime {
-
-    environment: WickEnvironment;
     /**
      * A promise that is fulfilled once the 
      * workspace has been initialized. 
@@ -68,24 +59,14 @@ export interface WickRuntime {
     /**
      * Template elements mapped to component names
      */
-    templates: Map<string, HTMLElement>;
+    templates: Map<string, HTMLTemplateElement>;
 
     OVERRIDABLE_onComponentCreate(component_instance: WickRTComponent): void;
 
     OVERRIDABLE_onComponentMetaChange(component_meta: any): void;
 
-    /**
-     * Asserts whether the WickEnvironnement flag is on 
-     * rt.environnement
-     * @param wick 
-     */
-    isEnv(wick: WickEnvironment): boolean;
 
-    /**
-     * Applies the WickEnvironment flag to rt.environment.
-     * @param env 
-     */
-    setEnvironment(env: WickEnvironment): void;
+
 
     /**
      * Adds the comp to root components array if the 
@@ -107,14 +88,16 @@ const rt: WickRuntime = (() => {
 
     return <WickRuntime>{
 
-        environment: WickEnvironment.WICK,
-
         async loadGlow(glow_url: string = "@candlelib/glow") {
             //Import glow module if it is not present
             glow = (await import(glow_url)).default;
 
             return glow;
         },
+
+        registerSession: registerWatcherComponent,
+
+        unregisterSession: unregisterWatcherComponent,
 
         root_components: [],
 
@@ -151,14 +134,6 @@ const rt: WickRuntime = (() => {
 
         addRootComp(comp: WickRTComponent) {
             rt.root_components.push(comp);
-        },
-
-        setEnvironment(env: WickEnvironment) {
-            rt.environment |= env;
-        },
-
-        isEnv(env: WickEnvironment): boolean {
-            return (env & rt.environment) == env;
         },
 
 

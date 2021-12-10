@@ -1,6 +1,6 @@
 {
     "name": "@candlelib/glow",
-    "version": "0.5.1",
+    "version": "0.5.9",
     "description": "Animation Library",
     "main": "./build/glow.js",
     "types": "./build/glow.d.ts",

@@ -110,6 +110,19 @@ export function hydrateComponentElements(pending_component_elements: HTMLElement
     return components.filter(i => i !== null);
 }
 
+export function hydrateTemplateElement(comp_name: string) {
+    const template = rt.templates.get(comp_name);
+
+    if (!template)
+
+        throw new Error("Unable to acquire template for " + comp_name);
+
+    const
+        doc = template.content.cloneNode(true),
+        ele = <HTMLElement>doc.firstElementChild;
+
+    return hydrateComponentElement(ele);
+}
 
 export function hydrateComponentElement(
     hydrate_candidate: HTMLElement,
@@ -119,10 +132,11 @@ export function hydrateComponentElement(
 
     let names = getComponentNames(hydrate_candidate), affinity = 0;
 
+    const parent = parent_chain[parent_chain.length - 1];
 
     const u = undefined;
 
-    let first_comp: WickRTComponent | null = null;
+    let last_comp: WickRTComponent | null = null;
 
     for (const component_name of names) {
 
@@ -130,26 +144,27 @@ export function hydrateComponentElement(
 
         if (comp_class) {
 
-            if (!first_comp && existing_comp) {
-                first_comp = existing_comp;
-                parent_chain = parent_chain.concat(first_comp);
-                affinity++;
+            if (!last_comp && existing_comp) {
+                last_comp = existing_comp;
+                //parent_chain = parent_chain.concat(last_comp);
             } else {
 
-                let comp = new (comp_class)(<any>hydrate_candidate, u, parent_chain, u, u, affinity++);
+                let comp: WickRTComponent = new (comp_class)(<any>hydrate_candidate, last_comp, parent_chain, u, u);
 
                 comp.hydrate();
 
                 parent_chain = parent_chain.concat(comp);
 
-                if (!first_comp)
-                    first_comp = comp;
+                last_comp = comp;
             }
         } else
             Logger.get("wick").activate(LogLevel.WARN).warn(`WickRT :: Could not find component data for ${component_name}`);
     }
 
-    return first_comp;
+    if (parent && last_comp && last_comp != parent)
+        parent.addChild(last_comp);
+
+    return last_comp;
 }
 
 export function hydrateContainerElement(

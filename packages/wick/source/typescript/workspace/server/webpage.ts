@@ -28,8 +28,9 @@ type PageRenderHooks = {
      * component_class_declarations...
      * ```
      */
+    resolve_import_path: (string: string) => string,
     init_script_render: (component_class_declarations: string, context: Context) => string;
-    init_components_render: (component_class_declarations: string, context: Context) => string;
+    init_components_render: (component_class_declarations: string, context: Context, resolve_import_path: (string: string) => string) => string;
 };
 
 
@@ -49,11 +50,11 @@ function renderRadiatePageInit(component_class_declarations: string, context: Co
 `;
 }
 
-function renderComponentInit(component_class_declarations: string, context: Context) {
+function renderComponentInit(component_class_declarations: string, context: Context, resolve_import_path: (string: string) => string = _ => _) {
     return `
     const w = wick;
 
-    w.appendPresets(${renderPresets(context)});
+    w.appendPresets(${renderPresets(context, resolve_import_path)});
 
     ${component_class_declarations}
     `;
@@ -61,10 +62,12 @@ function renderComponentInit(component_class_declarations: string, context: Cont
 
 export const default_wick_hooks = {
     init_script_render: renderBasicWickPageInit,
-    init_components_render: renderComponentInit
+    init_components_render: renderComponentInit,
+    resolve_import_path: _ => _
 }, default_radiate_hooks = {
     init_script_render: renderRadiatePageInit,
-    init_components_render: renderComponentInit
+    init_components_render: renderComponentInit,
+    resolve_import_path: _ => _
 };
 
 
@@ -287,7 +290,7 @@ const boiler_plate = `
 
     * { box-sizing: border-box; }
 
-    html, body { min-height: 100%; }
+    html, body { height: 100%; }
 
     body {
         position:absolute; 
@@ -334,7 +337,7 @@ ${templates}
         ${hooks.init_script_render(script.split("\n").join("\n      "), context)}
     </script>
     <script type=module id="wick-component-script">
-        ${hooks.init_components_render(script.split("\n").join("\n      "), context)}
+        ${hooks.init_components_render(script.split("\n").join("\n      "), context, hooks.resolve_import_path)}
     </script>
   </body>
 </html>`;
@@ -368,6 +371,11 @@ function renderRadiatePageString(
             top:0;
             left:0;
         }
+
+        .radiate-hide {
+            opacity:0;
+        }
+
         radiate-modals {
             position:fixed;
             top:0;
@@ -389,16 +397,16 @@ ${templates}
       ${hooks.init_script_render(script.split("\n").join("\n      "), context)}
     </script>
     <script type=module id="wick-component-script">
-      ${hooks.init_components_render(script.split("\n").join("\n      "), context)}
+      ${hooks.init_components_render(script.split("\n").join("\n      "), context, hooks.resolve_import_path)}
     </script>
   </body>
 </html>`;
 }
 
 
-function renderPresets(context: Context) {
+function renderPresets(context: Context, resolve_import_path: (string: string) => string = _ => _) {
     const out_value = {
-        repo: [...context.repo.values()].map(repo => [repo.hash, repo.url])
+        repo: [...context.repo.values()].map(repo => [repo.hash, resolve_import_path(repo.url)])
     };
     return JSON.stringify(out_value);
 }

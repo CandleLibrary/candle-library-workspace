@@ -2,7 +2,7 @@ import { Logger } from "@candlelib/log";
 import { col_css, getPackageJsonObject, xtColor, xtF, xtReset } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
 import { exec, execSync } from "child_process";
-import { writeFile } from 'fs/promises';
+import { writeFile, readFile } from 'fs/promises';
 import { resolve } from 'path';
 import { CommitLog, Dependencies, Dependency, DevPkg, TestStatus, Version } from "../types/types";
 import { gitLog, gitStatus } from "./git.js";
@@ -261,10 +261,10 @@ export function getNewVersionNumber(dep: Dependency, release_channel = "", RELEA
 
             new_version.channel = release_channel;
 
-            if (commit_drift > 0) {
-                pkg_logger(dep).log(`Determined latest version for ${dep.name}: ${versionToString(latest_version)} `);
-                pkg_logger(dep).log(`Determined next version for ${dep.name}: ${versionToString(new_version)} `);
-            }
+
+            pkg_logger(dep).log(`Determined latest version for ${dep.name}: ${versionToString(latest_version)} `);
+            pkg_logger(dep).log(`Determined next version for ${dep.name}: ${versionToString(new_version)} `);
+
 
             res({
                 new_version: versionToString(new_version),
@@ -423,33 +423,34 @@ rm ./publish.bounty
 `, { mode: 0o777 });
 }
 
-async function createCommitBounty(pkg: DevPkg, dep: Dependency) {
+async function createCommitBounty(pkg: DevPkg, dep: Dependency, version: string = dep.version_data.new_version) {
 
     const logs = getChangeLog(dep);
 
     if (logs.length > 0) {
+        pkg_logger(dep).log(`Found ${logs.length} new logs for CHANGELOG.md`);
         //append to change log
 
         const
-            change_log_entry = `## [v${dep.version_data.new_version}] - ${createISODateString()} \n\n` + logs.join("\n\n");
+            change_log_entry = `## [v${version}] - ${createISODateString()} \n\n` + logs.join("\n\n");
 
         await writeFile(resolve(pkg._workspace_location, "change_log_addition.md"), change_log_entry + "\n\n");
     }
-
-    const version = dep.version_data.new_version;
-
-    const change_log = getChangeLog(dep);
-    const cl_data = change_log.join("\n");
 
     await writeFile(resolve(pkg._workspace_location, "commit.bounty"),
         `#! /bin/bash 
 
 cd $(dirname "$0")
 
+echo "Applying changelog update to ${dep.name}"
+
 # Update changelog
 touch ./change_log_addition.md
+touch ./CHANGELOG.md
 echo -n "$( cat ./CHANGELOG.md || '' )" >> ./change_log_addition.md
 mv -f ./change_log_addition.md ./CHANGELOG.md
+
+echo "Applying package.json update to ${dep.name}"
 
 # Update package.json
 if test -f ./package.temp.json; then
@@ -459,7 +460,7 @@ fi
 
 git add ./
 
-git reset ./commit.bounty ./publish.bounty ./change_log_addition.md
+git reset ./commit.bounty ./publish.bounty ./change_log_temp.md
         
 # git commit -m "version ${dep.name} to ${version}"
 # 
@@ -488,15 +489,18 @@ done
 }
 
 async function createCommitVersionBountyHunter(
-    curr_commit: string,
-    prev_commit: string,
+    dev_commit: string,
+    prev_dev_commit: string,
     ...bounty_paths: Dependency[]
 ) {
     await writeFile(URI.resolveRelative("./root.commit.bounty") + "",
         `#! /bin/bash
 
-CURR_COMMIT="${curr_commit}"
-PREV_COMMIT="${prev_commit}"
+DEV_COMMIT="${dev_commit}"
+PREV_DEV_COMMIT="${prev_dev_commit}"
+
+echo "Development Commit to be merged $DEV_COMMIT"
+echo "Previous Merged Development Commit  $PREV_DEV_COMMIT"
 
 # Move to staged version branch
 
@@ -504,7 +508,11 @@ git switch $STAGED_VERSION_BRANCH
 
 # Merge Changes
 
-git merge --squash -X theirs $CURR_COMMIT
+git merge --allow-unrelated-histories --squash -X theirs --no-commit $DEV_COMMIT
+
+echo "Resetting changes to changelogs"
+
+git restore --source=HEAD \\*CHANGELOG.md
 
 LAST_VER_LOG=$(echo $(git --no-pager log --no-decorate HEAD^! ))
 
@@ -512,7 +520,7 @@ export LAST_VER_LOG
 
 LAST_VER_DIGITS=$(node -e "console.log(process.env.LAST_VER_LOG.match(/Version\\s*(\\d+)/)[1])")
 
-echo "Last Version $LAST_VER_DIGITS origin commit: $PREV_COMMIT"
+echo "Last Version $LAST_VER_DIGITS origin commit: $PREV_DEV_COMMIT"
 
 # Collect Commit Bounties 
 
@@ -524,6 +532,14 @@ for script in \${bounty_paths[@]}; do
     fi
 done
 
+echo "Updating staged with QoL files"
+
+git add .
+
+echo "Pre commit log"
+
+git status
+
 VER_PLUS=$(expr $LAST_VER_DIGITS + 1)
 
 # Perform stage commit 
@@ -532,7 +548,7 @@ git commit -m "Project Version $VER_PLUS
 
 ${bounty_paths.map((p, i) => `${p.name} @v${p.version_data.new_version}`).join("\n")}
 
-origin:$CURR_COMMIT"
+origin:$DEV_COMMIT"
 `, { mode: 0o777 });
 }
 /**
@@ -629,11 +645,14 @@ export async function validateEligibilityPackages(
             for (const key in pkg?.dependencies ?? {})
                 if (dependencies.has(key)) {
                     const dep = dependencies.get(key);
+                    if (dep) {
 
-
-                    pkg.dependencies[key] = dep.version_data.NEW_VERSION_REQUIRED
-                        ? dep.version_data.new_version
-                        : dep.version_data.latest_version;
+                        pkg.dependencies[key] = dep.version_data.NEW_VERSION_REQUIRED
+                            ? dep.version_data.new_version
+                            : dep.version_data.latest_version;
+                    } else {
+                        throw new Error(`Unable to resolve dependency ${key} from package ${pkg.name}`);
+                    }
                 }
 
             const logger = pkg_logger(dep);
@@ -651,19 +670,29 @@ export async function validateEligibilityPackages(
                 logger.log(`Updating package.json to v${dep.version_data.new_version}`);
                 if (!DRY_RUN) await writeFile(resolve(pkg._workspace_location, "package.temp.json"), json);
 
-                logger.log(`Creating A commit.bounty for ${dep.name}@${dep.version_data.new_version}`);
+                logger.log(`Creating a publish.bounty for ${dep.name}@${dep.version_data.new_version}`);
                 if (!DRY_RUN) await createPublishBounty(pkg, dep);;
 
-                logger.log(`Creating a publish.bounty for ${dep.name}@${dep.version_data.new_version}`);
+                logger.log(`Creating a commit.bounty for ${dep.name}@${dep.version_data.new_version}`);
                 if (!DRY_RUN) await createCommitBounty(pkg, dep);
-            } else
+            } else {
                 dev_logger.log(`No version change required for ${dep.name} at v${dep.version_data.latest_version}`);
+
+                pkg.version = dep.version_data.latest_version;
+                const json = JSON.stringify(Object.assign({}, pkg, { _workspace_location: undefined }), null, 4);
+
+                logger.log(`Preserving package.json v${dep.version_data.latest_version}`);
+                if (!DRY_RUN) await writeFile(resolve(pkg._workspace_location, "package.temp.json"), json);
+
+                logger.log(`Creating Aa commit.bounty for ${dep.name}@${dep.version_data.latest_version}`);
+                if (!DRY_RUN) await createCommitBounty(pkg, dep, dep.version_data.latest_version);
+            }
         }
     }
 
     if (updated.size > 0) {
-        await createCommitVersionBountyHunter(curr_origin_commit, prev_origin_commit, ...updated);
-        await createPublishVersionBountyHunter(...updated);
+        await createCommitVersionBountyHunter(curr_origin_commit, prev_origin_commit, ...processed);
+        await createPublishVersionBountyHunter(...processed);
     }
 
     return true;

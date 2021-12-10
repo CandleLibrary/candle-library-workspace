@@ -1,9 +1,11 @@
 
 import { CSS_Transform2D } from '@candlelib/css';
+import glow from '@candlelib/glow';
 import { WickRTComponent } from "../../client/runtime/component/component.js";
+import { Status } from '../../client/runtime/component/component_status.js';
 import { WickContainer } from "../../client/runtime/component/container";
 import { String_Is_Wick_Hash_ID } from '../../client/runtime/component/html.js';
-import { rt, WickEnvironment } from '../../client/runtime/global.js';
+import { rt, } from '../../client/runtime/global.js';
 import { Context, WickLibrary } from '../../index.js';
 import { EditorCommand } from "../../types/editor_types.js";
 import { PatchType } from "../../types/patch";
@@ -12,9 +14,12 @@ import { Session } from '../common/session.js';
 import { createSelection, getRuntimeComponentsFromName, updateActiveSelections } from './common_functions.js';
 import { EditorModel } from "./editor_model.js";
 import { loadPlugins } from './plugin.js';
+import { setRegisterHook } from "../../client/runtime/component/component.js";
 import { EditedComponent, WorkspaceSystem } from "./types/workspace_system.js";
+import { Environment, envIs } from '../../common/env.js';
+import { FLAG_ID_OFFSET } from "../../types/all.js";
 
-const patch_logger = logger.get("patch");
+const patch_logger = logger.get("patch").activate();
 export function revealEventIntercept(sys: WorkspaceSystem) {
     const { ui: { event_intercept_frame: event_intercept_ele } } = sys;
     if (event_intercept_ele)
@@ -145,6 +150,21 @@ export function initSystem(
 
     initializeDefualtSessionDispatchHandlers(sys.session, page_wick, sys);
 
+    setRegisterHook((comp: string) => {
+        if (sys.session.ACTIVE) {
+            sys.session.send_command({ command: EditorCommand.REGISTER_CLIENT_COMPONENT, comp_name: comp });
+        } else {
+            setTimeout(() => {
+                if (sys.session.ACTIVE) {
+                    sys.session.send_command({ command: EditorCommand.REGISTER_CLIENT_COMPONENT, comp_name: comp });
+                } else {
+                    throw new Error("unable to register component " + comp);
+                }
+            }, 5000);
+        }
+
+    });
+
     loadPlugins(sys);
 
     active_system = sys;
@@ -159,14 +179,34 @@ function initializeDefualtSessionDispatchHandlers(
 ) {
 
     session.setHandler(EditorCommand.UPDATED_COMPONENT, (command, session) => {
-        const { new_name, old_name, path } = command;
 
+        const { new_name, old_name, path } = command;
 
         // Identify all top_level components that need to be update. 
         const matches = getRuntimeComponentsFromName(old_name, page_wick);
 
-        if (matches.length > 0)
-            session.send_command({ command: EditorCommand.GET_COMPONENT_PATCH, to: new_name, from: old_name });
+        const names: Set<string> = new Set();
+
+        for (let match of matches) {
+
+            while (match.host)
+                match = match.host;
+
+            while (match.par) {
+                if (!match.is(Status.FOREIGN_HOST))
+                    break;
+                match = match.par;
+            }
+
+            names.add(match.name);
+        }
+
+        for (const name of names) {
+            if (name == old_name)
+                session.send_command({ command: EditorCommand.GET_COMPONENT_PATCH, to: new_name, from: old_name });
+            else
+                session.send_command({ command: EditorCommand.GET_COMPONENT_PATCH, to: name, from: name });
+        }
     });
 
 
@@ -349,11 +389,10 @@ function initializeDefualtSessionDispatchHandlers(
                                 let i = 0;
 
                                 for (const [name, flag] of Object.entries(match.nlu) as [string, number][]) {
-                                    if (new_component.nlu[name] && new_component.nlu[name] != undefined)
-                                        continue;
-
-                                    //@ts-ignore
-                                    new_component.update({ [name]: match[i++] }, flag >>> 24);
+                                    if (new_component.nlu[name] && new_component.nlu[name] != undefined) {
+                                        //@ts-ignore
+                                        new_component.update({ [name]: match[i++] }, new_component.nlu[name] >>> FLAG_ID_OFFSET.VALUE);
+                                    }
                                 }
                             }
 
@@ -361,23 +400,27 @@ function initializeDefualtSessionDispatchHandlers(
                             match.destructor();
 
 
-
                             if (removeRootComponent(match, page_wick))
                                 addRootComponent(new_component, page_wick);
 
-                            if (match.ele.classList.contains("radiate-page"))
+                            if (match.ele.classList.contains("radiate-page")) {
+
                                 //Integrate new component into page.
-                                if (rt.isEnv(WickEnvironment.RADIATE) && rt.router) {
+                                if (envIs(Environment.RADIATE) && rt.router) {
                                     for (const [, page] of rt.router.pages) {
                                         if (page.component == match) {
                                             page.component = new_component;
                                             page.ele = <any>new_component.ele;
                                             page.ele?.classList.add("radiate-page");
+                                            const trs = glow.createTransition(true);
+                                            new_component.transitionIn(0, 0, false, trs);
+                                            trs.set(10000000);
                                             new_component.transitionInEnd();
                                             break;
                                         }
                                     }
                                 }
+                            }
                         }
                     }
                 }

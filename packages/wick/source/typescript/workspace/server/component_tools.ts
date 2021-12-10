@@ -2,18 +2,18 @@ import { Logger } from '@candlelib/log';
 import URI from '@candlelib/uri';
 import { promises as fsp } from "fs";
 import { rt } from '../../client/runtime/global.js';
-import { createCompiledComponentClass } from '../../compiler/ast-build/build.js';
+import { createCompiledComponentClass, createComponentTemplates } from '../../compiler/ast-build/build.js';
+import { htmlTemplateToString } from '../../compiler/ast-render/html.js';
 import { createClassStringObject } from '../../compiler/ast-render/js.js';
 import { ComponentData } from '../../compiler/common/component.js';
 import { Context } from '../../compiler/common/context';
 import { ComponentHash } from '../../compiler/common/hash_name.js';
 import { createComponent } from '../../compiler/create_component.js';
-import { componentDataToCSS } from '../../compiler/ast-render/css.js';
+import { ensureComponentHasTemplates } from '../../compiler/ast-build/html.js';
 import { EditorCommand } from '../../types/editor_types.js';
 import { Patch, PatchType } from "../../types/patch";
-import { ChangeType } from '../../types/transition.js';
 import { Session } from '../common/session.js';
-import { addTransition, getComponent, getTransition, store, __sessions__ } from './store.js';
+import { addComponent, getComponent, store, __sessions__ } from './store.js';
 
 export const logger = Logger.createLogger("flame");
 
@@ -61,29 +61,7 @@ location ${old_comp.location + ""}
         `);
     } else {
 
-        // Check to see if there exists a transition from this component 
-        // to new one
-        const transition = getTransition(old_comp.name, new_comp.name);
 
-        if (!transition) {
-            //Create a general transition for this component 
-            addTransition({
-                old_id: old_comp.name,
-                new_id: new_comp.name,
-                new_location: old_comp.location + "",
-                old_location: old_comp.location + "",
-                changes: [
-                    {
-                        type: ChangeType.General,
-                        component: old_comp.name,
-                        changes: [],
-                        location: old_comp.location + ""
-                    }
-                ],
-                old_source: old_comp.source,
-                new_source: new_comp.source,
-            });
-        }
 
 
         for (const endpoint of store.page_components?.get(path)?.endpoints ?? [])
@@ -142,101 +120,42 @@ export async function getPatch(
     to: string,
     context: Context
 ): Promise<Patch[PatchType]> {
+
     logger.debug("Retrieving patch");
-    const transition = getTransition(from, to);
 
-    if (!transition) {
-        throw new Error("Transition not defined");
-    }
+    if (from == to) {
 
-    if (transition.patch) {
-        logger.debug("Using cached patch");
-        return transition.patch;
-    }
+        const component_from = await getComponent(from);
 
-    let patch = null;
+        if (!component_from) throw new Error("Could not retrieve from component");
 
-    const component_from = await getComponent(from);
-    const component_to = await getComponent(to);
+        const component_to = await reloadComponent(component_from.location + "");
 
-    if (!component_from) throw new Error("Could not retrieve from component");
-    if (!component_to) throw new Error("Could not retrieve to component");
-
-    if (
-        true
-        ||
-        component_to.code_hash != component_from.code_hash
-        ||
-        component_to.ele_hash != component_from.ele_hash
-        ||
-        component_to.text_hash != component_from.text_hash
-    ) {
-        logger.debug("Creating replace patch");
-        patch = {
-            type: PatchType.REPLACE,
-            to: component_to.name,
-            from: component_from.name,
-            patch_scripts: await createReplacePatch(component_to, context)
-        };
-
-    } else if (component_to.css_hash != component_from.css_hash) {
-        logger.debug("Creating css patch");
-        patch = await createCSSPatch(patch, from, to);
-
-    } else if (component_to.text_hash != component_from.text_hash) {
-        logger.debug("Creating text patch");
-        const elements = [
-            [component_to.HTML, component_from.HTML]
-        ];
-
-        const patches: Patch[PatchType.TEXT]["patches"] = [];
-
-        for (const [to, from] of elements) {
-
-            if (!("IS_BINDING" in to) && !("tag" in to) && "data" in to) {
-                if (to.data != from?.data)
-                    patches.push({ index: 0, to: to.data, from: from?.data ?? "" });
-            } else if (to.nodes)
-                for (let i = 0; i < to?.nodes.length; i++) {
-                    elements.push([
-                        to.nodes[i],
-                        from.nodes[i],
-                    ]);
-                }
-        }
-
-        patch = {
-            type: PatchType.TEXT,
-            to: component_to.name,
-            from: component_from.name,
-            patches: patches
-        };
-    } else {
-        logger.debug("Creating replace patch");
-        patch = {
-            type: PatchType.REPLACE,
-            to: component_to.name,
-            from: component_from.name,
-            patch_scripts: await createReplacePatch(component_to, context)
-        };
-    }
-
-    transition.patch = patch;
-
-    return patch;
-}
-
-async function createCSSPatch(patch: any, from: string, to: string) {
-    const comp = await getComponent(to);
-    if (comp) {
+        if (!component_to) throw new Error("Could not retrieve to component");
 
         return {
-            type: PatchType.CSS,
-            from: from,
-            to: to,
-            style: componentDataToCSS(comp)
+            type: PatchType.REPLACE,
+            to: component_to.name,
+            from: component_from.name,
+            patch_scripts: await createReplacePatch(component_to, context)
         };
-    } else return null;
+    } else {
+
+        const component_from = await getComponent(from);
+        const component_to = await getComponent(to);
+
+        if (!component_from) throw new Error("Could not retrieve from component");
+        if (!component_to) throw new Error("Could not retrieve to component");
+
+
+        return {
+            type: PatchType.REPLACE,
+            to: component_to.name,
+            from: component_from.name,
+            patch_scripts: await createReplacePatch(component_to, context)
+        };
+    }
+
 }
 
 async function createReplacePatch(
@@ -264,15 +183,28 @@ async function createRPPatchScript(
 
 
     const comp_class = await createCompiledComponentClass(comp, context, true, true);
+
+    await ensureComponentHasTemplates(comp, context);
+
+    if (!comp.template)
+        throw new Error("Could not generate template for " + comp.name);
+
     const class_strings = `
         const name = "${comp.name}";
         const WickRTComponent = wick.rt.C;
         const components= wick.rt.context.component_class;
+        const w = wick;
         
         if(components.has(name))
             logger.log(\`Replacing component class [${comp.name}] \`)
         
         const class_ = ${createClassStringObject(comp, comp_class, context).class_string};
+
+        const div = document.createElement("div");
+
+        div.innerHTML = \`${htmlTemplateToString(comp.template)}\`;
+
+        wick.rt.templates.set(name, div.firstElementChild);
         
         components.set(name, class_);
 
@@ -310,3 +242,53 @@ export function getComponentDependencies(
 
     return output;
 }
+
+
+export async function reloadComponent(path: string, sessions?: Set<Session>) {
+    const location = new URI(path);
+
+    const comp = await createComponent(location, rt.context);
+
+    if (comp) {
+        if (comp.HAS_ERRORS) {
+
+            logger.warn(`Component ${comp.name} [${comp.location}] has the following problems: `);
+
+            for (const error of rt.context.getErrors(comp) ?? [])
+                logger.warn(error);
+
+            rt.context.clearWarnings(comp);
+            rt.context.clearErrors(comp);
+            rt.context.components.delete(comp.name);
+
+        } else {
+
+            //Update any endpoint that have a matching source path.
+            if (store.page_components?.has(path)) {
+                for (const p of store.page_components.get(path)?.endpoints ?? []) {
+                    //Update endpoints with this component 
+                    store.endpoints?.set(p, { comp });
+                    logger.log(`Updating endpoint [ ${p} ]`);
+                }
+            }
+
+            addComponent(comp);
+
+            const cmp = store.components?.get(path);
+
+            if (cmp) {
+
+                const { comp: existing } = cmp;
+
+                if (existing.name != comp.name) {
+                    swap_component_data(comp, existing, sessions);
+                }
+            }
+        }
+
+        return comp;
+    }
+
+    return null;
+}
+

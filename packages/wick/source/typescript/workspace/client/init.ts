@@ -1,6 +1,7 @@
 import { Logger } from "@candlelib/log";
 import spark from "@candlelib/spark";
 import { rt, WickEnvironment } from '../../client/runtime/global.js';
+import { Environment, setEnv } from '../../common/env.js';
 import { UserPresets, WickLibrary } from '../../index.js';
 import { getComponentNameFromElement } from './common_functions.js';
 import { initializeEvents } from './event.js';
@@ -8,8 +9,7 @@ import { initSystem } from './system.js';
 
 export const logger = Logger.createLogger("wick-client").activate();
 
-rt.setEnvironment(WickEnvironment.WORKSPACE);
-
+setEnv(Environment.WORKSPACE);
 export function init() {
 
 

@@ -15,7 +15,8 @@ import {
     CompiledComponentClass,
     FunctionFrame,
     HTMLNodeClass,
-    STATIC_RESOLUTION_TYPE
+    STATIC_RESOLUTION_TYPE,
+    BINDING_FLAG
 } from "../../types/all.js";
 import { componentDataToCSS } from "../ast-render/css.js";
 import {
@@ -30,7 +31,7 @@ import {
     Node_Is_Binding_Identifier
 } from "../common/binding.js";
 import { setPos } from "../common/common.js";
-import { ComponentData } from '../common/component.js';
+import { ComponentData, ORIGINATOR_ID } from '../common/component.js';
 import { Context } from '../common/context.js';
 import {
     appendStmtToFrame,
@@ -104,7 +105,6 @@ export async function createCompiledComponentClass(
     const run_tag = metrics.startRun("Class Build");
 
     try {
-
         const class_info = createClassInfoObject();
 
         //HTML INFORMATION
@@ -138,6 +138,7 @@ export async function createCompiledComponentClass(
                 prependStmtToFrame(class_info.init_interface_frame, nluf);
 
 
+
             // check for any onload frames. This will be converted to the async_init frame. Any
             // statements defined in async_init will prepended to the frames statements. Create
             // a new frame if onload is not present
@@ -157,9 +158,20 @@ export async function createCompiledComponentClass(
             else
                 appendStmtToFrame(class_info.init_frame, ...getStatementsFromRootFrame(root_frame));
 
+            //Session Variables - enabled if the component has session bindings
+            if (component.root_frame.binding_variables) {
+                const bindings = [...component.root_frame.binding_variables.values()];
+                if (bindings.some(b => (b.flags & BINDING_FLAG.FROM_SESSION) == BINDING_FLAG.FROM_SESSION && b.class_index >= 0)) {
+                    appendStmtToFrame(class_info.init_frame, stmt(`w.rt.registerSession(this)`));
+                    appendStmtToFrame(class_info.terminate_frame, stmt(`w.rt.unregisterSession(this)`));
+                }
+
+            }
+
             //Ensure there is an async init method
             for (const function_block of out_frames)
                 await makeComponentMethod(function_block, component, class_info, context);
+
 
         }
 
@@ -448,7 +460,12 @@ export async function finalizeBindingExpression(
                     mutate(<any>parse_js_exp(`${self_ref}.ctr[${node.value.slice(5)}]`));
                     skip();
                 } else if (node.value.slice(0, 4) == ("$$ch")) {
-                    mutate(<any>parse_js_exp(`${self_ref}.ch[${node.value.slice(4)}]`));
+                    const val = parseInt(node.value.slice(4));
+                    if (val == ORIGINATOR_ID) {
+                        mutate(<any>parse_js_exp(`${self_ref}.originator`));
+                    } else {
+                        mutate(<any>parse_js_exp(`${self_ref}.ch[${val}]`));
+                    }
                     skip();
                 } else if (node.value.slice(0, 4) == "$$bi") {
                     const binding = getComponentBinding(node.value.slice(4), component);
@@ -470,6 +487,8 @@ export async function finalizeBindingExpression(
                     name = <string>node.value,
                     binding = getComponentBinding(name, component);
                 if (
+                    binding
+                    &&
                     binding.type == BINDING_VARIABLE_TYPE.TEMPLATE_CONSTANT
                     ||
                     binding.type == BINDING_VARIABLE_TYPE.CONFIG_GLOBAL

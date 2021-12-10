@@ -1,15 +1,16 @@
-import { Context, UserPresets } from '../compiler/common/context.js';
+import { Router } from '../client/index.js';
 import { WickRTComponent } from '../client/runtime/component/component.js';
-import { rt, WickEnvironment } from "../client/runtime/global.js";
 import {
     Element_Is_Wick_Component,
     Element_Is_Wick_Template, hydrateComponentElements
 } from "../client/runtime/component/html.js";
+import { rt } from "../client/runtime/global.js";
 import { loadModules } from "../client/runtime/load_modules.js";
 import { Observable } from '../client/runtime/observable/observable.js';
 import { ObservableArray } from '../client/runtime/observable/observable_array.js';
 import { ObservableScheme__ } from '../client/runtime/observable/observable_prototyped.js';
-import { Router } from '../client/index.js';
+import { Environment, envIs } from '../common/env.js';
+import { Context, UserPresets } from '../compiler/common/context.js';
 
 let
     nop = (_: any) => !0,
@@ -95,9 +96,7 @@ const wick = Object.assign(wick_root, {
 
                 comp.initialize();
 
-                comp.connect();
-
-                if (rt.isEnv(WickEnvironment.WORKSPACE))
+                if (envIs(Environment.WORKSPACE))
                     rt.addRootComp(comp);
             }
         });

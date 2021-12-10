@@ -4,5 +4,7 @@ export const enum Status {
     DESTROY_AFTER_TRANSITION = 1 << 2,
     CONTAINER_COMPONENT = 1 << 3,
     INITIALIZED = 1 << 4,
-    ALLOW_UPDATE = 1 << 5
+    ALLOW_UPDATE = 1 << 5,
+    TRANSITIONED_OUT = 1 << 6,
+    FOREIGN_HOST = 1 << 7
 }

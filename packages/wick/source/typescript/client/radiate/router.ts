@@ -72,9 +72,7 @@ export class Router {
     modal_stack: Page[];
     prev_url: URI | null;
 
-    model: Observable<{
-        uri: URI | null;
-    }>;
+    head_sigs: Set<string>;
 
     /**
      * Constructs the object.
@@ -82,8 +80,6 @@ export class Router {
     constructor(wick: typeof Wick) {
 
         //Initialize CSS + Conflagrate Parsers
-
-        this.model = Observable({ uri: null });
 
         this.pages = new Map;
 
@@ -111,10 +107,49 @@ export class Router {
 
         this.wick = wick;
 
-        this.model.uri = new URI;
+        this.head_sigs = new Set;
 
+        wick.rt.context.api.router = {
 
-        wick.rt.context.integrate_new_options({ models: { router: this.model } });
+            default: null,
+
+            page_uir: null,
+
+            setHashSilently: (string: string) => {
+                history.replaceState(null, "", document.location.pathname + '#' + string);
+                this.current_url.hash = string;
+            },
+
+            setHash: (string: string) => {
+                document.location.hash = string;
+            },
+
+            getHash: (): string => {
+                return document.location.hash;
+            },
+
+            closeModal: (data: any) => this.closeModal(data),
+
+            setLocation: (string: string) => {
+
+                let url = new URI(string);
+
+                if (!url.host) {
+
+                    if (url.IS_RELATIVE) {
+                        const { path } = <URI>URI.resolveRelative(url.path, this.current_url);
+                        url.path = path;
+                    }
+                    url.host = URI.GLOBAL.host;
+                    url.port = URI.GLOBAL.port;
+
+                    if (!url.protocol)
+                        url.protocol = URI.GLOBAL.protocol;
+                }
+
+                this.parseURL(url);
+            }
+        };
 
         wick.rt.context.processLink = (temp: HTMLElement) => {
             if (!temp.onclick) temp.onclick = (e: MouseEvent) => {
@@ -169,24 +204,28 @@ export class Router {
 
         let modal = this.modal_stack[top];
 
-        modal.SHOULD_CLOSE = true;
-
-        if (modal.reply)
-            modal.reply(data);
-
-        modal.reply = null;
-
-        let next_modal = this.modal_stack[top - 1];
-
-        if (next_modal)
-            return this.loadPage(next_modal);
+        if (modal) {
 
 
-        if (this.prev_url)
+            modal.SHOULD_CLOSE = true;
 
-            return this.parseURL(this.prev_url.toString(), this.prev_url);
+            if (modal.reply)
+                modal.reply(data);
 
-        return new URI(this.current_url);
+            modal.reply = null;
+
+            let next_modal = this.modal_stack[top - 1];
+
+            if (next_modal)
+                return this.loadPage(next_modal);
+
+
+            if (this.prev_url)
+
+                return this.parseURL(this.prev_url.toString(), this.prev_url);
+
+        }
+        return new URI(this.current_url + "");
     }
 
     /*
@@ -198,12 +237,13 @@ export class Router {
         wurl: URI = new URI(location),
         pending_modal_reply = null
     ) {
-        this.model.uri = wurl;
 
         let
             url = wurl.toString(),
 
-            IS_SAME_PAGE = (this.current_url == url),
+            IS_SAME_URL = (
+                (this.current_url + "") == (wurl + "")
+            ),
 
             page = null;
 
@@ -214,15 +254,20 @@ export class Router {
             page.reply = pending_modal_reply;
 
             if (
-                IS_SAME_PAGE
+                IS_SAME_URL
                 &&
                 this.current_view == page
+                &&
+                this.modal_stack.length == 0
 
             ) {
 
                 URL_HOST.wurl = wurl;
 
-                logger.log("missing same-page resolution");
+                if (wurl.hash && wurl.hash != document.location.hash) {
+                    document.location.hash = wurl.hash;
+                    logger.log("hash updated");
+                }
 
                 return;
             }
@@ -245,7 +290,7 @@ export class Router {
         }
 
         if (page)
-            this.loadPage(page, wurl, IS_SAME_PAGE);
+            this.loadPage(page, wurl, IS_SAME_URL);
     }
 
     /**
@@ -290,20 +335,12 @@ export class Router {
         wurl: string | URI = new URI(document.location.href),
         IS_SAME_PAGE = false
     ) {
+
         if (typeof wurl == "string")
             wurl = new URI(wurl);
 
         //Update the radiate API for components
-        this.wick.rt.setPresets({
-            api: {
-                router: {
-                    page_url: wurl
-                }
-            }
-        });
-
-        console.log(wurl);
-
+        this.wick.rt.context.api.router.page_url = wurl;
 
         URL_HOST.wurl = wurl;
 
@@ -327,7 +364,7 @@ export class Router {
 
             let u = new URL(this.prev_url?.toString() ?? this.current_url.toString());
 
-            u.hash = `modal://${wurl + ""}`;
+            u.hash = `modal:${wurl.path}`;
 
             history.replaceState({
                 modal_state: true,
@@ -347,20 +384,18 @@ export class Router {
                 } else if (a !== page) {
                     a.primeDisconnect();
                     finalizing_pages.push(a);
-                    a.transitionOut(transition.out);
+                    a.transitionOut(transition);
                 }
                 return r;
             }, <Page[]>[]);
 
             this.modal_stack.push(page);
 
-            this.current_view = null;
-
             if (page.type != PageType.WICK_TRANSITIONING_MODAL) {
 
                 page.connect(getModalContainer(this), wurl);
 
-                page.transitionIn(transition.in);
+                page.transitionIn(transition);
 
                 await transition.asyncPlay();
 
@@ -371,15 +406,15 @@ export class Router {
 
 
         } else {
-            this.prev_url = wurl;
             this.current_view = page;
-            this.current_url = wurl.toString();
+            this.prev_url = new URI(wurl);
+            this.current_url = new URI(wurl);
 
             for (const modal of this.modal_stack) {
 
                 modal.primeDisconnect();
 
-                modal.transitionOut(transition.out);
+                modal.transitionOut(transition);
 
                 finalizing_pages.push(modal);
             }
@@ -387,29 +422,37 @@ export class Router {
             this.modal_stack.length = 0;
         }
 
-        if (current_view && current_view != page) {
+        if (!IS_SAME_PAGE)
 
-            //Set all components 
+            if (current_view && current_view != page) {
 
-            current_view.primeDisconnect();
+                //Set all components 
 
-            page.connect(app_ele, wurl, current_view);
+                current_view.primeDisconnect();
 
-            current_view.transitionOut(transition);
+                page.connect(app_ele, wurl, current_view);
 
-            finalizing_pages.push(current_view);
+                current_view.transitionOut(transition);
 
-            page.transitionIn(transition);
+                finalizing_pages.push(current_view);
 
-        } else if (!current_view) {
-            page.connect(app_ele, wurl);
+                page.transitionIn(transition);
 
-            page.transitionIn(transition);
-        }
+            } else if (!current_view) {
+                page.connect(app_ele, wurl);
+
+                page.transitionIn(transition);
+            }
+
+        transition.set(10);
+
+        if (!IS_SAME_PAGE)
+            page.transitionStart();
 
         await transition.asyncPlay();
-
-        page.transitionComplete();
+        
+        if (!IS_SAME_PAGE)
+            page.transitionComplete();
 
         this.finalizePageDisconnects();
 
@@ -478,6 +521,8 @@ export class Router {
 
                 page = new Page(url, app_page);
 
+                Array.from(DOM.head.children).map(c => this.head_sigs.add(c.outerHTML));
+
                 const wick_style = DOM.getElementById("wick-app-style");
 
                 if (wick_style)
@@ -489,6 +534,18 @@ export class Router {
                 // 
                 const wick_script = DOM.getElementById("wick-component-script");
 
+                const head_children = Array.from(DOM.head.children);
+
+                document.head.append(...head_children.filter(e => {
+                    return (
+                        e.tagName == "LINK" ||
+                        e.tagName == "META"
+                    ) && !this.head_sigs.has(e.outerHTML);
+                }).map(c => (this.head_sigs.add(c.outerHTML), c)));
+
+
+                const page_title = head_children.filter(e => e.tagName == "TITLE")[0];
+
                 if (wick_script)
                     await (async_function("wick", wick_script.innerHTML))(this.wick);
 
@@ -496,19 +553,15 @@ export class Router {
 
                 const wick_style = DOM.getElementById("wick-app-style");
 
-                page = new Page(url, app_source);
+                page = new Page(url, app_source, page_title);
 
                 if (wick_style)
                     page.style = wick_style.cloneNode(true);
             }
 
-            if (app_source.dataset.modal == "true" || pending_modal_reply) {
+            if (app_source.classList.contains("modal") || pending_modal_reply) {
 
                 page.setType(PageType.WICK_MODAL, this);
-                let modal: ComponentElement = <ComponentElement>document.createElement("radiate-modal");
-                modal.innerHTML = app_source.innerHTML;
-                app_source.innerHTML = "";
-                app_source = modal;
 
                 page.reply = pending_modal_reply;
 
@@ -540,8 +593,6 @@ export class Router {
                 NO_BUFFER = true;
 
             if (!NO_BUFFER) this.pages.set(url.path, page);
-
-
 
             return page;
         }

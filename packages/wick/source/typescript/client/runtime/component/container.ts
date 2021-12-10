@@ -2,7 +2,7 @@ import { Transition } from "@candlelib/glow";
 import spark, { Sparky } from "@candlelib/spark";
 import { WickRTComponent } from "./component.js";
 import { ObservableModel, ObservableWatcher } from "../../../types/model";
-import { hydrateComponentElements } from "./html.js";
+import { hydrateComponentElements, hydrateTemplateElement } from "./html.js";
 import { rt } from "../global.js";
 import { Status } from './component_status.js';
 
@@ -226,7 +226,7 @@ export class WickContainer implements Sparky, ObservableWatcher {
         this.components_pending_removal = [];
         this.ele = element;
 
-        if (null_elements.length > 0 || this.ele.tagName == "NULL") {
+        if (null_elements.length > 0 || this.ele.getAttribute("element") == "null") {
 
             this.USE_NULL_ELEMENT = true;
 
@@ -241,7 +241,6 @@ export class WickContainer implements Sparky, ObservableWatcher {
                 this.last_dom_element = null_elements[null_elements.length - 1];
 
                 for (const comp of hydrateComponentElements(null_elements)) {
-                    //comp.par = parent_comp;
                     comp.connect();
                     this.active_comps.push(<ContainerComponent>comp);
                     this.comps.push(<ContainerComponent>comp);
@@ -684,8 +683,8 @@ export class WickContainer implements Sparky, ObservableWatcher {
      * Appends elements to the DOM
      */
     append(appending_comp: WickRTComponent, append_before_ele?: HTMLElement) {
-
         if (this.USE_NULL_ELEMENT) {
+
             if (!this.NULL_ELEMENT_DISCONNECTED) {
 
                 if (this.ele.parentElement) {
@@ -785,6 +784,10 @@ export class WickContainer implements Sparky, ObservableWatcher {
             if (!rt.glow || NO_TRANSITION) {
                 this.removeFromDOM();
             } else {
+                for (const component of this.components_pending_removal)
+                    if (!component.is(Status.TRANSITIONED_IN))
+                        component.removeFromDOM();
+
                 transition.asyncPlay().then(this.removeFromDOM.bind(this));
             }
         }
@@ -1060,7 +1063,12 @@ export class WickContainer implements Sparky, ObservableWatcher {
 
                     if (j == cstr_l - 1 || (evaluator && evaluator(model))) {
 
-                        component = <ContainerComponent>new this.comp_constructors[j](null, null, [this.parent]);
+                        component = <ContainerComponent>hydrateTemplateElement(this.comp_constructors[j].name);
+
+                        if (!component)
+                            throw new Error("Unable create container component");
+
+                        this.parent.addChild(component);
 
                         component.setStatus(Status.CONTAINER_COMPONENT);
 
@@ -1108,6 +1116,12 @@ export class WickContainer implements Sparky, ObservableWatcher {
     purge() {
 
         let seen = new WeakSet();
+
+        if (this.USE_NULL_ELEMENT && this.NULL_ELEMENT_DISCONNECTED) {
+            const ele = this.first_dom_element;
+            ele?.parentElement?.insertBefore(this.ele, ele);
+            this.NULL_ELEMENT_DISCONNECTED = false;
+        }
 
         for (const comp of [
             ...this.comps,

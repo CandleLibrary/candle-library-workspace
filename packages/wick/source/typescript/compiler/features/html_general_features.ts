@@ -2,11 +2,11 @@
 import { JSNode, JSNodeType, stmt } from '@candlelib/js';
 import {
     BINDING_VARIABLE_TYPE,
-    HTMLAttribute, HTMLElementNode, HTMLNode, HTMLNodeType, WickBindingNode, HTMLBindingAttribute
+    HTMLAttribute, HTMLBindingAttribute, HTMLElementNode, HTMLNode, HTMLNodeType, WickBindingNode
 } from "../../types/all.js";
+import { ORIGINATOR_ID } from '../common/component.js';
 import { getAttributeValue, hasAttribute } from '../common/html.js';
 import { registerFeature } from './../build_system.js';
-import { ComponentHash } from './../common/hash_name.js';
 
 registerFeature(
 
@@ -243,7 +243,7 @@ registerFeature(
 
                             new_node.nodes = [];
 
-                            new_node.child_id = component.children.push(1) - 1;
+                            new_node.child_id = component.child_index++;
 
                             new_node.component = comp;
 
@@ -251,12 +251,6 @@ registerFeature(
 
                             new_node.component_name = new_node.component.name;
 
-                            //@ts-ignore
-                            new_node.attributes.push({
-                                type: HTMLNodeType.HTMLAttribute,
-                                name: "expat",
-                                value: ComponentHash(index + comp.name)
-                            });
 
                             if (hasAttribute("radiate_element", node)) {
                                 new_node.attributes.push({
@@ -293,7 +287,13 @@ registerFeature(
                             name = component.local_component_names.get(node.tag ?? "") ?? "",
                             comp = context.components.get(name);
 
-                        node.child_id = component.children.push(1) - 1;
+                        // If the component is the root element then assign 
+                        // the originator id [-1]
+
+                        if (!host_node)
+                            node.child_id = ORIGINATOR_ID;
+                        else
+                            node.child_id = component.child_index++;
 
                         node.component = comp;
 
@@ -341,13 +341,6 @@ registerFeature(
 
 
                                 node.attributes = new_attributes;
-
-                                //@ts-ignore
-                                node.attributes.push({
-                                    type: HTMLNodeType.HTMLAttribute,
-                                    name: "expat",
-                                    value: ComponentHash(index + comp.name + name)
-                                });
 
 
                                 if (hasAttribute("radiate_element", node)) {

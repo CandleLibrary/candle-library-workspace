@@ -20,7 +20,7 @@ import { JS_handlers } from "./js.js";
 export function getFunctionFrame(
     ast: JSNode,
     component: ComponentData,
-    frame: FunctionFrame = null,
+    frame: FunctionFrame | null = null,
     DONT_ATTACH = false,
     TEMPORARY = DONT_ATTACH
 ) {
@@ -48,11 +48,11 @@ export function incrementBindingRefCounters(function_frame: FunctionFrame) {
             root.binding_variables.get(name).ref_count += count;
 }
 
-export async function processFunctionDeclaration(node: JSNode, component: ComponentData, context: Context, root_name = "") {
-    return await processWickJS_AST(node, component, context, root_name, component.root_frame);
+export async function processFunctionDeclaration(node: JSNode, component: ComponentData, context: Context, frame: FunctionFrame = component.root_frame) {
+    return await processWickJS_AST(node, component, context, frame);
 }
 
-export async function processWickJS_AST(ast: JSNode, component: ComponentData, context: Context, root_name = "", frame = null, TEMPORARY = false): Promise<FunctionFrame> {
+export async function processWickJS_AST(ast: JSNode, component: ComponentData, context: Context, frame: FunctionFrame | null = null, TEMPORARY = false): Promise<FunctionFrame> {
     return await processCoreAsync(
         ast,
         getFunctionFrame(ast, component, frame, TEMPORARY),

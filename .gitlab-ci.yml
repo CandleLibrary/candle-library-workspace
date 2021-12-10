@@ -117,6 +117,7 @@ version_ts_modules:
       - "./*.bounty"
       - packages/**/*.bounty
       - packages/**/*.temp.json
+      - packages/**/change_log_temp.md
       - packages/**/change_log_addition.md
 
   dependencies:

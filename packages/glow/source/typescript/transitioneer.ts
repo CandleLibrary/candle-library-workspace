@@ -142,6 +142,9 @@ export class TransitionClass {
     OVERRIDE: boolean;
 
 
+    INITIALIZED: boolean;
+
+
     constructor(override = true) {
         this.constructCommon();
         this.in_duration = 0;
@@ -151,6 +154,8 @@ export class TransitionClass {
 
         this.in_seq = [];
         this.out_seq = [];
+
+        this.INITIALIZED = false;
 
         this.TT = {};
         //Final transition time is given by max(start_len+in_delay, end_len);\
@@ -210,6 +215,7 @@ export class TransitionClass {
         const in_t = t - this.in_delay;
 
         if (in_t >= 0) {
+            this.INITIALIZED = false;
             for (let i = 0; i < this.in_seq.length; i++) {
                 let seq = this.in_seq[i];
                 if (!seq.run(in_t) && !seq.FINISHED) {
@@ -217,6 +223,11 @@ export class TransitionClass {
                     seq.FINISHED = true;
                 }
             }
+        } else if (!this.INITIALIZED) {
+            for (let i = 0; i < this.in_seq.length; i++) {
+                this.in_seq[i].run(0);
+            }
+            this.INITIALIZED = true;
         }
 
         return (t <= this.duration && t >= 0);

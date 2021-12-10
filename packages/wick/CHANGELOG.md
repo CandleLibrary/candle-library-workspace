@@ -1,3 +1,9 @@
+## [v0.18.8] - 2021-12-10 
+
+- [2021-12-10]
+
+    Added `@session` synthetic import which currently has the named imports `width` and `height` that provide the Window innerWidth and innerHeight pixel values. These are automatically reactive and will update the component as the values are changed by viewport resizing.
+
 ## [v0.18.0] - 2021-12-07 
 
 - [2021-12-07]

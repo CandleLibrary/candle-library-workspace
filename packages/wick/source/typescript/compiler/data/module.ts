@@ -239,13 +239,16 @@ export async function importResource(
             ref_type = BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE; flag = BINDING_FLAG.FROM_PARENT;
             break;
 
+        case "@session":
+            ref_type = BINDING_VARIABLE_TYPE.SESSION_VARIABLE; flag = BINDING_FLAG.FROM_SESSION;
+            break;
         case "@api":
             ref_type = BINDING_VARIABLE_TYPE.MODULE_MEMBER_VARIABLE; flag = BINDING_FLAG.FROM_OUTSIDE;
             break;
 
-        /* case "@global":
-            ref_type = BINDING_VARIABLE_TYPE.GLOBAL_VARIABLE; flag = BINDING_FLAG.FROM_OUTSIDE;
-            break; */
+        case "@store":
+            ref_type = BINDING_VARIABLE_TYPE.STORE_VARIABLE; flag = BINDING_FLAG.FROM_OUTSIDE;
+            break;
 
         case "@globals":
             ref_type = BINDING_VARIABLE_TYPE.CONFIG_GLOBAL; flag = BINDING_FLAG.FROM_PRESETS;

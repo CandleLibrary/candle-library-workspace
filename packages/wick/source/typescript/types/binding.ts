@@ -47,6 +47,13 @@ export enum BINDING_VARIABLE_TYPE {
     CONSTANT_DATA_SOURCE = 16384,
     DYNAMIC_DATA_SOURCE = 32768,
 
+    STORE_VARIABLE = 65536,
+    /**
+     * Values that are update from listeners 
+     * attached to the window or document. 
+     */
+    SESSION_VARIABLE = 131072,
+
     /**
      * Variables that are replaced with direct
      * property access on the associated object
@@ -59,6 +66,12 @@ export enum BINDING_VARIABLE_TYPE {
     DIRECT_ACCESS = 16 | 64 | 128,
 }
 
+export const enum FLAG_ID_OFFSET {
+    VALUE = 22,
+
+    MASK = 0x3FFFFF
+}
+
 /**
  * These flags govern how data can move
  * through the boundaries of a component
@@ -66,11 +79,14 @@ export enum BINDING_VARIABLE_TYPE {
 export const enum BINDING_FLAG {
 
     DEFAULT_BINDING_STATE = 1,
+
     FROM_PARENT = 2,
 
     FROM_PRESETS = 4,
 
     FROM_OUTSIDE = 8,
+
+    FROM_SESSION = 256,
 
     ALLOW_EXPORT_TO_PARENT = 16,
 

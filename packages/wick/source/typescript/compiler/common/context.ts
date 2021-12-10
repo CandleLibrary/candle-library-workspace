@@ -217,7 +217,17 @@ export class Context {
 
         this.options = user_presets.options;
 
-        this.api = {};
+        this.api = {
+            store: <any>new Proxy(new Map, {
+                get(target, name, _) {
+                    return target.get(name);
+                },
+                set(target, name, val, _) {
+                    target.set(name, val);
+                    return true;
+                }
+            })
+        };
 
         this.models = {};
 
@@ -378,6 +388,9 @@ export class Context {
     addAPIObject(name: string, obj: any) {
 
         if (this.api) {
+
+            if (name == "store" || name == "router")
+                return;
 
             //if (name in this.api)
             //    return;

@@ -63,7 +63,8 @@ export async function componentDataToCompiledHTML(
     comp: ComponentData,
     context: Context = rt.context,
     model = null,
-) {
+): Promise<TemplatePackage> {
+
     const static_data_pack: StaticDataPack = {
         context,
         self: comp,
@@ -72,10 +73,26 @@ export async function componentDataToCompiledHTML(
         prev: null
     };
 
-    return __componentDataToCompiledHTML__(
+    let n: TemplateHTMLNode = {
+        tagName: "",
+        data: "",
+        attributes: new Map(),
+        children: [],
+        strings: [],
+    };
+
+    const template_map = new Map;
+
+    const { node } = await addComponent(
         comp.HTML,
         static_data_pack,
+        comp.name,
+        htmlState.IS_ROOT | htmlState.IS_COMPONENT,
+        n,
+        template_map,
     );
+
+    return { html: [node], templates: template_map };
 }
 
 
@@ -98,9 +115,7 @@ export async function __componentDataToCompiledHTML__(
     comp_data = [static_data_pack.self.name]
 ): Promise<TemplatePackage> {
 
-    const {
-        context,
-    } = static_data_pack;
+    const { context, } = static_data_pack;
 
     let node: TemplateHTMLNode = {
         tagName: "",
@@ -120,9 +135,6 @@ export async function __componentDataToCompiledHTML__(
             name_space: namespace_id
         }: HTMLNode = html,
             children = c.map(i => ({ USED: false, child: i, id: comp_data.length - 1 }));
-
-        if (html.id !== undefined && html.id !== 0)
-            addAttribute(node, "class", "wk-id-" + html.id);
 
         if (namespace_id)
             node.namespace = namespace_id;
@@ -153,12 +165,6 @@ export async function __componentDataToCompiledHTML__(
                 )
             );
 
-
-
-            //Replace the woo attribute with the local component index value
-            if (node)
-                addAttribute(node, "class", "wk-id-" + html.id);
-
         } else if (tag_name) {
 
             if (tag_name == "SLOT" && extern_children.length > 0 && slot_name) {
@@ -175,7 +181,7 @@ export async function __componentDataToCompiledHTML__(
                     return r_;
             }
 
-            await processElement(html, static_data_pack, node, tag_name, state, comp_data, template_map);
+            await processElement(html, static_data_pack, node, tag_name, state, template_map);
 
         } else if ("IS_BINDING" in html) {
 
@@ -188,6 +194,9 @@ export async function __componentDataToCompiledHTML__(
         const child_state = (((state) & (htmlState.IS_INTERLEAVED | htmlState.IS_COMPONENT))
             == (htmlState.IS_INTERLEAVED | htmlState.IS_COMPONENT))
             ? htmlState.IS_INTERLEAVED : 0;
+
+        if (!(state & htmlState.IS_ROOT))
+            addClaim(node, html, comp_data);
 
         for (const { child } of children.filter(n => !n.USED)) {
 
@@ -223,7 +232,6 @@ async function processElement(
     node: TemplateHTMLNode,
     tag_name: string,
     state: htmlState,
-    comp_data: string[],
     template_map: TemplatePackage["templates"]
 ) {
     await processHooks(html, static_data_pack, node, template_map);
@@ -236,18 +244,27 @@ async function processElement(
 
     processAttributes(html.attributes, node);
 
-    if (COMPONENT_IS_ROOT_ELEMENT) {
+    if (COMPONENT_IS_ROOT_ELEMENT)
         addAttribute(node, "class", "wk-c");
-        addAttribute(node, "class", ...(COMPONENT_IS_ROOT_ELEMENT
-            ? ((state & htmlState.IS_INTERLEAVED) > 0)
-                ? comp_data
-                : comp_data.slice(-1)
-            : []));
-    }
 
-    if ((state & htmlState.IS_INTERLEAVED) > 0) {
-        addAttribute(node, "class", "wk-own-" + comp_data.indexOf(static_data_pack.self.name));
-    }
+}
+
+function addClaim(
+    node: TemplateHTMLNode,
+    html: HTMLElementNode,
+    comp_data: string[],
+) {
+
+    if (!html.comp)
+        throw new Error("Missing component name");
+
+    const i = comp_data.indexOf(html.comp);
+
+    if (i < 0)
+        throw new Error("Invalid component claim information");
+
+    addAttribute(node, "class", "wk-claim-" + i);
+
 }
 
 function setAttribute(node: TemplateHTMLNode, attrib_name: string, ...attrib_val: string[]) {
@@ -349,9 +366,9 @@ async function addComponent(
     state: htmlState,
     node: TemplateHTMLNode,
     template_map: TemplatePackage["templates"],
-    extern_children: { USED: boolean; child: HTMLNode; id: number; }[],
-    children: { USED: boolean; child: HTMLNode; id: number; }[],
-    comp_data: string[],
+    extern_children: { USED: boolean; child: HTMLNode; id: number; }[] = [],
+    children: { USED: boolean; child: HTMLNode; id: number; }[] = [],
+    comp_data: string[] = [],
 ) {
 
     const { context, self: comp, model } = static_data_pack;
@@ -361,6 +378,8 @@ async function addComponent(
     if (!c_comp)
         throw new Error(`Component ${component_name} not found.`);
 
+    const claims = c_comp.root_ele_claims;
+
     if (htmlState.IS_COMPONENT & state)
         state |= htmlState.IS_INTERLEAVED;
 
@@ -369,17 +388,22 @@ async function addComponent(
         self: c_comp,
         model: null,
         context: context,
-        prev: static_data_pack
+        prev: comp == null ? null : static_data_pack
     };
 
     ({ html: [node] } = await __componentDataToCompiledHTML__(
         c_comp.HTML,
         new_static_data_pack,
         template_map,
-        state,
+        state | htmlState.IS_ROOT,
         extern_children.concat(children),
-        [...comp_data, c_comp.name]
+        [...comp_data, ...claims]
     ));
+
+
+    addAttribute(node, "class", ...claims);
+
+    //  comp_data.push(c_comp.name);
 
     //Merge node attribute data with host entry data, overwrite if necessary
 
@@ -733,9 +757,6 @@ async function resolveHTMLBinding(
     } else if (html.data) {
         node.data = html.data || "";
     }
-
-    if ((state & htmlState.IS_INTERLEAVED) > 0)
-        addAttribute(node, "class", "wk-own-" + comp_data.indexOf(static_data_pack.self.name));
 
     return node;
 }

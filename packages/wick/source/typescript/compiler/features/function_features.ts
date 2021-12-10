@@ -1,5 +1,5 @@
 import { copy, traverse } from '@candlelib/conflagrate';
-import { JSCallExpression, JSFormalParameters, JSFunctionDeclaration, JSFunctionExpression, JSIdentifier, JSIdentifierBinding, JSNode, JSNodeType } from '@candlelib/js';
+import { JSCallExpression, JSFormalParameters, JSFunctionDeclaration, JSFunctionExpression, JSIdentifierBinding, JSNode, JSNodeClass, JSNodeType } from '@candlelib/js';
 import {
     BINDING_VARIABLE_TYPE, HTMLNodeType, IndirectHook, JSHandler
 } from "../../types/all.js";
@@ -82,14 +82,15 @@ registerFeature(
                             // and convert back to normal variables. 
 
                             const function_frame = await build_system.
-                                processFunctionDeclaration(<JSNode>node, component, context, root_name);
+                                processFunctionDeclaration(<JSNode>node, component, context, frame);
 
                             //Grab references to the binding variables
                             const call_ids: JSIdentifierBinding[] = <any>function_frame.ast.nodes[1]?.nodes?.filter(
                                 (i): i is JSIdentifierBinding => i.type == JSNodeType.IdentifierBinding
                             ) ?? [];
 
-                            const name = "__" + function_frame.ast.nodes[0].value.slice(1) + "__";
+                            const name = "_" + component.frames.length + "_";
+                            // const name = "__" + function_frame.ast.nodes[0].value.slice(1) + "__";
 
                             function_frame.ast.nodes[0].value = name;
 
@@ -129,7 +130,7 @@ registerFeature(
 
                     skip(1);
 
-                    await build_system.processFunctionDeclaration(<JSNode>node, component, context, root_name);
+                    await build_system.processFunctionDeclaration(<JSNode>node, component, context, frame);
 
                     return null;
                 }
@@ -162,12 +163,23 @@ registerFeature(
 
                 async prepareJSNode(node, parent_node, skip, component, context, frame) {
 
+                    if (node.nodes?.[0]) {
+
+                        const binding_prop = JSNodeType.IdentifierName | JSNodeClass.PROPERTY_NAME;
+
+                        for (const { node: n } of traverse(node.nodes[0], "nodes")) {
+                            if (n.type == binding_prop) {
+                                n.type = JSNodeType.IdentifierBinding;
+                            }
+                        }
+                    }
+
                     const function_frame = await build_system.
-                        processFunctionDeclaration(<JSNode>node, component, context);
+                        processFunctionDeclaration(<JSNode>node, component, context, frame);
 
                     skip();
 
-                    return node;
+                    return function_frame.ast;
                 }
 
             }, JSNodeType.ArrowFunction
@@ -194,7 +206,7 @@ registerFeature(
             }, JSNodeType.FormalParameters
         );
 
-        build_system.registerHookHandler<IndirectHook<{ nodes: [JSNode], action: string; }>, JSNode | void>({
+        build_system.registerHookHandler<IndirectHook<[{ nodes: [JSNode], action: string; }]>, JSNode | void>({
 
             name: "On Event Function Hook",
 

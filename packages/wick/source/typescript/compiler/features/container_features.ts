@@ -9,7 +9,6 @@ import {
     stmt
 } from '@candlelib/js';
 import URI from '@candlelib/uri';
-import { Token } from '../../../../../hydrocarbon/build/runtime/token.js';
 import {
     BINDING_VARIABLE_TYPE, HTMLAttribute,
     HTMLContainerNode,
@@ -137,8 +136,6 @@ registerFeature(
                                     comp = context.components.get(component.local_component_names.get(ch.tag));
 
                                 component.local_component_names.set(comp?.name, comp?.name);
-
-                                ch.child_id = component.children.push(1) - 1;
                             }
 
                             ctr.components.push(comp);
