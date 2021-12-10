@@ -2,12 +2,14 @@ import { Logger } from '@candlelib/log';
 import URI from '@candlelib/uri';
 import { promises as fsp } from "fs";
 import { rt } from '../../client/runtime/global.js';
-import { createCompiledComponentClass } from '../../compiler/ast-build/build.js';
+import { createCompiledComponentClass, createComponentTemplates } from '../../compiler/ast-build/build.js';
+import { htmlTemplateToString } from '../../compiler/ast-render/html.js';
 import { createClassStringObject } from '../../compiler/ast-render/js.js';
 import { ComponentData } from '../../compiler/common/component.js';
 import { Context } from '../../compiler/common/context';
 import { ComponentHash } from '../../compiler/common/hash_name.js';
 import { createComponent } from '../../compiler/create_component.js';
+import { ensureComponentHasTemplates } from '../../compiler/ast-build/html.js';
 import { EditorCommand } from '../../types/editor_types.js';
 import { Patch, PatchType } from "../../types/patch";
 import { Session } from '../common/session.js';
@@ -181,15 +183,28 @@ async function createRPPatchScript(
 
 
     const comp_class = await createCompiledComponentClass(comp, context, true, true);
+
+    await ensureComponentHasTemplates(comp, context);
+
+    if (!comp.template)
+        throw new Error("Could not generate template for " + comp.name);
+
     const class_strings = `
         const name = "${comp.name}";
         const WickRTComponent = wick.rt.C;
         const components= wick.rt.context.component_class;
+        const w = wick;
         
         if(components.has(name))
             logger.log(\`Replacing component class [${comp.name}] \`)
         
         const class_ = ${createClassStringObject(comp, comp_class, context).class_string};
+
+        const div = document.createElement("div");
+
+        div.innerHTML = \`${htmlTemplateToString(comp.template)}\`;
+
+        wick.rt.templates.set(name, div.firstElementChild);
         
         components.set(name, class_);
 
