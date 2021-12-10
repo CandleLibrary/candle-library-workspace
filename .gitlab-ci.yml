@@ -17,6 +17,8 @@ workflow:
       when: always
     - when: never
 
+# FETCH ----------------------------------------------------------------------
+
 fetch_dependencies:
   stage: fetch
   script:
@@ -24,8 +26,6 @@ fetch_dependencies:
     - npm install --no-audit
 
   rules:
-    - if: $CI_COMMIT_REF_NAME != "gitlab-ci"
-      when: never
     - when: always
 
   artifacts:
@@ -39,8 +39,6 @@ build_typescript_packages:
   stage: build
 
   rules:
-    - if: $CI_COMMIT_REF_NAME != "gitlab-ci"
-      when: never
     - when: always
 
   script:
@@ -124,7 +122,7 @@ version_ts_modules:
     - fetch_dependencies
     - build_typescript_packages
 
-# DEPLOY ------------------------------------------------------------------
+# DEPLOY - PRIVATE ----------------------------------------------------------------
 
 publish_ts_packages:
   stage: deploy
@@ -173,6 +171,8 @@ deploy_to_gitlab_branch:
     - version_ts_modules
     - fetch_dependencies
     - build_typescript_packages
+
+# DEPLOY - PUBLIC -----------------------------------------------------------
 
 publish_ts_packages_npm:
   stage: deploy
