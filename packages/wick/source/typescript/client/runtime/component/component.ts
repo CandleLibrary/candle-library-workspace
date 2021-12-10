@@ -227,8 +227,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         this.setModel(model);
 
-        this.disconnect();
-
         return this;
     }
 
@@ -322,8 +320,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         if (rt.templates.has(this.name)) {
 
-            const template: HTMLTemplateElement = <HTMLTemplateElement>
-                rt.templates.get(this.name);
+            const template = rt.templates.get(this.name);
 
             if (template) {
 
@@ -1067,6 +1064,12 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         classes: any
     ) {
 
+        if (!classes) {
+            console.warn("Error while attempting to set class attribute on element. [classes] param is undefined");
+            return;
+        }
+
+
         const bool = !!bool_expression;
 
         let class_strings = [];
@@ -1075,7 +1078,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             class_strings = classes.flatMap(c => c.toString().split(" "));
         else
             class_strings = classes.toString().split(" ");
-
 
         for (const ele of this.elu[ele_index] ?? []) {
             if (ele instanceof HTMLElement) {
