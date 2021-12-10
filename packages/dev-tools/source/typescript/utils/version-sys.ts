@@ -2,7 +2,7 @@ import { Logger } from "@candlelib/log";
 import { col_css, getPackageJsonObject, xtColor, xtF, xtReset } from "@candlelib/paraffin";
 import URI from '@candlelib/uri';
 import { exec, execSync } from "child_process";
-import { writeFile } from 'fs/promises';
+import { writeFile, readFile } from 'fs/promises';
 import { resolve } from 'path';
 import { CommitLog, Dependencies, Dependency, DevPkg, TestStatus, Version } from "../types/types";
 import { gitLog, gitStatus } from "./git.js";
@@ -423,23 +423,25 @@ rm ./publish.bounty
 `, { mode: 0o777 });
 }
 
-async function createCommitBounty(pkg: DevPkg, dep: Dependency) {
+async function createCommitBounty(pkg: DevPkg, dep: Dependency, version: string = dep.version_data.new_version) {
 
     const logs = getChangeLog(dep);
 
     if (logs.length > 0) {
         //append to change log
 
-        const
-            change_log_entry = `## [v${dep.version_data.new_version}] - ${createISODateString()} \n\n` + logs.join("\n\n");
+        let previous_change_log: string = "";
 
-        await writeFile(resolve(pkg._workspace_location, "change_log_addition.md"), change_log_entry + "\n\n");
+        try {
+            previous_change_log = await readFile(resolve(pkg._workspace_location, "CHANGELOG.md"), { encoding: "utf8" });
+        } catch (e) { }
+
+        const change_log_entry = `## [v${version}] - ${createISODateString()} \n\n` + logs.join("\n\n");
+
+        await writeFile(resolve(pkg._workspace_location, "change_log_temp.md"), change_log_entry + "\n\n" + previous_change_log);
     }
 
-    const version = dep.version_data.new_version;
-
     const change_log = getChangeLog(dep);
-    const cl_data = change_log.join("\n");
 
     await writeFile(resolve(pkg._workspace_location, "commit.bounty"),
         `#! /bin/bash 
@@ -447,9 +449,8 @@ async function createCommitBounty(pkg: DevPkg, dep: Dependency) {
 cd $(dirname "$0")
 
 # Update changelog
-touch ./change_log_addition.md
-echo -n "$( cat ./CHANGELOG.md || '' )" >> ./change_log_addition.md
-mv -f ./change_log_addition.md ./CHANGELOG.md
+touch ./change_log_temp.md
+mv -f ./change_log_temp.md ./CHANGELOG.md
 
 # Update package.json
 if test -f ./package.temp.json; then
@@ -459,7 +460,7 @@ fi
 
 git add ./
 
-git reset ./commit.bounty ./publish.bounty ./change_log_addition.md
+git reset ./commit.bounty ./publish.bounty ./change_log_temp.md
         
 # git commit -m "version ${dep.name} to ${version}"
 # 
@@ -651,13 +652,24 @@ export async function validateEligibilityPackages(
                 logger.log(`Updating package.json to v${dep.version_data.new_version}`);
                 if (!DRY_RUN) await writeFile(resolve(pkg._workspace_location, "package.temp.json"), json);
 
-                logger.log(`Creating A commit.bounty for ${dep.name}@${dep.version_data.new_version}`);
+                logger.log(`Creating a publish.bounty for ${dep.name}@${dep.version_data.new_version}`);
                 if (!DRY_RUN) await createPublishBounty(pkg, dep);;
 
-                logger.log(`Creating a publish.bounty for ${dep.name}@${dep.version_data.new_version}`);
+                logger.log(`Creating A commit.bounty for ${dep.name}@${dep.version_data.new_version}`);
                 if (!DRY_RUN) await createCommitBounty(pkg, dep);
-            } else
+            } else {
                 dev_logger.log(`No version change required for ${dep.name} at v${dep.version_data.latest_version}`);
+
+                const json = JSON.stringify(Object.assign({}, pkg, { _workspace_location: undefined }), null, 4);
+
+                logger.log(`Preserving package.json v${dep.version_data.latest_version}`);
+                if (!DRY_RUN) await writeFile(resolve(pkg._workspace_location, "package.temp.json"), json);
+
+                logger.log(`Creating A commit.bounty for ${dep.name}@${dep.version_data.latest_version}`);
+                if (!DRY_RUN) await createCommitBounty(pkg, dep, dep.version_data.latest_version);
+            }
+
+
         }
     }
 
