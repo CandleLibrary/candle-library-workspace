@@ -70,6 +70,12 @@ export function testPackage(pkg: DevPkg): Promise<boolean> {
                 res(true);
         });
 
+        setTimeout(() => {
+            dev_logger.get(`testing [${pkg.name}] `).error("Testing timed out after 5 minutes");
+            p.kill();
+            res(false);
+        }, 5 * 60 * 1000);
+
         p.on("error", (err) => {
             dev_logger.get(`testing [${pkg.name}]`).error(err);
         });
