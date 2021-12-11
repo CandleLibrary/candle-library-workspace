@@ -4,7 +4,7 @@ import glow from '@candlelib/glow';
 import { WickRTComponent } from "../../client/runtime/component/component.js";
 import { Status } from '../../client/runtime/component/component_status.js';
 import { WickContainer } from "../../client/runtime/component/container";
-import { String_Is_Wick_Hash_ID } from '../../client/runtime/component/html.js';
+import { hydrateComponentElement, hydrateTemplateElement, String_Is_Wick_Hash_ID } from '../../client/runtime/component/html.js';
 import { rt, } from '../../client/runtime/runtime.js';
 import { Context, WickLibrary } from '../../index.js';
 import { EditorCommand } from "../../types/editor_types.js";
@@ -291,14 +291,10 @@ function initializeDefualtSessionDispatchHandlers(
                             const par_ele = ele.parentElement;
                             const par_comp = match.par;
 
-                            const new_component = new class_(
-                                null,
-                                undefined,
-                                [],
-                                "",
-                                page_wick.rt.context
-                            );
+                            const new_component = hydrateTemplateElement(to);
 
+                            if (!new_component)
+                                throw new Error(`Unable to hydrate ${to}`);
 
                             if (par_comp) {
 
