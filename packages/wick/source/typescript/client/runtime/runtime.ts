@@ -89,14 +89,19 @@ export class WickRuntime {
      * @param component - A WickTt
      * @returns 
      */
-    rC(component: typeof WickRTComponent) { this.context.component_class.set(component.name, component); return component; };
+    rC(component: typeof WickRTComponent) {
+        this.context.component_class.set(component.name, component);
+        return component;
+    };
 
     /**
      * KEEP________________________________________________________
      * Retrieve component class
      * @param name 
      */
-    gC(component_name: string) { this.context.component_class.get(component_name); };
+    gC(component_name: string) {
+        return this.context.component_class.get(component_name);
+    };
 
 
     OVERRIDABLE_onComponentCreate(component_instance: WickRTComponent) { }
