@@ -5,7 +5,7 @@ import { WickRTComponent } from "../../client/runtime/component/component.js";
 import { Status } from '../../client/runtime/component/component_status.js';
 import { WickContainer } from "../../client/runtime/component/container";
 import { String_Is_Wick_Hash_ID } from '../../client/runtime/component/html.js';
-import { rt, } from '../../client/runtime/global.js';
+import { rt, } from '../../client/runtime/runtime.js';
 import { Context, WickLibrary } from '../../index.js';
 import { EditorCommand } from "../../types/editor_types.js";
 import { PatchType } from "../../types/patch";

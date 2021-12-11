@@ -2,7 +2,7 @@ import { Logger } from '@candlelib/log';
 import spark, { Sparky } from '@candlelib/spark';
 import URI from '@candlelib/uri';
 import { FSWatcher, watch } from "fs";
-import { rt } from '../../client/runtime/global.js';
+import { rt } from '../../client/runtime/runtime.js';
 import { createComponent } from '../../compiler/create_component.js';
 import { Session } from '../common/session.js';
 import { reloadComponent, swap_component_data } from './component_tools.js';

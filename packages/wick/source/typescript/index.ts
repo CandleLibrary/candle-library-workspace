@@ -40,7 +40,7 @@ await HTML.server();
 export type { ComponentData } from './compiler/common/component';
 export type { Context, UserPresets } from './compiler/common/context';
 export type { WickRTComponent } from './client/runtime/component/component.js';
-export type { WickRuntime } from './client/runtime/global';
+export type { WickRuntime } from './client/runtime/runtime';
 export * from "./types/all.js";
 export type { WickLibrary } from './entry/wick-full';
 export * from "./entry/wick-full.js";

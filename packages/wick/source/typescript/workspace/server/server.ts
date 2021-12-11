@@ -11,7 +11,7 @@ import lantern, {
 } from "@candlelib/lantern";
 import URI from '@candlelib/uri';
 import { WebSocketServer } from "ws";
-import { rt } from '../../client/runtime/global.js';
+import { rt } from '../../client/runtime/runtime.js';
 import { WickCompileConfig } from '../../types/config.js';
 import { set_resolved_working_directory } from '../dispatchers/resolved_working_directory.js';
 import { workspace_component_dispatch } from '../dispatchers/workspace_component_dispatch.js';

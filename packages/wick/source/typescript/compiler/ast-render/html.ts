@@ -1,6 +1,6 @@
 import { bidirectionalTraverse, TraversedNode, TraverseState } from "@candlelib/conflagrate";
 import { exp, JSExpressionClass, JSNode, JSNodeType } from "@candlelib/js";
-import { rt } from "../../client/runtime/global.js";
+import { rt } from "../../client/runtime/runtime.js";
 import { TemplateHTMLNode } from "../../types/all.js";
 import { componentDataToCompiledHTML } from "../ast-build/html.js";
 import * as b_sys from "../build_system.js";

@@ -1,7 +1,7 @@
 import { Logger } from '@candlelib/log';
 import URI from '@candlelib/uri';
 import { promises as fsp } from "fs";
-import { rt } from '../../client/runtime/global.js';
+import { rt } from '../../client/runtime/runtime.js';
 import { createCompiledComponentClass, createComponentTemplates } from '../../compiler/ast-build/build.js';
 import { htmlTemplateToString } from '../../compiler/ast-render/html.js';
 import { createClassStringObject } from '../../compiler/ast-render/js.js';

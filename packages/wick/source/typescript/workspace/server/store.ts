@@ -1,6 +1,6 @@
 import { Logger } from '@candlelib/log';
 import URI from '@candlelib/uri';
-import { rt } from '../../client/runtime/global.js';
+import { rt } from '../../client/runtime/runtime.js';
 import { ComponentData } from '../../compiler/common/component.js';
 import { Context } from '../../compiler/common/context.js';
 import { WickCompileConfig } from '../../types/all';

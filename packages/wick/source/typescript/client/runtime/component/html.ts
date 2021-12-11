@@ -1,6 +1,6 @@
 import { WickRTComponent } from "./component.js";
 import { WickContainer } from "./container.js";
-import { rt } from "../global.js";
+import { rt } from "../runtime.js";
 import { Logger, LogLevel } from '@candlelib/log';
 
 //

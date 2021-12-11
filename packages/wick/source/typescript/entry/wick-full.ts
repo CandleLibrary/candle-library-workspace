@@ -17,7 +17,7 @@ import { init_build_system } from '../compiler/init_build_system.js';
 import { parse_component } from "../compiler/source-code-parse/parse.js";
 import { renderWithFormatting } from "../compiler/source-code-render/render.js";
 import { WickRTComponent } from "../client/runtime/component/component.js";
-import { rt, WickRuntime } from "../client/runtime/global.js";
+import { rt, WickRuntime } from "../client/runtime/runtime.js";
 import { Observable } from "../client/runtime/observable/observable.js";
 import { ObservableScheme, ObservableScheme__ } from "../client/runtime/observable/observable_prototyped.js";
 import { WickTest as test } from "../test/wick.test.js";

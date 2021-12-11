@@ -2,7 +2,7 @@ import {
     Dispatcher,
     ext_map
 } from "@candlelib/lantern";
-import { rt } from '../../client/runtime/global.js';
+import { rt } from '../../client/runtime/runtime.js';
 import { ComponentData } from '../../compiler/common/component.js';
 import { createComponent } from '../../compiler/create_component.js';
 import { Context } from '../../compiler/common/context.js';

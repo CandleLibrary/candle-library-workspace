@@ -1,7 +1,7 @@
 //Target actual package file to prevent recursive references
 import { getPackageJsonObject } from "@candlelib/paraffin";
 import URL from "@candlelib/uri";
-import { rt } from "../../client/runtime/global.js";
+import { rt } from "../../client/runtime/runtime.js";
 import { createCompiledComponentClass } from "../../compiler/ast-build/build.js";
 import { ComponentData } from '../../compiler/common/component.js';
 import { Context } from '../../compiler/common/context.js';

@@ -4,7 +4,7 @@ import {
     Element_Is_Wick_Component,
     Element_Is_Wick_Template, hydrateComponentElements
 } from "../client/runtime/component/html.js";
-import { rt } from "../client/runtime/global.js";
+import { rt } from "../client/runtime/runtime.js";
 import { loadModules } from "../client/runtime/load_modules.js";
 import { Observable } from '../client/runtime/observable/observable.js';
 import { ObservableArray } from '../client/runtime/observable/observable_array.js';

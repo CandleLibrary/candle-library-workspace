@@ -1,7 +1,7 @@
 import { JSNode, JSNodeType } from "@candlelib/js";
 import { Logger } from '@candlelib/log';
 import { default as URI, default as URL } from "@candlelib/uri";
-import { WickEnvironment } from '../../client/runtime/global.js';
+import { WickEnvironment } from '../../client/runtime/runtime.js';
 import { Environment, envIs } from '../../common/env.js';
 import { BINDING_FLAG, BINDING_VARIABLE_TYPE, HTMLNode, HTMLNodeClass } from "../../types/all.js";
 import { addBindingVariable, processUndefinedBindingVariables } from "../common/binding.js";

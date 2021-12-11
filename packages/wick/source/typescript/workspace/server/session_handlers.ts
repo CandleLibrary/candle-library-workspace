@@ -1,7 +1,7 @@
 import spark from '@candlelib/spark';
 import URI from '@candlelib/uri';
 import { promises as fsp } from "fs";
-import { rt } from '../../client/runtime/global.js';
+import { rt } from '../../client/runtime/runtime.js';
 import { getCSSStringFromComponentStyle } from '../../compiler/ast-render/css.js';
 import { ComponentData } from '../../compiler/common/component.js';
 import { WickCompileConfig } from '../../index.js';

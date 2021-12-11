@@ -19,7 +19,7 @@ import { htmlTemplateToString } from "../compiler/ast-render/html.js";
 import { ComponentData } from "../compiler/common/component.js";
 import { Context } from "../compiler/common/context.js";
 import { WickRTComponent } from "../client/runtime/component/component.js";
-import { rt } from "../client/runtime/global.js";
+import { rt } from "../client/runtime/runtime.js";
 import { ComponentData } from "../types/component";
 
 

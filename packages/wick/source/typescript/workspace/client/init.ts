@@ -1,6 +1,6 @@
 import { Logger } from "@candlelib/log";
 import spark from "@candlelib/spark";
-import { rt, WickEnvironment } from '../../client/runtime/global.js';
+import { rt, WickEnvironment } from '../../client/runtime/runtime.js';
 import { Environment, setEnv } from '../../common/env.js';
 import { UserPresets, WickLibrary } from '../../index.js';
 import { getComponentNameFromElement } from './common_functions.js';

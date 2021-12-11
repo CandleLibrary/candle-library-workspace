@@ -3,7 +3,7 @@ import spark, { Sparky } from "@candlelib/spark";
 import { WickRTComponent } from "./component.js";
 import { ObservableModel, ObservableWatcher } from "../../../types/model";
 import { hydrateComponentElements, hydrateTemplateElement } from "./html.js";
-import { rt } from "../global.js";
+import { rt } from "../runtime.js";
 import { Status } from './component_status.js';
 
 function getColumnRow(index: number, offset: number, set_size: number) {

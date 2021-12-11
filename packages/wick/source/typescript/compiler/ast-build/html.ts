@@ -1,4 +1,4 @@
-import { rt } from "../../client/runtime/global.js";
+import { rt } from "../../client/runtime/runtime.js";
 import {
     HTMLContainerNode,
     HTMLElementNode,

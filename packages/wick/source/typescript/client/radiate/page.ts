@@ -3,7 +3,7 @@ import { Transition } from '@candlelib/glow';
 import { ComponentElement, WickRTComponent } from '../runtime/component/component.js';
 import { hydrateComponentElements } from '../runtime/component/html.js';
 import { Element } from './element.js';
-import { rt, WickEnvironment } from '../runtime/global.js';
+import { rt, WickEnvironment } from '../runtime/runtime.js';
 import { Environment, envIs } from '../../common/env.js';
 
 export const enum PageType {

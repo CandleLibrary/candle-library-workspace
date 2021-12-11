@@ -3,7 +3,7 @@ import spark, { Sparky } from "@candlelib/spark";
 import { Environment, envIs } from '../../../common/env.js';
 import { Context } from '../../../compiler/common/context.js';
 import { BINDING_FLAG, ObservableModel, ObservableWatcher, FLAG_ID_OFFSET } from "../../../types/all";
-import { rt } from "../global.js";
+import { rt } from "../runtime.js";
 import { Status } from './component_status.js';
 import { WickContainer } from "./container.js";
 import {
