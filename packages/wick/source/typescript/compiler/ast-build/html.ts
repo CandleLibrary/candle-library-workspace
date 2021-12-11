@@ -65,31 +65,18 @@ export async function componentDataToCompiledHTML(
     model = null,
 ): Promise<TemplatePackage> {
 
-    const static_data_pack: StaticDataPack = {
-        context,
-        self: comp,
-        model: model,
-        root_element: comp.HTML,
-        prev: null
-    };
-
-    let n: TemplateHTMLNode = {
-        tagName: "",
-        data: "",
-        attributes: new Map(),
-        children: [],
-        strings: [],
-    };
 
     const template_map = new Map;
 
-    const { node } = await addComponent(
-        comp.HTML,
-        static_data_pack,
-        comp.name,
-        htmlState.IS_ROOT | htmlState.IS_COMPONENT,
-        n,
-        template_map,
+    const { node } = await createCompElement(
+        {
+            context,
+            self: comp,
+            model: model,
+            root_element: comp.HTML,
+            prev: null
+        },
+        template_map
     );
 
     return { html: [node], templates: template_map };
@@ -152,7 +139,7 @@ export async function __componentDataToCompiledHTML__(
         } else if (component_name && context.components?.has(component_name)) {
 
             ({ node, state } =
-                await addComponent(
+                await integrateComponentElement(
                     html,
                     static_data_pack,
                     component_name,
@@ -359,7 +346,7 @@ async function processSlot(
 }
 
 
-async function addComponent(
+async function integrateComponentElement(
     html: HTMLElementNode,
     static_data_pack: StaticDataPack,
     component_name: string,
@@ -371,47 +358,62 @@ async function addComponent(
     comp_data: string[] = [],
 ) {
 
-    const { context, self: comp, model } = static_data_pack;
+    const { context, self: comp } = static_data_pack;
 
     const c_comp = context.components.get(component_name);
 
     if (!c_comp)
         throw new Error(`Component ${component_name} not found.`);
 
+    const { state: new_state, node: new_node } = await createCompElement(
+        {
+            root_element: html || c_comp.HTML,
+            self: c_comp,
+            model: null,
+            context: context,
+            prev: comp == null ? null : static_data_pack
+        },
+        template_map,
+        extern_children,
+        children,
+        comp_data,
+    );
+
+    processAttributes(html.attributes, new_node);
+
+    await processHooks(html, static_data_pack, new_node, template_map, c_comp);
+
+    return { state: new_state, node: new_node };
+}
+
+async function createCompElement(
+    new_static_data_pack: StaticDataPack,
+    template_map: Map<string, TemplateHTMLNode> = new Map,
+    extern_children: { USED: boolean; child: HTMLNode; id: number; }[] = [],
+    children: { USED: boolean; child: HTMLNode; id: number; }[] = [],
+    comp_data: string[] = [],
+) {
+    const c_comp = new_static_data_pack.self;
     const claims = c_comp.root_ele_claims;
 
-    if (htmlState.IS_COMPONENT & state)
-        state |= htmlState.IS_INTERLEAVED;
+    /* if (htmlState.IS_COMPONENT & state)
+        state |= htmlState.IS_INTERLEAVED; */
 
-    const new_static_data_pack: StaticDataPack = {
-        root_element: html || c_comp.HTML,
-        self: c_comp,
-        model: null,
-        context: context,
-        prev: comp == null ? null : static_data_pack
-    };
-
-    ({ html: [node] } = await __componentDataToCompiledHTML__(
+    const { html: [node] } = await __componentDataToCompiledHTML__(
         c_comp.HTML,
         new_static_data_pack,
         template_map,
-        state | htmlState.IS_ROOT,
+        htmlState.IS_COMPONENT | htmlState.IS_ROOT,
         extern_children.concat(children),
         [...comp_data, ...claims]
-    ));
-
+    );
 
     addAttribute(node, "class", ...claims);
 
     //  comp_data.push(c_comp.name);
-
     //Merge node attribute data with host entry data, overwrite if necessary
 
-    processAttributes(html.attributes, node,);
-
-    await processHooks(html, static_data_pack, node, template_map, c_comp);
-
-    return { state, node };
+    return { state: htmlState.IS_COMPONENT | htmlState.IS_ROOT, node };
 }
 
 async function addContainer(
@@ -583,17 +585,17 @@ async function processContainerHooks(
                     if (child_comp && node.children)
                         for (const model of data) {
 
-                            const new_static_data_pack: StaticDataPack = {
+                            const { node: child_node } = await createCompElement({
                                 self: child_comp,
                                 root_element: child_comp.HTML,
                                 context: static_data_pack.context,
                                 model: model,
                                 prev: static_data_pack
-                            };
+                            });
 
-                            const result = await __componentDataToCompiledHTML__(child_comp.HTML, new_static_data_pack, template_map);
+                            //const result = await addComponent(child_comp.HTML, new_static_data_pack, template_map);
 
-                            node.children.push(result.html[0]);
+                            node.children.push(child_node);
                         }
                 }
             }
