@@ -229,6 +229,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         for (const child of this.ch)
             child.initialize();
 
+        if (this.originator)
+            this.originator.initialize();
+
         this.async_init();
 
         this.setModel(model);
