@@ -19,21 +19,21 @@
 
 <> STYLE_SHEET >  ( STYLE_RULE | AT_RULE )(*)     
 
-                                                    f:r { { type:env.typ.Stylesheet, nodes:$$1, pos } }
+                                                    f:r { { t_Stylesheet | c_RuleParent, rules:$1, tok } }
 
 <> STYLE_RULE > COMPLEX_SELECTOR(+\, ) \{ declaration_list? \}   
 
-                                                    f:r { { type:env.typ.Rule, selectors:$$1, props: new Map(($$3||[]).map(s=>[s.name, s])), pos, precedence: 0, parent:null } }
+                                                    f:r { { t_Rule, selectors:$1, properties: $3, tok, parent: c_RuleParent } }
 
-<> GROUP_RULE_BODY > STYLE_RULE(*)
+<> RULE_BODY > STYLE_RULE(*)
 
-<> AT_RULE > media ;?           
+<> AT_RULE > media            
                                                     f:r { $1 }
     | import ;?          
                                                     f:r { $1 }
-    | keyframes ;?          
+    | keyframes          
                                                     f:r { $1 }
-    | supports ;?           
+    | support           
                                                     f:r { $1 }
     | charset ;?           
                                                     f:r { $1 }
@@ -47,101 +47,101 @@
 ##############################################################################################
 #### At Rules
 ##############################################################################################
-##############################################################################################  
+##############################################################################################
 
+##############################################################################################
+# Top Level Declarations - BEGIN
+
+<> fontface >  \@font-face { declaration_list? }  
+
+                                                    f:r { { t_FontFace, descriptors:$3, tok } }
+
+<> keyframes > \@keyframes keyframes_name { keyframes_blocks(+) }         
+
+                                                    f:r { { t_Keyframes, name:$3, keyframes:$4, tok, parent:c_RuleParent } }
+
+<> supports > \@supports supports_condition { RULE_BODY? }     
+
+                                                    f:r { { t_Supports | c_RuleParent, condition:$2, rules:$4, tok, parent:c_RuleParent } }
+
+<> import >    \@import ( string | url ) ( t:supports \( ( supports_condition | import_declaration ) \) f:r{$3} )? media_query(*\, )  
+
+                                                    f:r { { t_Import, uri:$2, condition:$3, media:$4, tok } }
+
+<> charset > \@charset string                       f:r { { t_CharSet, value:$2, tok } }
+
+<> media >  \@media media_queries { RULE_BODY? }       
+                                                    f:r { { t_Media | c_RuleParent, queries:$2; rules:$4, tok } }
+
+# Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/@page
+
+<> page >  \@page page_selector? { declaration_list? }       
+                                                    f:r { { t_Page, selector:$2, rules:$4, tok } }
 # adapted from https://www.w3.org/TR/css-cascade-4/#at-import
 
-<> unknown_at_rule > 
+<> unknown_at_rule > \@ ident unknown_block?
 
-            \@ ( g:ws | g:num | g:nl | g:sym | g:id )(*) unknown_block
-
-            f:r { { type:env.typ.UnknownAtRule, nodes:[$$4], pos } }
-
-<> unknown_block > \{ ( g:ws | g:num | g:nl | g:sym | g:id | unknown_block )(*) \}
-
-<> fontface > 
-            \@ t:fontface { GROUP_RULE_BODY? } 
-
-            f:r { { type:env.typ.FontFace, nodes:[$$4], pos } }
+# Top Level Declarations - END
+##############################################################################################
 
 
-<> charset > 
-            \@ t:charset string
+# @KEY-FRAMES --------------------------------------------------------------------------------
+# adapted from https://developer.mozilla.org/en-US/docs/Web/CSS/@keyframes
 
-            f:r { { type:env.typ.CharSet, nodes:[$$3], pos } }
+<> keyframes_name > ident | string
 
-<> import >  
-            \@ t:import ( string f:r{ new env.functions.url($1) } | url ) ( t:supports \( ( supports_condition | import_declaration ) \) f:r{$3} )? media_query(*\, ) 
-                                                        
-            f:r { { type:env.typ.Import, nodes:[$$3, $$4, ...($$5||[])], pos } }
+<> keyframes_blocks > keyframe_selector(+\, ) { declaration_list? }      
 
-<> import_declaration > declaration
+                                                    f:r { { t_KeyframeBlock, selectors:$1, properties:$3, tok } }
 
-# adapted from https://developer.mozilla.org/en-US/docs/Web/CSS/@keyframes#Formal_syntax
+<> keyframe_selector > t:from                       f:r { { t_KeyframeSelector, val:$1, tok } }
+    | t:to                                          f:r { { t_KeyframeSelector, val:$1, tok } }
+    | percentage                                    f:r { { t_KeyframeSelector, val:$1, tok } }    
 
-<> keyframes > \@ t:keyframes keyframes_name { keyframes_blocks(+) }         
-                                                                                f:r { { type:env.typ.Keyframes, name:$3, nodes:[$$5], pos, parent:null } }
+# @SUPPORTS --------------------------------------------------------------------------------
+# reference: https://developer.mozilla.org/en-US/docs/Web/CSS/@supports
 
-<> keyframes_name > custom_ident | string
+<> supports_condition > t:not supports_in_parens    f:r { [ { t_Not, supports:$2, tok } ] }
 
-<> keyframes_blocks > keyframe_selector(+\, ) { declaration_list }             
-                                                                                f:r { { type:env.typ.KeyframeBlock, nodes:[
-                                                                                        {type:env.typ.KeyframeSelectors, nodes:$1, pos}, $$3
-                                                                                    ], pos } }
+    | ( supports_in_parens  f:r { [$1] } )
 
-<> keyframe_selector > t:from                                                   f:r { { type:env.typ.KeyframeSelector, val:$$1, pos } }
-    | t:to                                                                      f:r { { type:env.typ.KeyframeSelector, val:$$1, pos } }
-    | percentage                                                                f:r { { type:env.typ.KeyframeSelector, val:$$1, pos } }                      
-                                                                                
-
-# adapted from https://developer.mozilla.org/en-US/docs/Web/CSS/@supports#Formal_syntax
-
-<> supports > \@ t:supports ( 
-
-        supports_condition                                                      f:r { { type:env.typ.SupportConditions, nodes:$$1, pos } }
-    
-    ) { GROUP_RULE_BODY? }               
-                                                                                f:r { { type:env.typ.Supports, nodes:[$2, ...$$5], pos, parent:null } }
-
-<> supports_condition > t:not supports_in_parens                                 f:r { [{ type:env.typ.Not, nodes:[$2], pos }] }
-    | supports_in_parens ( 
-        t:and supports_in_parens                                                 
-                                                                                f:r { { type:env.typ.And, nodes:[$2], pos } }
-        | t:or supports_in_parens 
-                                                                                f:r { { type:env.typ.Or, nodes:[$2], pos } }
-    )(*) 
-                                                                                f:r { [$1, ...$2] }
-                                                                                
+        ( 
+                t:and supports_in_parens                                                 
+                                                    f:r { { t_And, supports:$2, tok } }
+            |   t:or supports_in_parens 
+                                                    f:r { { t_Or, supports:$2, tok } }
+        )(*) 
+                                                    f:r { $1 + $2 }                                              
 
 <> supports_in_parens > \( supports_condition \)                                
-                                                                                f:r { { type:env.typ.Parenthesis, nodes:[$2], pos } }
+                                                    f:r { { t_SupportsParenthesis, supports:$2, tok } }
     | supports_feature
 
     | general_enclosed
 
-<> supports_feature > supports_feature_fn 
+<> supports_feature > supports_selector 
+
     | supports_decl 
 
 <> supports_decl > \( declaration \)
-                                                                                f:r { { type:env.typ.Parenthesis, nodes:[$2], pos } }
-<> supports_feature_fn >  g:selector \( COMPLEX_SELECTOR \)
-                                                                                f:r { { type:env.typ.Function, nodes:[$3], pos } }
 
-# adapted from https://developer.mozilla.org/en-US/docs/Web/CSS/@media#Formal_syntax
+                                                    f:r { { t_SupportDeclaration, declaration:$2, tok } }
 
-<> media >  \@ t:media media_queries { GROUP_RULE_BODY? }       
-                                                                                f:r { { type:env.typ.Media, nodes:[$3, ...$5], pos } }
-<> media_queries > media_query(+\, )                                          
-                                                                                f:r { { queries:true, type:env.typ.MediaQueries, nodes:$$1, pos } }
+<> supports_selector >  t:selector \( COMPLEX_SELECTOR \)
+
+                                                    f:r { { t_SupportsSelector, selector:$3, tok } }
+
+# @MEDIA ---------------------------------------------------------------------------------
+# reference: https://developer.mozilla.org/en-US/docs/Web/CSS/@media#Formal_syntax
+
+<> media_queries > media_query(+\, ) 
 
 <> media_query > media_condition                                                
-                                                                                f:r { { type:env.typ.Query, nodes:[$1], pos } }                       
-    | (t:not | t:only )? media_type (
-                                    t:and media_condition_without_or 
-                                                                                f:r { { type:env.typ.And, nodes:[$2], pos } }
-                                    )?      
-                                                                                f:r { { type:env.typ.Query, condition:$1, nodes:[$2, $3], pos } }
+                                                    f:r { { t_Condition, condition:$1, tok } }  
 
+    | (t:not | t:only )? media_type ( t:and media_condition_without_or )?      
+
+                                                    f:r { { t_Type, modifier:str($1), type:$2, and:$3, tok } }
 
 <> media_condition > media_condition_without_or
     | media_or
@@ -150,71 +150,99 @@
     | media_and 
     | media_in_parenths
 
-<> media_not > t:not media_in_parenths                                           f:r { { type:env.typ.Not, nodes:[$2], pos } }
+<> media_not > t:not media_in_parenths               f:r { { t_MediaNot, media:$2, tok } }
 
-<> media_and > media_in_parenths (
-                                    t:and media_in_parenths
-                                                                                f:r { { type:env.typ.And, nodes:[$2], pos } }
-                                )(+)
-                                                                                f:r { [$1, ...$2] }
+<> media_and > media_in_parenths ( t:and media_in_parenths  f:r { { t_MediaAnd, media:$2, tok } } )(+)
 
-<> media_or > media_in_parenths (
-                                    t:or media_in_parenths 
-                                                                                f:r { { type:env.typ.And, nodes:[$2], pos } }
-                                )(+)
-                                                                                f:r { [$1, ...$2] }
+                                                     f:r { [$1] + $2 }
 
-<> media_in_parenths > \( media_condition \)                                    f:r { { type:env.typ.Parenthesis, nodes:[$2], pos } }        
+<> media_or > media_in_parenths ( t:or media_in_parenths f:r { { t_MediaOr, media:$2, tok } } )(+)
+
+                                                    f:r { [$1] + $2 }
+
+<> media_in_parenths > \( media_condition \)        f:r { { t_MediaParenthesis, media:$2, tok } }        
     | media_feature
     | general_enclosed
 
-<> media_feature > \( ( mf_plain | mf_boolean | mf_range ) \)                   
-                                                                                f:r { { type:env.typ.MediaFeature, nodes:[$2], pos } }
+<> media_feature > \( ( mf_plain | boolean | mf_range ) \)                   
+                                                    f:r { { t_MediaFeature, feature:$2, tok } }
+
 <> general_enclosed > tk:ident_token \( ( g:sym | g:id  | g:sp )(*\" ) \)                            
                                         
-                                                                                f:r { { type:env.typ.MediaFunction, nodes:[$3], pos } }
+                                                    f:r { { t_MediaFunction, name:$1, value:str($3), tok } }
 
-<> mf_plain > mf_name \: mf_value                                              f:r { {type:env.typ.MediaValue, key:$1, val:$3, pos } }   
+<> mf_plain > mf_name \: mf_value                   f:r { { t_MediaValue, key:$1, val:$3, tok } }   
 
-<> mf_range > mf_name ( < | \<= | > | \>= | = ) mf_value                          
-                                                                                f:r { {type:env.typ.MediaEquality, sym:$2, left:$1, right:$3, pos } }  
-    | mf_value ( < | \<= | > | \>= | = ) mf_name                                  
-                                                                                f:r { {type:env.typ.MediaEquality, sym:$2, left:$1, right:$3, pos } }  
-    | mf_value ( > | \>= ) tk:ident_token ( > | \>= ) mf_value                        
-                                                                                f:r { {type:env.typ.MediaRangeDescending, sym:$2, max:$1, id:$3, min:$5, pos } } 
-    | mf_value ( < | \<= ) tk:ident_token ( < | \<= ) mf_value                        
-                                                                                f:r { {type:env.typ.MediaRangeAscending, sym:$2, min:$1, id:$3, max:$5, pos } } 
+<> mf_range > mf_name ( < | \<= | > | \>= | = ) mf_value         
+
+                                                    f:r { {t_MediaEquality, sym:$2, left:$1, right:$3, tok } } 
+
+    | mf_value ( < | \<= | > | \>= | = ) mf_name                
+
+                                                    f:r { {t_MediaEquality, sym:$2, left:$1, right:$3, tok } }  
+
+    | mf_value ( > | \>= ) tk:ident_token ( > | \>= ) mf_value        
+
+                                                    f:r { {t_MediaRangeDescending, sym1:$2, sym2:$4, max:$1, id:$3, min:$5, tok } } 
+
+    | mf_value ( < | \<= ) tk:ident_token ( < | \<= ) mf_value    
+
+                                                    f:r { {t_MediaRangeAscending, sym1:$2, sym2:$4, min:$1, id:$3, max:$5, tok } } 
+
 
 <> mf_value > number 
     | dimension 
     | mf_name 
     | ratio
 
-<> mf_boolean > t:true                                                           
-                                                                                f:r { { type:env.typ.Boolean, val:true, pos } }
-    | t:false                                                                    
-                                                                                f:r { { type:env.typ.Boolean, val:false, pos } }
-
 <> mf_name > tk:ident_token
 
-<> media_type > tk:ident_token                                                   f:r { { type:env.typ.MediaType, val:$1, pos } }                                                                                  
+<> media_type > tk:ident_token                      f:r { { t_MediaType, val:$1, tok } }  
 
-<> ratio > number / number                                                         
-                                                                                f:r { {type:"ratio", num:$1, den:$3 } }
 
-<> percentage > number %                                                          
-                                                                                f:r { new env.functions.percentage($1+$2) }
+# @PAGE ----------------------------------------------------------------------------------
 
-<> dimension > number g:id                                                         
-                                                                                f:r { new env.functions.length($1+$2) }
+<> page_selector > ( tk:pseudo_page )(+)
+    | ident ( tk:pseudo_page )(*)
+
+<> pseudo_page > \: ( t:left | t:right | t:first | t:blank )
+
+                                                    f:r { { t_UnknownAtRule, name:str($2), value:str($4), tok } }
+
+# UNKNOWN -------------------------------------------------------------------------------
+
+<> unknown_block > \{ ( g:ws | g:num | g:nl | g:sym | g:id | unknown_block )(*) \}
+
+<> import_declaration > declaration
+
+#########################################################################################
+# Primitives
+
+
+<> boolean > t:true                                                           
+                                                    f:r { { t_Boolean, val:true, tok } }
+    | t:false                                                                    
+                                                    f:r { { t_Boolean, val:false, tok } }                                                                
+
+<> ratio > number \/ number                                                         
+                                                    f:r { { t_Ratio, numerator:$1, denominator:$3 } }
+
+<> percentage > number \%                                                          
+                                                    f:r { { t_Percentage, value:$1 } }
+
+<> dimension > number ( g:id | g:ids )  
+                                                    f:r { { t_Length, value:$1, unit:str($2) } }
 
 <> url >  t:url \( string \)                                                     
-                                                                                f:r { new env.functions.url($3) }      
-<> number > tk:scientific_token
+                                                    f:r { { t_URL, value:string($3), } }     
+
+<> number > tk:scientific_token                     f:r { f64($1) }
 
 <> float_token > g:num ( \. g:num )?
 
 <> scientific_token > float_token ( ( t:e | t:E ) \- ? g:num )?
+
+<> ident > tk:ident_token 
 
 <> custom_ident > tk:ident_token 
 
@@ -229,90 +257,79 @@
 #### Modified from https://drafts.csswg.org/selectors-4/#grammar
 ##############################################################################################
 
-<> COMPLEX_SELECTOR >  COMPOUND_SELECTOR  ( (COMBINATOR f:r{ {type:env.typ.Combinator, val:$1} } )? COMPOUND_SELECTOR f:r { [$1, $2] } )(*)  
-                                                                                f:r { 
-                                                                                    ($$1 && $$2) ?
-                                                                                    {type:env.typ.ComplexSelector, nodes:[$1, ...( ($2).flat(2) )], pos } 
-                                                                                    : $1
-                                                                                } 
+<> COMPLEX_SELECTOR >  COMPOUND_SELECTOR  
+                                                    f:r { { t_ComplexSelector, selectors:[$1], tok } } 
+
+    COMPLEX_SELECTOR [ ( ( \> | \+ | \~ | \|| ) f:r { t_Combinator, val:$1 } )? g:sp? ] COMPOUND_SELECTOR 
+    
+                                                    f:r { s1.selectors + [$2] + [$4], $1 } 
 
 <> COMPOUND_SELECTOR >  [
         TYPE_SELECTOR? 
         SUBCLASS_SELECTOR(*) 
-        ( PSEUDO_ELEMENT_SELECTOR ( (RST g:sp) PSEUDO_CLASS_SELECTOR )(*) f:r { {type:env.typ.PseudoSelector, nodes:[$1, ...$2], pos } } )(*) 
+        ( 
+            PSEUDO_ELEMENT_SELECTOR ( (RST g:sp) PSEUDO_CLASS_SELECTOR )(*)       
+                                                    
+                                                    f:r { { t_PseudoSelector, selectors: [$1] + $2, tok } } 
+        )(*) 
     ] g:sp?
-                                                                                f:r { 
-                                                                                        ( $$1 && !($$2 || $$3 )) 
-                                                                                        ? $$1 
-                                                                                        : 
-                                                                                            ( $$2 && $$2.length == 1 && !($$1 || $$3 ))
-                                                                                            ? $$2[0]
-                                                                                            :  { type:env.typ.CompoundSelector, nodes:[$1, ...$2, ...$3], pos }
-                                                                                } 
-
-<> COMBINATOR > \>                         
-    | \+     
-    | \~                                 
-    | \||                                       
+                                                    f:r { { t_CompoundSelector, selectors: [$1] + $2 + $3], tok } }                                     
 
 <> SUBCLASS_SELECTOR > ID_SELECTOR 
     | CLASS_SELECTOR 
     | ATTRIBUTE_SELECTOR 
     | PSEUDO_CLASS_SELECTOR
 
-<> ID_SELECTOR >\#  (RST g:sp)  tk:ident_token                                      f:r { {type:env.typ.IdSelector, val:$2, pos, precedence: env.typ.B_SPECIFIER } } 
+<> ID_SELECTOR >\#  (RST g:sp)  tk:ident_token          f:r { { t_IdSelector, c_B_SPECIFIER, val:$2, tok, precedence: 0 } } 
 
-<> CLASS_SELECTOR > \. (RST g:sp)  tk:ident_token                                   f:r { {type:env.typ.ClassSelector, val:$2, pos,precedence: env.typ.C_SPECIFIER } } 
+<> CLASS_SELECTOR > \. (RST g:sp)  tk:ident_token       f:r { { t_ClassSelector, val:$2, tok, precedence:0, c_C_SPECIFIER } } 
 
-<> PSEUDO_CLASS_SELECTOR >  \:  (RST g:sp) tk:ident_token ( \( psuedo_class_value \) f:r {$2} )?        
-                                                                                    f:r { {type:env.typ.PseudoClassSelector, id:$2, val:$3, pos, precedence: env.typ.C_SPECIFIER } }
+<> PSEUDO_CLASS_SELECTOR >  \:  (RST g:sp) tk:ident_token ( \( psuedo_class_value \) f:r {$2} )?       
 
-<> PSEUDO_ELEMENT_SELECTOR > \: (RST g:sp)  PSEUDO_CLASS_SELECTOR               
-                                                                                    f:r { $2.type = env.typ.PseudoElementSelector,  $2.precedence = env.typ.D_SPECIFIER , $2} 
+                                                        f:r { { t_PseudoClassSelector, id:$2, val:$3, tok, precedence:0, c_C_SPECIFIER } }
+
+<> PSEUDO_ELEMENT_SELECTOR > \:: (RST g:sp)  tk:ident_token ( \( psuedo_class_value \) f:r {$2} )?                 
+
+                                                        f:r { $2.type = env.typ.PseudoElementSelector,  $2.precedence = env.typ.D_SPECIFIER , $2} 
+
     
-<>  ATTRIBUTE_SELECTOR >  \[ WQ_NAME \]                                             f:r { {type:env.typ.AttributeSelector, nodes:[$2], pos, precedence: env.typ.C_SPECIFIER } } 
-    | \[ WQ_NAME ATTR_MATCHER ( tk:ident_token | string ) ATTR_MODIFIER? \] 
-                                    f:r { {type:env.typ.AttributeSelector, nodes:[$2], match_type:$3, match_val:$4, mod:$5, pos, precedence: env.typ.C_SPECIFIER } } 
+<>  ATTRIBUTE_SELECTOR >  \[ WQ_NAME \]                 f:r { { t_AttributeSelector, name:$2, tok, precedence:0, c_C_SPECIFIER } } 
 
-<> ATTR_MATCHER > \~=                                                
-    | \^=                                                                
-    | \$=                                                                
-    | \*=                                                                
-    | =                                                                 
+    | \[ WQ_NAME ( \~= | \^= | \$= | \*= | \= ) ( tk:ident_token | string ) ( t:i | t:s )? \] 
 
-<> ATTR_MODIFIER >  t:i 
-    | t:s
+                                                        f:r { { t_AttributeSelector, name:$2, match_type:$3, match_val:$4, mod:$5, tok, precedence:0, c_C_SPECIFIER } }   
 
+<> TYPE_SELECTOR >  WQ_NAME                             f:r { { t_TypeSelector, c_D_SPECIFIER, name:$1, tok  } }
 
+    | NS_PREFIX? \*                                     f:r { { t_TypeSelector, name:{ t_QualifiedName, namespace:$1, val:"*", tok, precedence: 0 }, tok } } 
 
-<> TYPE_SELECTOR >  WQ_NAME                                                         f:r { {type:env.typ.TypeSelector, nodes:[$1], pos,  precedence: env.typ.D_SPECIFIER  } }
-    | NS_PREFIX? \*                                                                 f:r { {type:env.typ.TypeSelector, nodes:[{type:env.typ.QualifiedName, ns:$1 || "", val:"*", pos, precedence: 0 }], pos } } 
+<> WQ_NAME >  NS_PREFIX? tk:ident_token                 f:r { { t_QualifiedName, namespace:$1, name:str($2), tok } }
 
-
-<> WQ_NAME >  NS_PREFIX? tk:ident_token                                            f:r { {type:env.typ.QualifiedName, ns:$1 || "", val:$2, pos } }
-
-<> NS_PREFIX >  ( tk:ident_token   | \* ) \|                                       f:r { $$1 }
+<> NS_PREFIX >  ( tk:ident_token | \* ) \|              f:r { str($1) }
 
 
 ##############################################################################################
 #### Declarations
 ##############################################################################################
 
-<> declaration_list >  ( declaration? )(+\; )                                   f:r { $1.filter(i=>i!=";") }       
-
+<> declaration_list >  ( \; (*) declaration? )(+\; )
     
-<> declaration > tk:declaration_id \: tk:declaration_values_sentineled \!important ?    f:r ^parseDeclaration
+<> declaration > tk:declaration_id \: declaration_values_sentineled \!important ?    
+                                                                                
+                                                    f:r { { t_Property, name:str($1), value:str($3), important: bool($4) } }
 
 <[recover declaration]
     scan until [ \} \; ] 
-    then reduce f:r { { name:"invalid", pos, val:sym, VALID:false } } 
+    then reduce f:r { { t_InvalidProperty, tok, val:sym } } 
     then set prod to declaration
 >
 
 <> declaration_values_sentineled > declaration_values ( ?=\} | ?=\; | ?=\!important | ?=g:nl )
 
 <> declaration_values > declaration_value
+
     | declaration_values \( declaration_values \)                               
+
     | declaration_values declaration_value                                    
 
 <> declaration_value > g:id | g:sym | g:num  |g:sp 
