@@ -247,8 +247,6 @@ export class Context {
 
         this.styles = new Map;
 
-        this.css_cache = new Map;
-
         this.plugins = new PluginStore;
 
         //this.options.USE_SHADOWED_STYLE = ((user_presets.options.USE_SHADOWED_STYLE) && (this.options.USE_SHADOW));

@@ -336,48 +336,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         throw new Error(`WickRT :: NO template element for component: ${this.name}. Was this component defined without a default HTML element export?`);
     }
 
-    removeCSS() {
-        if (this.context.css_cache) {
+    removeCSS() { rt.removeCSS(this.name); }
 
-            const cache = this.context.css_cache.get(this.name);
-
-            if (cache && cache.css_ele.parentElement) {
-                cache.count--;
-                if (cache.count <= 0) {
-                    cache.css_ele.parentElement.removeChild(cache.css_ele);
-                    this.context.css_cache.delete(this.name);
-                }
-            }
-        }
-    }
-
-    setCSS(style_string = this.getCSS()) {
-
-        if (style_string && this.context.css_cache) {
-
-            if (!this.context.css_cache.has(this.name)) {
-
-                const { window, css_cache } = this.context;
-                if (window) {
-                    const { document } = window,
-
-                        css_ele = document.createElement("style");
-
-                    css_ele.innerHTML = style_string;
-
-                    document.head.appendChild(css_ele);
-
-                    css_cache.set(this.name, { css_ele, count: 1 });
-                }
-            } else {
-                if (this.context.css_cache.has(this.name))
-                    //@ts-ignore
-                    this.context.css_cache.get(this.name).count++;
-            }
-
-            this.ele.classList.add(this.name);
-        }
-    }
+    setCSS() { rt.setCSS(this); }
 
     appendToDOM(parent_element: HTMLElement, other_element: HTMLElement | null = null, INSERT_AFTER = false) {
 
