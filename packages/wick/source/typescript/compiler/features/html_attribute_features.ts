@@ -257,7 +257,7 @@ registerFeature(
                 ) {
 
                     const { value: boolean } = await build_system.getStaticValue(primary, sdp);
-                    const { value: values } = await build_system.getStaticValue(primary, sdp);
+                    const { value: values } = await build_system.getStaticValue(secondary, sdp);
 
                     if (!!boolean && values) {
                         if (Array.isArray(values))

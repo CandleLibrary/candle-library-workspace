@@ -971,7 +971,7 @@ export class WickContainer implements Sparky, ObservableWatcher {
                 && this.first_dom_element
                 && this.first_dom_element.parentElement
             )
-                this.first_dom_element.parentElement.insertBefore(this.first_dom_element, this.ele);
+                this.first_dom_element.parentElement.insertBefore(this.ele, this.first_dom_element);
 
             for (let i = 0; i < sl; i++) {
                 const { row, col } = getColumnRow(i, this.offset, this.columns);
