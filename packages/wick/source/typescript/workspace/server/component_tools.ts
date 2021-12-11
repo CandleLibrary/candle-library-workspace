@@ -195,9 +195,12 @@ async function createRPPatchScript(
         const components= wick.rt.context.component_class;
         const w = wick;
         
-        if(components.has(name))
+        if(components.has(name)){
             logger.log(\`Replacing component class [${comp.name}] \`)
-        
+            wick.rt.purgeCSS(name);
+            logger.log(\`Purged component CSS\`)
+        }
+                
         const class_ = ${createClassStringObject(comp, comp_class, context).class_string};
 
         const div = document.createElement("div");
