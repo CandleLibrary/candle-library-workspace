@@ -1,221 +1,21 @@
-import { traverse } from '@candlelib/conflagrate';
-import {
-    CSSNode,
-    CSSNodeType, CSSRuleNode,
-
-    PrecedenceFlags,
-    tools
-} from "@candlelib/css";
-import { ContainerComponent, WickRTComponent } from '../../client/index.js';
+import { ContainerComponent, getRegisteredComponents, WickRTComponent } from '../../client/index.js';
 import { WickLibrary } from '../../index.js';
 import { releaseCSSCache } from './cache/css_cache.js';
-import { WorkspaceSystem, StyleData } from "./types/workspace_system";
 import { EditorSelection } from "./types/selection";
-import { TrackedCSSProp } from "./types/tracked_css_prop";
+import { WorkspaceSystem } from "./types/workspace_system";
 
 
-const {
-    rules: {
-        getArrayOfMatchedRules,
-
-    },
-
-    selectors: {
-        getFirstMatchedSelector,
-        getMatchedElements,
-        getSelectorSpecificityValue,
-    }
-} = tools;
-
-/*
- *  ██████ ███████ ███████ 
- * ██      ██      ██      
- * ██      ███████ ███████ 
- * ██           ██      ██ 
- *  ██████ ███████ ███████ 
- */
-
-
-export function getMatchedRulesFromComponentData(
-    sys: WorkspaceSystem,
-    ele: HTMLElement,
-    styles_array: StyleData[]
-): CSSRuleNode[] {
-    const rules = [];
-
-    for (const { stylesheet } of styles_array) {
-        rules.push(...getArrayOfMatchedRules(
-            ele, stylesheet
-        ));
-    }
-
-    return rules;
-};
-
-export function getApplicableProps(
-    sys: WorkspaceSystem,
-    ele: HTMLElement,
-    styles_array: StyleData[]
-): Map<string, TrackedCSSProp> {
-
-
-    //Get applicable css files,
-
-    //Then get applicable rules,
-
-    //For each rule -> Identify 1 matching selector.
-
-    //Extract selector, for each prop in rule create
-    // sel,prop pairs. 
-
-    //TODO, setup cache clone
-
-    return getMatchedRulesFromComponentData(sys, ele, styles_array)
-        .reverse()
-        .reduce((m, r) => {
-
-            const
-                s = getFirstMatchedSelector(r, ele),
-                rp = r.precedence,
-                sp: PrecedenceFlags = getSelectorSpecificityValue(s);
-
-            for (const [name, val] of r.props.entries())
-                if (!m.has(name) || (m.get(name).prop.precedence) < (val.precedence | rp | sp))
-                    m.set(name, { sel: "", prop: val.copy(rp | sp) });
-
-            return m;
-        }, <Map<string, TrackedCSSProp>>new Map);
-};
-
-export function isSelectorCapableOfBeingUnique(comp: WickRTComponent, selector: CSSNode, root_name: string = comp.name): boolean {
-    let count = 0;
-
-    for (const { node, meta: { parent } } of traverse(selector, "nodes")) {
-
-        //Only certain selector types are allowed to serve as a unique selector. 
-        switch (node.type) {
-            case CSSNodeType.CompoundSelector:
-            case CSSNodeType.ComplexSelector:
-                break;
-            case CSSNodeType.ClassSelector:
-                if (node.value == root_name && parent)
-                    break;
-            case CSSNodeType.IdSelector:
-                count++;
-                break;
-            default:
-                count += 2;
-        }
-    }
-
-    const matched_elements = [...getMatchedElements(comp.ele, selector)];
-
-    if (matched_elements.length > 1)
-        return false;
-
-    return count == 1;
-}
-
-/*
- * ██████  ██    ██ ███    ██ ████████ ██ ███    ███ ███████                         
- * ██   ██ ██    ██ ████   ██    ██    ██ ████  ████ ██                              
- * ██████  ██    ██ ██ ██  ██    ██    ██ ██ ████ ██ █████                           
- * ██   ██ ██    ██ ██  ██ ██    ██    ██ ██  ██  ██ ██                              
- * ██   ██  ██████  ██   ████    ██    ██ ██      ██ ███████                         
- *                                                                                   
- *                                                                                   
- *  ██████  ██████  ███    ███ ██████   ██████  ███    ██ ███████ ███    ██ ████████ 
- * ██      ██    ██ ████  ████ ██   ██ ██    ██ ████   ██ ██      ████   ██    ██    
- * ██      ██    ██ ██ ████ ██ ██████  ██    ██ ██ ██  ██ █████   ██ ██  ██    ██    
- * ██      ██    ██ ██  ██  ██ ██      ██    ██ ██  ██ ██ ██      ██  ██ ██    ██    
- *  ██████  ██████  ██      ██ ██       ██████  ██   ████ ███████ ██   ████    ██    
- */
-
-/**
- * Retrieve a list of elements that are contemporary 
- * between instances of the same component.
- */
-export function getContemporaryElements(
-    ele: HTMLElement, wick: WickLibrary
-): HTMLElement[] {
-
-    const comp_name = getComponentNameFromElement(ele);
-
-    const element_id = ele.getAttribute("w:u");
-
-    const runtime_components = getRuntimeComponentsFromName(comp_name, wick);
-
-    const elements = [];
-
-    for (const comp of runtime_components)
-        elements.push(...getMatchingElementsFromCompID(comp, element_id));
-
-    return elements;
-}
 
 export function getElementWIndex(ele: HTMLElement): number {
     if (ele.hasAttribute("w:u"))
-        return parseInt(ele.getAttribute("w:u"));
+        return parseInt(ele.getAttribute("w:u") || "");
     return -1;
 }
-
-function getMatchingElementsFromCompID(
-    comp: WickRTComponent, element_id: string
-): HTMLElement[] {
-    let eles = [comp.ele];
-    let out_elements = [];
-    let root = true;
-
-    for (const ele of eles) {
-
-        if (ele.getAttribute("w:u") == element_id) {
-            console.log(ele, { d: ele.getAttribute("w:u"), element_id });
-            out_elements.push(ele);
-        }
-
-        if (root || !ele.hasAttribute("w:c")) {
-            //@ts-ignore
-            eles.push(...(Array.from(ele.children) || []));
-
-        }
-
-        root = false;
-    }
-
-    return out_elements;
-}
-
-export function setRTInstanceClass(sys: WorkspaceSystem, comp_name: string, comp_class: typeof WickRTComponent) {
-    sys.editor_wick.rt.context.component_class.set(comp_name, comp_class);
-    sys.page_wick.rt.context.component_class.set(comp_name, comp_class);
-}
-
 export function getRuntimeComponentsFromName(name: string, wick: WickLibrary): (WickRTComponent | ContainerComponent)[] {
 
     //Traverse dom structure and identify all components
-
-
-    const candidates = wick.rt.root_components.slice();
-
-    const output = [];
-
-    for (const candidate of candidates) {
-        if (candidate.name == name)
-            output.push(candidate);
-        else
-            candidates.push(...candidate.ch);
-    }
-
-    return output;
+    return getRegisteredComponents(name);
 }
-
-export function getListOfRTInstanceAndAncestors(comp: WickRTComponent): WickRTComponent[] {
-    const list = [comp];
-    //@ts-ignore
-    while (comp.par) { if (comp.par) list.push(comp.par); comp = comp.par; }
-    return list.reverse();
-}
-
 export function getRootComponentName(ele: HTMLElement) {
 
     while (ele) {
@@ -236,55 +36,6 @@ export function getComponentNameFromElement(ele: HTMLElement): string {
 
 
 
-/*
- * ██   ██ ████████ ███    ███ ██          ███    ██  ██████  ██████  ███████ 
- * ██   ██    ██    ████  ████ ██          ████   ██ ██    ██ ██   ██ ██      
- * ███████    ██    ██ ████ ██ ██          ██ ██  ██ ██    ██ ██   ██ █████   
- * ██   ██    ██    ██  ██  ██ ██          ██  ██ ██ ██    ██ ██   ██ ██      
- * ██   ██    ██    ██      ██ ███████     ██   ████  ██████  ██████  ███████                                                                           
- */
-
-export function getValidSelectionsCount(sys: WorkspaceSystem) {
-
-    let count = 0;
-
-    const selections = sys.editor_model.selections;
-
-    for (const sel of selections) {
-
-        if (sel.VALID) count++;
-
-
-    }
-
-    return count;
-}
-
-export function getActiveSelectionsCount(sys: WorkspaceSystem) {
-
-    let count = 0;
-
-    const selections = sys.editor_model.selections;
-
-    for (const sel of selections) {
-
-        if (sel.VALID && sel.ACTIVE) count++;
-
-
-    }
-
-    return count;
-}
-
-export function* getActiveSelections(sys: WorkspaceSystem): Generator<EditorSelection> {
-
-    const selections = sys.editor_model.selections;
-
-    for (const sel of selections) {
-        if (sel.ACTIVE && sel.VALID)
-            yield sel;
-    }
-};
 
 export function invalidateSelection(sel: EditorSelection, sys: WorkspaceSystem) {
     const
@@ -438,19 +189,6 @@ export function updateSelectionCoords(sel: EditorSelection, sys: WorkspaceSystem
 }
 
 
-function getElementInHTMLNamespace(ele: HTMLElement) {
-    if (ele.parentNode) {
-        const par = ele.parentNode;
-
-        if (par.namespaceURI.includes("html"))
-            return ele;
-
-        return getElementInHTMLNamespace(par);
-    }
-
-    return null;
-}
-
 export function getSelectionFromPoint(x: number, y: number, sys: WorkspaceSystem): EditorSelection {
 
     sys.ui.event_intercept_frame.style.pointerEvents = "none";
@@ -485,57 +223,5 @@ export function getSelectionFromPoint(x: number, y: number, sys: WorkspaceSystem
 }
 
 
-export function getElementFromEvent(event: PointerEvent, sys: WorkspaceSystem): EditorSelection {
-    return getSelectionFromPoint(event.x, event.y, sys);
-}
-
-export function getIndexOfElementInRTInstance(comp: WickRTComponent, ele: HTMLElement, sys: WorkspaceSystem): number {
-    if (comp == sys.harness) {
-        for (let i = 0; i < sys.edited_components.components.length; i++)
-            if (ele == sys.edited_components.components[i].frame)
-                return i;
-    } else {
-        //@ts-ignore
-        return comp.elu.indexOf(ele);
-    }
-    return -1;
-}
-
-export function getElementAtIndexInRTInstance(comp: WickRTComponent, index: number): HTMLElement {
-    //@ts-ignore
-    return comp.elu[index];
-}
-export function insertElementAtIndexInRTInstance(comp: WickRTComponent, index: number, ele: HTMLElement, APPEND_TO_ELEMENT: boolean = false) {
-
-    const
-        elu = comp.elu,
-        target_ele = elu[index],
-        parent = target_ele.parentElement;
-
-    if (APPEND_TO_ELEMENT) {
-        target_ele.insertBefore(ele, target_ele.firstChild);
-        elu.splice(index + 1, 0, ele);
-    } else if (index > elu.length) {
-        elu.push(ele);
-        comp.ele.appendChild(ele);
-    } else if (index == 0) {
-        elu.unshift(ele);
-        comp.ele.insertBefore(ele, comp.ele.firstChild);
-    } else {
-        elu.splice(index, 0, ele);
-        parent.insertBefore(ele, target_ele);
-    }
-}
-
-export function removeElementAtIndexInRTInstance(comp: WickRTComponent, index: number) {
-
-    const
-        elu = comp.elu,
-        target_ele = elu[index];
-
-    target_ele.parentElement.removeChild(target_ele);
-
-    elu.splice(index, 1);
-}
 
 

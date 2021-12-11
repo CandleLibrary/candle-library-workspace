@@ -20,7 +20,7 @@ const enum DATA_DIRECTION {
     UP = 2
 }
 
-const registry = new Map;
+const registry: Map<string, Set<WickRTComponent>> = new Map;
 
 let new_component_type_hook = (_: any) => _;
 
@@ -33,7 +33,7 @@ export function registerComponent(comp: WickRTComponent) {
         registry.set(comp.name, new Set);
         new_component_type_hook(comp.name);
     }
-
+    //@ts-ignore
     registry.get(comp.name).add(comp);
 }
 
@@ -46,9 +46,9 @@ export function unregisterComponent(comp: WickRTComponent) {
         return;
 
     const set = registry.get(comp.name);
-
+    //@ts-ignore
     set.delete(comp);
-
+    //@ts-ignore
     if (set.size == 0)
         registry.delete(comp.name);
 }

@@ -149,6 +149,7 @@ class JUX { /* Juxtaposition */
                 j++;
                 break;
             }
+
         }
 
         if (j < start) {

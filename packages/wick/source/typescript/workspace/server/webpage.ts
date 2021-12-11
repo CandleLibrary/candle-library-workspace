@@ -63,11 +63,11 @@ function renderComponentInit(component_class_declarations: string, context: Cont
 export const default_wick_hooks = {
     init_script_render: renderBasicWickPageInit,
     init_components_render: renderComponentInit,
-    resolve_import_path: _ => _
+    resolve_import_path: (_: any) => _
 }, default_radiate_hooks = {
     init_script_render: renderRadiatePageInit,
     init_components_render: renderComponentInit,
-    resolve_import_path: _ => _
+    resolve_import_path: (_: any) => _
 };
 
 

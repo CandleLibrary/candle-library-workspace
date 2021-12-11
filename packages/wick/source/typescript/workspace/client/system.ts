@@ -192,11 +192,11 @@ function initializeDefualtSessionDispatchHandlers(
             while (match.host)
                 match = match.host;
 
-            while (match.par) {
-                if (!match.is(Status.FOREIGN_HOST))
-                    break;
-                match = match.par;
-            }
+            /*  while (match.par) {
+                 if (!match.is(Status.FOREIGN_HOST))
+                     break;
+                 match = match.par;
+             } */
 
             names.add(match.name);
         }
@@ -219,30 +219,6 @@ function initializeDefualtSessionDispatchHandlers(
         else try {
             switch (patch.type) {
 
-                case PatchType.CSS: {
-
-                    const { to, from, style } = patch;
-
-                    const matches = getRuntimeComponentsFromName(from, page_wick);
-
-                    updateCSSReferences(page_wick.rt.context, from, to, matches, style);
-
-                    patch_logger.log(`Applying CSS patch: [ ${from} ]->[ ${to} ] to ${matches.length} component${matches.length == 1 ? "" : "s"}`);
-
-                    if (to != from)
-                        for (const match of matches) {
-                            if ("container" in match) {
-                                for (const _class of match.container.comp_constructors) {
-                                    if (_class.edit_name == from || _class.name == from)
-                                        _class.edit_name = to;
-                                }
-
-                            }
-                            applyToPatchToRuntimeComp(match, to);
-                        }
-
-                } break;
-
 
                 case PatchType.STUB: {
 
@@ -261,45 +237,6 @@ function initializeDefualtSessionDispatchHandlers(
                     }
 
                 } break;
-
-                case PatchType.TEXT: {
-
-                    const { to, from, patches } = patch;
-
-                    const matches = getRuntimeComponentsFromName(from, page_wick);
-
-                    updateCSSReferences(page_wick.rt.context, from, to, matches);
-
-                    patch_logger.log(`Applying TEXT patch: [ ${from} ]->[ ${to} ] to ${matches.length} component${matches.length == 1 ? "" : "s"}`);
-
-                    for (const match of matches) {
-                        if (to != from)
-                            applyToPatchToRuntimeComp(match, to);
-
-                        const ele = match.ele;
-
-                        let eles = [ele];
-
-                        for (const patch of patches) {
-
-                            for (const ele of eles) {
-                                if (ele instanceof Text) {
-                                    if (ele.data.trim() == patch.from.trim()) {
-                                        ele.data = patch.to;
-                                        break;
-                                    }
-                                }
-
-                                for (const child of Array.from(ele.childNodes)) {
-                                    eles.push(<any>child);
-                                }
-                            }
-                        }
-                    }
-
-                    updateActiveSelections(system);
-                } break;
-
                 case PatchType.REPLACE: {
 
                     const { to, from, patch_scripts } = patch;
@@ -438,46 +375,6 @@ function applyToPatchToRuntimeComp(match: WickRTComponent, to: string) {
     match.ele.dataset.wrtc = to;
 }
 
-function updateCSSReferences(
-    context: Context,
-    from: string,
-    to: string,
-    matches: WickRTComponent[],
-    style: string = "",
-) {
-    if (matches) for (const match of matches)
-        match.ele.classList.add(to);
-
-    if (context.css_cache) {
-
-
-
-        const old_css = context.css_cache.get(from);
-
-        if (old_css) {
-            if (style)
-                old_css.css_ele.innerHTML = style;
-            else
-                old_css.css_ele.innerHTML = old_css.css_ele.innerHTML.replace(new RegExp(from, "g"), to);
-            context.css_cache.delete(from);
-            context.css_cache.set(to, old_css);
-        } else if (style) {
-            const css_ele = document.createElement("style");
-            css_ele.innerHTML = style;
-            document.head.appendChild(css_ele);
-            context.css_cache.set(to, { css_ele, count: matches.length });
-        }
-
-        if (matches) for (const match of matches) {
-            const class_name = Array.from(match.ele.classList);
-
-            for (const css of class_name) {
-                if (css != to && String_Is_Wick_Hash_ID(css))
-                    match.ele.classList.remove(css);
-            }
-        }
-    }
-}
 export function removeRootComponent(comp: WickRTComponent, wick: WickLibrary): boolean {
 
     const index = wick.rt.root_components.indexOf(comp);
