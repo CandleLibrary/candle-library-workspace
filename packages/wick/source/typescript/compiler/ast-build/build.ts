@@ -202,7 +202,7 @@ function processCSS(
         class_info.method_frames.push(frame);
         appendStmtToFrame(frame, stmt(`return \`${style}\`;`));
 
-        appendStmtToFrame(class_info.init_frame, stmt(`this.setCSS()`));
+        //appendStmtToFrame(class_info.init_frame, stmt(`this.setCSS()`));
     }
 
     metrics.endRun(run_tag);
