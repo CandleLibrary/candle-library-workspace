@@ -24,6 +24,12 @@ const registry: Map<string, Set<WickRTComponent>> = new Map;
 
 let new_component_type_hook = (_: any) => _;
 
+export function getRegisteredComponents(name: string): WickRTComponent[] {
+    if (registry.has(name))
+        return [...registry.get(name)?.values() ?? []];
+    return [];
+}
+
 export function registerComponent(comp: WickRTComponent) {
 
     if (!envIs(Environment.WORKSPACE))
