@@ -182,7 +182,7 @@ async function createRPPatchScript(
 ) {
 
 
-    const comp_class = await createCompiledComponentClass(comp, context, true, true);
+    const comp_class = await createCompiledComponentClass(comp, context, false, true);
 
     await ensureComponentHasTemplates(comp, context);
 
