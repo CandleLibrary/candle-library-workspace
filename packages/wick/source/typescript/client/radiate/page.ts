@@ -55,8 +55,11 @@ export class Page {
         if (this.ele) {
             for (const comp of hydrateComponentElements([this.ele])) {
                 if (comp) {
-
-                    comp.initialize();
+                    try {
+                        comp.initialize();
+                    } catch (e) {
+                        console.log(e);
+                    }
 
                     if (envIs(Environment.WORKSPACE))
                         rt.addRootComp(comp);

@@ -307,8 +307,12 @@ function initializeDefualtSessionDispatchHandlers(
 
                                 match.par = null;
                             }
-
-                            new_component.initialize(match.model);
+                            //Absorb bad things
+                            try {
+                                new_component.initialize(match.model);
+                            } catch (e) {
+                                patch_logger.get("component initialization").error(e);
+                            }
                             new_component.connect();
 
                             if (par_ele) {
