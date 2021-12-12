@@ -50,8 +50,8 @@ export async function renderPage(
             {
                 VERBOSE_ANNOTATION_ATTRIBUTES: true,
                 ALLOW_STATIC_REPLACE: false,
-                INTEGRATED_CSS: true,
-                INTEGRATED_HTML: true,
+                INTEGRATED_CSS: false,
+                INTEGRATED_HTML: false,
                 STATIC_RENDERED_HTML: true
             },
             hooks
