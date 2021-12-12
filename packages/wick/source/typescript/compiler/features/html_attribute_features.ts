@@ -1,13 +1,11 @@
 
 import { JSNode, JSNodeType } from '@candlelib/js';
 import {
-    HTMLNode,
-    HTMLAttribute, HTMLNodeType,
+    BindingVariable, BINDING_FLAG, HTMLAttribute, HTMLElementNode, HTMLNode, HTMLNodeType,
     IndirectHook,
-    STATIC_RESOLUTION_TYPE,
-    BINDING_FLAG,
-    HTMLElementNode
+    STATIC_RESOLUTION_TYPE
 } from "../../types/all.js";
+import { getComponentBinding, Node_Is_Binding_Identifier } from '../common/binding.js';
 import { NodeTypes } from '../source-code-parse/env.js';
 import { registerFeature } from './../build_system.js';
 
@@ -97,11 +95,14 @@ registerFeature(
 
                     if (attr.IS_BINDING) {
 
-                        const ast = await build_system.processBindingAsync(attr.value, component, context);
-
                         // Create an indirect hook for container data attribute
 
-                        build_system.addIndirectHook(component, AttributeHook, { name: attr.name, nodes: [ast] }, index, true);
+                        const [primary, secondary] = await Promise.all(
+                            [build_system.processBindingAsync(attr.value, component, context),
+                            build_system.processSecondaryBindingAsync(attr.value, component, context)]
+                        );
+
+                        build_system.addIndirectHook(component, AttributeHook, { name: attr.name, nodes: [primary, secondary] }, index, true);
 
                         return null;
                     }
@@ -109,7 +110,7 @@ registerFeature(
             }, HTMLNodeType.HTMLAttribute
         );
 
-        build_system.registerHookHandler<IndirectHook<{ name: string; nodes: [JSNode]; }>, JSNode | void>({
+        build_system.registerHookHandler<IndirectHook<{ name: string; nodes: [JSNode, JSNode | null]; }>, JSNode | void>({
 
             name: "General Attribute Hook",
 
@@ -117,9 +118,11 @@ registerFeature(
 
             verify: () => true,
 
-            buildJS: (node, sdp, element_index, addWrite, addInit) => {
+            buildJS: (node, sdp, element_index, addWrite, addInit, addChildMap) => {
 
-                const { name, nodes: [ast] } = node.value[0];
+                const { name, nodes: [primary, secondary] } = node.value[0];
+
+                //Assign this attribute to the 
 
                 // If the element in question belongs to another component AND that 
                 // component has defined an attribute import for the particular
@@ -140,12 +143,30 @@ registerFeature(
 
                     if (child_binding && typeof child_comp_id == "number") {
 
+                        if (secondary && Node_Is_Binding_Identifier(primary)) {
+
+                            let binding: BindingVariable | null = null;
+
+                            if (Node_Is_Binding_Identifier(secondary)) {
+                                binding = getComponentBinding(secondary.value, sdp.self);
+                            } else {
+                                binding = getComponentBinding(primary.value, sdp.self);
+                            }
+
+                            if (binding) {
+                                binding.flags |= BINDING_FLAG.FROM_OUTSIDE;
+                                const name = binding.external_name;
+                                console.log(binding);
+                                addInit(<any>build_system.js.stmt(`this.ch_map.set(this.ch[${child_comp_id}], ["${name}", "${child_binding.external_name}"])`));
+                            }
+                        }
+
                         let exp: any = null;
 
                         exp = build_system.js.stmt(`$$ch${child_comp_id}
-                                .update({ "${child_binding.external_name}":1}, ${BINDING_FLAG.FROM_PARENT});`);
+                                .update({ "${child_binding.external_name}":1}, ${BINDING_FLAG.FROM_ATTRIBUTES});`);
 
-                        exp.nodes[0].nodes[1].nodes[0].nodes[0].nodes[1] = ast;
+                        exp.nodes[0].nodes[1].nodes[0].nodes[0].nodes[1] = primary;
 
                         addWrite(<any>exp);
 
@@ -155,7 +176,7 @@ registerFeature(
 
                 const s = build_system.js.expr(`this.sa(${element_index},"${name}",e)`);
 
-                s.nodes[1].nodes[2] = ast;
+                s.nodes[1].nodes[2] = primary;
 
                 addWrite(s);
             },

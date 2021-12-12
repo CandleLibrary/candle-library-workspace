@@ -1,5 +1,6 @@
 import { copy, traverse } from "@candlelib/conflagrate";
 import {
+    ext,
     JSCallExpression,
     JSFunctionDeclaration,
     JSMethod,
@@ -159,14 +160,17 @@ export async function createCompiledComponentClass(
             else
                 appendStmtToFrame(class_info.init_frame, ...getStatementsFromRootFrame(root_frame));
 
+
             //Session Variables - enabled if the component has session bindings
             if (component.root_frame.binding_variables) {
-                const bindings = [...component.root_frame.binding_variables.values()];
 
-                for (const binding of bindings.filter(b => (b.flags & BINDING_FLAG.FROM_STORE) == BINDING_FLAG.FROM_STORE && b.class_index >= 0)) {
-                    const external_name = binding.external_name;
-                    appendStmtToFrame(class_info.init_frame, stmt(`w.rt.register_store("", "${external_name}", this)`));
-                    appendStmtToFrame(class_info.terminate_frame, stmt(`w.rt.unregister_store("", "${external_name}", this)`));
+                const bindings = [...component.root_frame.binding_variables.values()];
+                for (const b of bindings) {
+                    if ((b.flags & BINDING_FLAG.FROM_STORE) == BINDING_FLAG.FROM_STORE && b.class_index >= 0) {
+                        const external_name = b.external_name;
+                        appendStmtToFrame(class_info.init_frame, stmt(`w.rt.register_store("", "${external_name}", this)`));
+                        appendStmtToFrame(class_info.terminate_frame, stmt(`w.rt.unregister_store("", "${external_name}", this)`));
+                    }
                 }
             }
 
@@ -239,16 +243,22 @@ function createLookupTables(class_info: CompiledComponentClass) {
     const run_tag = metrics.startRun("Look Up Tables");
 
     const
-        binding_lu = stmt("c.nlu = {};"),
-        binding_function_lu = stmt("c.lookup_function_table = [];"),
-        { nodes: [{ nodes: [, lu_functions] }] } = binding_function_lu,
-        { nodes: [{ nodes: [, lu_public_variables] }] } = binding_lu;
+        binding_lu = <any>stmt("c.attr = new Map([]);"),
+        child_remap_lu = <any>stmt("c.ch_map = new Map([]);"),
+        binding_function_lu = <any>stmt("c.lookup_function_table = [];"),
+        { nodes: [{ nodes: [, lu_functions] }] } = binding_function_lu;
+
+    const
+        lu_public_variables = <any>binding_lu.nodes[0].nodes[1].nodes[1].nodes[0],
+        lu_ch_map = <any>child_remap_lu.nodes[0].nodes[1].nodes[1].nodes[0];
 
     class_info.nluf_public_variables = <any>lu_functions;
 
     class_info.lfu_table_entries = <any[]>lu_functions.nodes;
 
     class_info.lu_public_variables = <any[]>lu_public_variables.nodes;
+
+    class_info.lu_ch_map = <any[]>lu_ch_map.nodes;
 
     metrics.endRun(run_tag);
 
@@ -537,12 +547,9 @@ export async function finalizeBindingExpression(
 
                     if (Binding_Var_Is_Internal_Variable(comp_var)) {
 
-                        const update_action =
+                        const update_action = "set_attr",
 
-                            comp_var.type == BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE
-                                ? "fua" : "ua",
-
-                            index = comp_info.binding_records.get(name).index,
+                            index = comp_info.binding_records.get(name)?.name,
 
                             comp_var_name: string =
                                 getCompiledBindingVariableNameFromString(
@@ -634,11 +641,9 @@ export async function finalizeBindingExpression(
 
                     } else if (Binding_Var_Is_Internal_Variable(comp_var)) {
 
-                        const update_action =
-                            comp_var.type == BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE
-                                ? "fua" : "ua";
+                        const update_action = "set_attr";
 
-                        const index = comp_info.binding_records.get(name).index,
+                        const index = comp_info.binding_records.get(name)?.name,
 
                             assignment: JSCallExpression = <any>parse_js_exp(
                                 `${self_ref}.${update_action}(${index})`

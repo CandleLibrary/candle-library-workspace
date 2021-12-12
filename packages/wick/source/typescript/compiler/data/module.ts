@@ -242,7 +242,7 @@ export async function importResource(
         case "@attributes":
             /* all ids within this node are imported binding_variables from parent */
             //Add all elements to global scope
-            ref_type = BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE; flag = BINDING_FLAG.FROM_PARENT;
+            ref_type = BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE; flag = BINDING_FLAG.FROM_ATTRIBUTES;
             break;
 
         case "@store":

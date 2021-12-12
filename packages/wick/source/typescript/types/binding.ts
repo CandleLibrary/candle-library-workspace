@@ -79,7 +79,7 @@ export const enum BINDING_FLAG {
 
     DEFAULT_BINDING_STATE = 1,
 
-    FROM_PARENT = 2,
+    FROM_ATTRIBUTES = 2,
 
     FROM_PRESETS = 4,
 

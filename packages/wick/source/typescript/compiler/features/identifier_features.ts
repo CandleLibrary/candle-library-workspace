@@ -47,7 +47,7 @@ registerFeature(
 
                         build_system.addBindingVariable(
                             frame, name, child.pos, BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE, name,
-                            BINDING_FLAG.ALLOW_UPDATE_FROM_MODEL | BINDING_FLAG.FROM_PARENT
+                            BINDING_FLAG.ALLOW_UPDATE_FROM_MODEL | BINDING_FLAG.FROM_ATTRIBUTES
                         );
 
                         await build_system.processNodeAsync(child, frame, component, context);

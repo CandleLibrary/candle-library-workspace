@@ -1,5 +1,6 @@
 import { Transition } from '@candlelib/glow';
 import spark, { Sparky } from "@candlelib/spark";
+import { id } from '../../../../../../wind/build/tables.js';
 import { Environment, envIs } from '../../../common/env.js';
 import { Context } from '../../../compiler/common/context.js';
 import { BINDING_FLAG, ObservableModel, ObservableWatcher, FLAG_ID_OFFSET } from "../../../types/all";
@@ -74,7 +75,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     context: Context;
 
     //@ts-ignore
-    nlu: { [key: string]: number; };
+    //nlu: { [key: string]: number; };
 
     //@ts-ignore
     lookup_function_table: BindingUpdateFunction[];
@@ -130,17 +131,38 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     _SCHD_: number;
 
     static edit_name: string | undefined;
+    /**
+     * Store for attribute name to internal cached value
+     */
+    attr: Map<string, { meta: number, val: any; }>;
+    /**
+     * Mapping between child attribute name and internal binding 
+     * name.
+     */
+    ch_map: Map<WickContainer | WickRTComponent, [string, string]>;
+
 
     is(flag: Status) {
-        return (this.status & flag) == flag;
+
+        return (this.getStatus() & flag) == flag;
+    }
+
+    getStatus(): number {
+        return parseInt(this.ele.dataset["wkstat"] ?? "0");
+        //return this.status
     }
 
     setStatus(...flags: Status[]) {
-        this.status |= flags.reduce((r, t) => r | t, 0);
+        //this.status |= flags.reduce((r, t) => r | t, 0);
+        this.ele.dataset["wkstat"] = this.getStatus() | flags.reduce((r, t) => r | t, 0);
     }
 
     removeStatus(...flags: Status[]) {
-        this.status ^= (this.status & flags.reduce((r, t) => r | t, 0));
+
+        const status = this.getStatus();
+        this.ele.dataset["wkstat"] = (status ^ (status & flags.reduce((r, t) => r | t, 0)));
+
+        //this.status ^ (status & flags.reduce((r, t) => r | t, 0));
     }
 
     constructor(
@@ -185,6 +207,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         this.setCSS();
 
+        this.attr = new Map;
+        this.ch_map = new Map;
+
         //Create or assign global model whose name matches the default_model_name;
         if (default_model_name) {
 
@@ -213,6 +238,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         registerComponent(this);
     }
 
+    denit() { }
+
     init_interfaces(c: any) { }
 
     initialize(model: any = this.model) {
@@ -228,11 +255,21 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         this.init(this);
 
-        for (const child of this.ch)
-            child.initialize();
+        for (const child of this.ch) {
+            try {
+                child.initialize();
+            } catch (e) {
+                console.log(e);
+            }
+        }
 
-        if (this.originator)
-            this.originator.initialize();
+        if (this.originator) {
+            try {
+                this.originator.initialize();
+            } catch (e) {
+                console.log(e);
+            }
+        }
 
         this.async_init();
 
@@ -258,6 +295,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     }
 
     destructor() {
+        this.denit();
+
         if (this.model)
             this.setModel(null);
 
@@ -404,7 +443,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     oTI(row: number, col: number, DESCENDING: boolean, trs: Transition) { }
     oTO(row: number, col: number, DESCENDING: boolean, trs: Transition) { }
     aRR(row: number, col: number, trs: Transition) { }
-
 
     onTransitionOutEnd() {
 
@@ -600,9 +638,37 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         for (const child of this.ch)
             child.onModelUpdate(model,
                 BINDING_FLAG.ALLOW_UPDATE_FROM_MODEL
-                | BINDING_FLAG.FROM_PARENT
+                | BINDING_FLAG.FROM_ATTRIBUTES
                 | BINDING_FLAG.DEFAULT_BINDING_STATE
             );
+    }
+
+    decodeAttribute(str: any) { return str; }
+
+    updateAttributeData(ch: WickRTComponent) {
+
+        if (ch.is(Status.DIRTY)) {
+            // Scan the child props for dirty flags
+            // and pull the props value into the target
+            // variable
+            let map = null;
+
+            if (ch.is(Status.CONTAINER_COMPONENT)) {
+                map = this.ch_map.get(ch.constructor);
+            } else {
+                map = this.ch_map.get(ch);
+            }
+
+            if (map) {
+
+                const [own, child] = map;
+                const update_val = { [own]: ch.get_attr(child) };
+                this.update(update_val, BINDING_FLAG.FROM_OUTSIDE);
+
+            }
+            ch.removeStatus(Status.DIRTY);
+        }
+
     }
 
     update(data: any, flags: BINDING_FLAG = 1, IMMEDIATE: boolean = false) {
@@ -611,25 +677,25 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         for (const name in data) {
 
-            const val = data[name];
+            const store = this.attr.get(name);
 
-            if (val !== undefined && this.nlu) {
+            if (store) {
 
-                const index = this.nlu[name];
+                const { meta } = this.decodeAttribute(store);
 
-                if (flags && ((index >>> FLAG_ID_OFFSET.VALUE) & flags) == flags) {
-
-                    this.ua(index & FLAG_ID_OFFSET.MASK, val);
+                if (flags && ((meta >>> FLAG_ID_OFFSET.VALUE) & flags) == flags) {
+                    this.set_attr(name, data[name]);
                 }
             }
         }
 
-        for (const [call_id, args] of this.clearActiveCalls())
-            this.lookup_function_table[call_id].call(this, ...args);
-
+        /*       for (const [call_id, args] of this.clearActiveCalls())
+                  this.lookup_function_table[call_id].call(this, ...args);
+       */
         if (IMMEDIATE)
             this.scheduledUpdate(0, 0);
     }
+
     /**
      * Use in compiled functions to update attributes and schedule an
      * immediate update followup pass to call methods that may be effected
@@ -639,56 +705,63 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      * @param RETURN_PREVIOUS_VAL 
      * @returns 
      */
-    ua(attribute_index: number, attribute_value: any, RETURN_PREVIOUS_VAL = false) {
+    set_attr(name: string, attribute_value: any, RETURN_PREVIOUS_VAL = false) {
 
         const comp: { [key: string]: any; } = <any>this;
 
-        const prev_val = comp[attribute_index];
+        const store = this.attr.get(name);
 
-        if (attribute_value !== prev_val) {
+        if (store) {
 
-            comp[attribute_index] = attribute_value;
+            const prev_val = store.val;
 
-            if (
-                !this.call_set.has(attribute_index)
-                &&
-                this.lookup_function_table[attribute_index]
-            ) {
-                /*
-                this.call_set.set(attribute_index, [this.active_flags, this.call_depth]);
+            const index = (store.meta & FLAG_ID_OFFSET.MASK);
 
-                
-                //Forcefully update 
-                spark.queueUpdate(this, 0, 0, true); 
-            */
-                this.lookup_function_table[attribute_index].call(this, this.call_depth);
+            if (attribute_value !== prev_val) {
+
+                store.val = attribute_value;
+
+                if (typeof attribute_value != "object")
+                    this.ele.dataset[name] = attribute_value;
+                else {
+                    console.log("Cannot store an object");
+                }
+
+                if (
+                    !this.call_set.has(index)
+                    &&
+                    this.lookup_function_table[index]
+                ) {
+
+                    this.call_set.set(index, [this.active_flags, this.call_depth]);
+
+                    //Forcefully update 
+                    //spark.queueUpdate(this, 0, 0, true);
+                    //this.lookup_function_table[attribute_index].call(this, this.call_depth);
+                    spark.queueUpdate(this);
+                }
+
+                if (
+                    (store.meta >>> FLAG_ID_OFFSET.VALUE) & BINDING_FLAG.FROM_ATTRIBUTES
+                    &&
+                    this.par
+                ) {
+                    this.setStatus(Status.DIRTY);
+                    this.par.updateAttributeData(this);
+                }
             }
+
+            return RETURN_PREVIOUS_VAL ? prev_val : comp[index];
+
+        } else {
+            throw new Error("Undefined attribute " + name);
         }
-
-        return RETURN_PREVIOUS_VAL ? prev_val : comp[attribute_index];
     }
 
-    fua(attribute_index: number, attribute_value: any, RETURN_PREVIOUS_VAL = false) {
+    get_attr(name: string) { return this.attr.get(name)?.val ?? undefined; }
 
-        const comp: { [key: string]: any; } = <any>this;
+    /* 
 
-        const prev_val = comp[attribute_index];
-
-        if (
-            !this.call_set.has(attribute_index)
-            &&
-            this.lookup_function_table[attribute_index]
-        )
-            this.call_set.set(attribute_index, [this.active_flags, this.call_depth]);
-
-        comp[attribute_index] = attribute_value;
-
-        //Forcefully update 
-        spark.queueUpdate(this, 0, 0, true);
-
-
-        return RETURN_PREVIOUS_VAL ? prev_val : comp[attribute_index];
-    }
     u(flags: DATA_DIRECTION, call_depth: number = this.call_depth) {
 
         const pending_function_indices = this.updated_attributes.values();
@@ -701,7 +774,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         }
 
         spark.queueUpdate(this);
-    }
+    } */
 
     /**
      * Check to see of the index locations are defined
@@ -726,14 +799,14 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.pui[this_index] = this.par["u" + parent_method_index];
     }
 
-    updateFromParent(local_index: number, attribute_value: any, flags: number) {
+    updateFromParent(local_index: string, attribute_value: any, flags: number) {
 
         if (flags >> FLAG_ID_OFFSET.VALUE == this.ci + 1)
             return;
 
-        this.active_flags |= BINDING_FLAG.FROM_PARENT;
+        this.active_flags |= BINDING_FLAG.FROM_ATTRIBUTES;
 
-        this.ua(local_index, attribute_value);
+        this.set_attr(local_index, attribute_value);
     }
 
     updateParent(data: any) {
@@ -755,7 +828,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 if (((index >>> FLAG_ID_OFFSET.VALUE) & BINDING_FLAG.ALLOW_UPDATE_FROM_CHILD)) {
                     let cd = this.call_depth;
                     this.call_depth = 0;
-                    this.ua(index & FLAG_ID_OFFSET.MASK, val);
+                    this.set_attr(index & FLAG_ID_OFFSET.MASK, val);
                     this.call_depth = cd;
                 }
             }
@@ -1070,7 +1143,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         listener_function: (...args: any[]) => any,
         REQUIRES_THIS_BINDING: boolean = false
     ) {
-
         for (const ele of this.elu[ele_index] ?? []) {
             const fn = REQUIRES_THIS_BINDING ? listener_function.bind(this) : listener_function;
 

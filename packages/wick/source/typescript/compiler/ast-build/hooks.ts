@@ -391,7 +391,7 @@ function processBindingRecords(comp_info: CompiledComponentClass, comp: Componen
 
     const { methods, method_frames, init_frame } = comp_info;
 
-    for (const [name, { nodes, index }] of comp_info.binding_records.entries()) {
+    for (const [name, { nodes, index, name: lu_name }] of comp_info.binding_records.entries()) {
 
         const binding = getComponentBinding(name, comp),
             { internal_name, class_index, flags, type, external_name } = binding;
@@ -407,7 +407,7 @@ function processBindingRecords(comp_info: CompiledComponentClass, comp: Componen
 
         if (flags & BINDING_FLAG.ALLOW_EXPORT_TO_PARENT) {
 
-            const stmt_ = stmt(`this.updateParent({${external_name}:this[${index}]});`);
+            const stmt_ = stmt(`this.updateParent({${external_name}:this.get_value(${lu_name})});`);
 
             appendStmtToFrame(frame, stmt_);
         }
@@ -439,6 +439,8 @@ function processBindingVariables(
     component: ComponentData,
     index: number
 ): void {
+
+    const val = "undefined";
     if (
         true ||
         binding.type == BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE
@@ -447,10 +449,10 @@ function processBindingVariables(
         ||
         binding.type == BINDING_VARIABLE_TYPE.CONST_INTERNAL_VARIABLE
     ) class_info.lu_public_variables.push(
-        <any>getPropertyAST(
-            getExternalName(binding),
-            ((((binding.flags | BINDING_FLAG.DEFAULT_BINDING_STATE) << FLAG_ID_OFFSET.VALUE) | index) >>> 0) + ""
-        )
+        exp(`["${getExternalName(binding)}", {
+            val:${val},
+            meta:${((((binding.flags | BINDING_FLAG.DEFAULT_BINDING_STATE) << FLAG_ID_OFFSET.VALUE) | index) >>> 0) + ""}
+        }]`)
     );
 
     if (binding.type == BINDING_VARIABLE_TYPE.METHOD_VARIABLE) {
@@ -490,9 +492,9 @@ export async function addBindingRecord(
 
         const index = class_info.binding_records.size;
 
-        const { default_val } = binding;
+        const { default_val, external_name } = binding;
 
-        class_info.binding_records.set(name, { index, nodes: [] });
+        class_info.binding_records.set(name, { name: `"${external_name}"`, index, nodes: [] });
     }
 }
 

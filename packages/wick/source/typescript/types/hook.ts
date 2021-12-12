@@ -65,6 +65,7 @@ interface buildJSFunction<T, U = T> {
          * @param ast
          */
         addOnDestroy: (ast: T | U) => void
+
     ): (U | T) | Promise<(U | T)> | null;
 }
 

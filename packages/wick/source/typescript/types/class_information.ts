@@ -19,7 +19,7 @@ export interface CompiledComponentClass {
      * Statements added to the component's init_async function
      */
     async_init_frame: FunctionFrame,
-
+    lu_ch_map: JSNode[];
     lfu_table_entries: JSNode[];
     lu_public_variables: JSNode[];
     nluf_public_variables: JSNode;
@@ -31,5 +31,5 @@ export interface CompiledComponentClass {
         HAS_ASYNC: boolean,
         NO_LOCAL_BINDINGS: boolean;
     }[],
-    binding_records: Map<string, { nodes: JSNode[], index: number; }>;
+    binding_records: Map<string, { nodes: JSNode[], name: string, index: string; }>;
 }

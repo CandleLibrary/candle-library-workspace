@@ -235,11 +235,11 @@ registerFeature(
                         child_binding
                     ) {
 
-                        if (node.type == AttributeHook && (child_binding.flags & BINDING_FLAG.FROM_PARENT) > 0) {
+                        if (node.type == AttributeHook && (child_binding.flags & BINDING_FLAG.FROM_ATTRIBUTES) > 0) {
 
                             let exp: any = null;
 
-                            exp = build_system.js.stmt(`$$${child_id}.ufp(${child_binding.class_index}, _, f);`);
+                            exp = build_system.js.stmt(`$$${child_id}.ufp("${child_binding.external_name}", _, f);`);
 
                             exp.nodes[0].nodes[1].nodes[1] = createBindingReference(par_binding);
 
@@ -251,7 +251,7 @@ registerFeature(
 
                             let exp: any = null;
 
-                            exp = build_system.js.stmt(`$$ch${child_id}.spm(${child_binding.class_index}, ${getBindingClassIndexID(par_binding)}, ${child_id})`);
+                            exp = build_system.js.stmt(`$$ch${child_id}.spm("${child_binding.external_name}", ${getBindingClassIndexID(par_binding)}, ${child_id})`);
 
                             registerClassBinding(addInit, par_binding);
 

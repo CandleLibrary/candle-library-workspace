@@ -234,7 +234,7 @@ function integrateParentComponentScope(
                         {},
                         BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE,
                         binding.external_name,
-                        BINDING_FLAG.ALLOW_EXPORT_TO_PARENT | BINDING_FLAG.FROM_PARENT
+                        BINDING_FLAG.ALLOW_EXPORT_TO_PARENT | BINDING_FLAG.FROM_ATTRIBUTES
                     );
                 } break;
 
@@ -258,7 +258,7 @@ function integrateParentComponentScope(
                     {},
                     BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE,
                     name,
-                    BINDING_FLAG.ALLOW_EXPORT_TO_PARENT | BINDING_FLAG.FROM_PARENT
+                    BINDING_FLAG.ALLOW_EXPORT_TO_PARENT | BINDING_FLAG.FROM_ATTRIBUTES
                 );
 
                 binding.flags |= BINDING_FLAG.ALLOW_UPDATE_FROM_CHILD;

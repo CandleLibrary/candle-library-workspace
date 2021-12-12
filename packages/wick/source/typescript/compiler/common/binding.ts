@@ -370,7 +370,7 @@ export function getCompiledBindingVariableName(
             case BINDING_VARIABLE_TYPE.STORE_VARIABLE:
             default:
                 if (comp_info)
-                    return `${comp_name}[${comp_info.binding_records.get(binding.internal_name)?.index ?? -1}]`;
+                    return `${comp_name}.get_attr(${comp_info.binding_records.get(binding.internal_name)?.name ?? `""`})`;
                 else
                     throw new Error("comp_info not defined");
         }
