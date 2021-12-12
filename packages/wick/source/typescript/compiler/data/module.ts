@@ -1,6 +1,7 @@
 import { JSNode } from "@candlelib/js";
 import URI from '@candlelib/uri';
 import { error, warn } from '../../entry/logger.js';
+import radiate from '../../entry/wick-radiate.js';
 import {
     BINDING_FLAG,
     BINDING_VARIABLE_TYPE,
@@ -213,6 +214,10 @@ export async function importResource(
         case "@radiate":
             // Opts the component into the wick-radiate client side router system. The component must be 
             // at the root of the component tree for this to work.
+
+            if (default_name)
+                addBindingVariable(frame, default_name, node.pos, BINDING_VARIABLE_TYPE.RADIATE_ROUTER_VARIABLE, default_name, flag);
+
             component.RADIATE = true;
             return;
 
@@ -221,6 +226,7 @@ export async function importResource(
             if (default_name && context.named_components.has(comp_name))
                 component.local_component_names.set(comp_name, context.named_components.get(comp_name)?.name ?? "");
             return;
+
         case "@test":
             if (default_name)
                 addBindingVariable(frame, default_name, node.pos, BINDING_VARIABLE_TYPE.CURE_TEST, default_name,
@@ -230,30 +236,29 @@ export async function importResource(
                 node.pos?.throw("Cure synthetic module only exports a default value");
 
             break;
-
-        case "@parent":
         case "@props":
+        case "@properties":
+        case "@attrib":
         case "@attributes":
             /* all ids within this node are imported binding_variables from parent */
             //Add all elements to global scope
             ref_type = BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE; flag = BINDING_FLAG.FROM_PARENT;
             break;
 
-        case "@session":
-            ref_type = BINDING_VARIABLE_TYPE.SESSION_VARIABLE; flag = BINDING_FLAG.FROM_SESSION;
+        case "@store":
+            ref_type = BINDING_VARIABLE_TYPE.STORE_VARIABLE; flag = BINDING_FLAG.FROM_STORE;
+            if (["scope", "up"].includes(meta))
+                module_name = meta;
             break;
 
         case "@api":
             ref_type = BINDING_VARIABLE_TYPE.MODULE_MEMBER_VARIABLE; flag = BINDING_FLAG.FROM_OUTSIDE;
             break;
 
-        case "@store":
-            ref_type = BINDING_VARIABLE_TYPE.STORE_VARIABLE; flag = BINDING_FLAG.FROM_OUTSIDE;
-            break;
 
-        case "@globals":
+        /* case "@globals":
             ref_type = BINDING_VARIABLE_TYPE.CONFIG_GLOBAL; flag = BINDING_FLAG.FROM_PRESETS;
-            break;
+            break; */
 
         case "@model":
 
@@ -267,23 +272,27 @@ export async function importResource(
             flag = BINDING_FLAG.ALLOW_UPDATE_FROM_MODEL;
             break;
 
-        case "@context":
-            /* all ids within this node are imported from the context object */
-            break;
+        //case "@context":
+        //    /* all ids within this node are imported from the context object */
+        //    break;
     }
 
+    if (ref_type > 0) {
+        for (const { local, external } of names) {
 
-    for (const { local, external } of names) {
+            if (external == "namespace")
+                continue;
 
-        if (external == "namespace")
-            continue;
+            if (!addBindingVariable(frame, local, node.pos, ref_type, external || local, flag, module_name)) {
 
-        if (!addBindingVariable(frame, local, node.pos, ref_type, external || local, flag, module_name)) {
+                //@ts-ignore
+                node.pos.throw(`Import variable [${local}] already declared`);
+            }
 
-            //@ts-ignore
-            node.pos.throw(`Import variable [${local}] already declared`);
+            addWriteFlagToBindingVariable(local, frame);
         }
-
-        addWriteFlagToBindingVariable(local, frame);
+    } else {
+        for (const { local, external } of names)
+            console.warn(`${local || external} from ${url} is not a valid import and will be ignored`);
     }
 }

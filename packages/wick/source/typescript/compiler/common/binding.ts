@@ -338,8 +338,8 @@ export function getCompiledBindingVariableName(
                     return `${comp_name}.context.api.${external_name}`;
                 return `${comp_name}.context.api.${module_name}.module.${external_name}`;
 
-            case BINDING_VARIABLE_TYPE.STORE_VARIABLE:
-                return `${comp_name}.context.api.store.${external_name}`;
+            case BINDING_VARIABLE_TYPE.RADIATE_ROUTER_VARIABLE:
+                return `${comp_name}.context.api.router`;
 
             case BINDING_VARIABLE_TYPE.UNDECLARED:
                 const global_names = getSetOfEnvironmentGlobalNames();
@@ -367,6 +367,7 @@ export function getCompiledBindingVariableName(
             case BINDING_VARIABLE_TYPE.CONSTANT_DATA_SOURCE:
                 return "'---INVALID US OF STATIC BINDING---'";
 
+            case BINDING_VARIABLE_TYPE.STORE_VARIABLE:
             default:
                 if (comp_info)
                     return `${comp_name}[${comp_info.binding_records.get(binding.internal_name)?.index ?? -1}]`;
@@ -531,6 +532,10 @@ export function Binding_Var_Is_Internal_Variable(comp_var: BindingVariable) {
         ||
         comp_var.type == BINDING_VARIABLE_TYPE.TEMPLATE_INITIALIZER
     );
+}
+
+export function Binding_Var_Is_Store_Variable(comp_var: BindingVariable) {
+    return (comp_var.type == BINDING_VARIABLE_TYPE.STORE_VARIABLE);
 }
 
 /**

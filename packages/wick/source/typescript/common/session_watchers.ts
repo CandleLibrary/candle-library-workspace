@@ -18,7 +18,7 @@ let inits: any = null;
 function updateDomain(domain: Domain, obj: any) {
     const set = session_watcher_store[domain];
     if (set) for (const comp of set)
-        comp.update(obj, BINDING_FLAG.FROM_SESSION);
+        comp.update(obj, BINDING_FLAG.FROM_STORE);
 }
 
 
@@ -32,7 +32,7 @@ function getDomainList(comp: WickRTComponent): Set<Domain> {
     let domains: Set<Domain> = new Set;
 
     for (const [name, flags] of Object.entries(comp.nlu || {})) {
-        if ((flags >> FLAG_ID_OFFSET.VALUE) & BINDING_FLAG.FROM_SESSION) {
+        if ((flags >> FLAG_ID_OFFSET.VALUE) & BINDING_FLAG.FROM_STORE) {
             const val = domain_maps[name];
             if (typeof val == "number") {
                 domains.add(val);
@@ -70,7 +70,7 @@ export function registerWatcherComponent(
         if (set) set.add(comp);
 
         if (init && init.init_data)
-            comp.update(init.init_data(), BINDING_FLAG.FROM_SESSION);
+            comp.update(init.init_data(), BINDING_FLAG.FROM_STORE);
     }
 };
 export function unregisterWatcherComponent(

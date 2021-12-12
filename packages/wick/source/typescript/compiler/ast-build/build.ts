@@ -25,6 +25,7 @@ import {
 import * as b_sys from "../build_system.js";
 import {
     Binding_Var_Is_Internal_Variable,
+    Binding_Var_Is_Store_Variable,
     getBindingStaticResolutionType,
     getCompiledBindingVariableNameFromString,
     getComponentBinding,
@@ -161,11 +162,12 @@ export async function createCompiledComponentClass(
             //Session Variables - enabled if the component has session bindings
             if (component.root_frame.binding_variables) {
                 const bindings = [...component.root_frame.binding_variables.values()];
-                if (bindings.some(b => (b.flags & BINDING_FLAG.FROM_SESSION) == BINDING_FLAG.FROM_SESSION && b.class_index >= 0)) {
-                    appendStmtToFrame(class_info.init_frame, stmt(`w.rt.registerSession(this)`));
-                    appendStmtToFrame(class_info.terminate_frame, stmt(`w.rt.unregisterSession(this)`));
-                }
 
+                for (const binding of bindings.filter(b => (b.flags & BINDING_FLAG.FROM_STORE) == BINDING_FLAG.FROM_STORE && b.class_index >= 0)) {
+                    const external_name = binding.external_name;
+                    appendStmtToFrame(class_info.init_frame, stmt(`w.rt.register_store("", "${external_name}", this)`));
+                    appendStmtToFrame(class_info.terminate_frame, stmt(`w.rt.unregister_store("", "${external_name}", this)`));
+                }
             }
 
             //Ensure there is an async init method
@@ -262,7 +264,7 @@ export function createClassInfoObject(): CompiledComponentClass {
         init_interface_frame = createBuildFrame("init_interfaces", "c"),
         init_frame = createBuildFrame("init", "c"),
         async_init_frame = createBuildFrame("async_init"),
-        terminate_frame = createBuildFrame("terminate"),
+        terminate_frame = createBuildFrame("denit"),
         class_info: CompiledComponentClass = {
             methods: <any>[],
             binding_setup_frame,
@@ -275,7 +277,7 @@ export function createClassInfoObject(): CompiledComponentClass {
             lu_public_variables: [],
             write_records: [],
             binding_records: new Map(),
-            method_frames: [async_init_frame, init_frame, init_interface_frame, binding_setup_frame],
+            method_frames: [async_init_frame, init_frame, init_interface_frame, binding_setup_frame, terminate_frame],
             nlu_index: 0,
         };
 
@@ -535,7 +537,6 @@ export async function finalizeBindingExpression(
 
                     if (Binding_Var_Is_Internal_Variable(comp_var)) {
 
-
                         const update_action =
 
                             comp_var.type == BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE
@@ -592,8 +593,46 @@ export async function finalizeBindingExpression(
                         continue;
                     }
 
-                    //Directly assign new value to model variables
-                    if (Binding_Var_Is_Internal_Variable(comp_var)) {
+                    if (Binding_Var_Is_Store_Variable(comp_var)) {
+
+                        const update_action = "wick.rt.set_store";
+
+                        const name = comp_var.external_name;
+
+                        const meta = comp_var.module_name ?? "";
+
+                        const
+                            assignment: JSCallExpression = <any>parse_js_exp(
+                                `${update_action}("${meta}", "${name}", this)`
+                            ),
+
+                            { ast: a1, NEED_ASYNC: NA1 } =
+                                await finalizeBindingExpression(
+                                    ref, component, comp_info, context, self_ref
+                                ),
+
+                            { ast: a2, NEED_ASYNC: NA2 } =
+                                await finalizeBindingExpression(
+                                    <JSNode>value, component, comp_info, context, self_ref
+                                );
+
+                        NEED_ASYNC = NA1 || NA2 || NEED_ASYNC;
+
+                        node.nodes = [<any>a1, <any>a2];
+
+                        if (node.symbol == "=") {
+                            assignment.nodes[1].nodes.splice(2, 0, node.nodes[1]);
+                        } else {
+                            //@ts-ignore
+                            node.symbol = node.symbol.slice(0, 1);
+                            assignment.nodes[1].nodes.splice(2, 0, node);
+                        }
+
+                        mutate(setPos(assignment, node.pos));
+
+                        skip();
+
+                    } else if (Binding_Var_Is_Internal_Variable(comp_var)) {
 
                         const update_action =
                             comp_var.type == BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE
@@ -622,7 +661,6 @@ export async function finalizeBindingExpression(
                         if (node.symbol == "=") {
                             assignment.nodes[1].nodes.push(node.nodes[1]);
                         } else {
-
                             //@ts-ignore
                             node.symbol = node.symbol.slice(0, 1);
                             assignment.nodes[1].nodes.push(node);

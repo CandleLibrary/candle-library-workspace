@@ -3,12 +3,16 @@ import GlowAnimation from '@candlelib/glow';
 import { Environment, envIs } from '../../common/env.js';
 import { registerWatcherComponent, unregisterWatcherComponent } from '../../common/session_watchers.js';
 import { Context, UserPresets } from "../../compiler/common/context.js";
+import { BINDING_FLAG } from '../../index.js';
 import { Router } from '../radiate/router.js';
 import { WickRTComponent } from "./component/component.js";
 
 let GLOW_CHECKED = false;
 let local_glow: any = null;
 let glow: typeof GlowAnimation | null = null;
+
+
+const store: Map<string, { val: any, comps: Set<WickRTComponent>; }> = new Map();
 
 export class WickRuntime {
     /**
@@ -80,6 +84,83 @@ export class WickRuntime {
         }
 
         return local_glow;
+    }
+
+    set_store<T = any>(ns: string, key: string, val: T, comp: WickRTComponent): T {
+
+        if (!(comp instanceof WickRTComponent)) return val;
+
+        if (!ns) {
+
+            if (!store.has(key))
+                this.register_store(ns, key, comp);
+
+            const column = store.get(key);
+
+            if (column) {
+
+                column.val = val;
+
+                const update_obj = { [key]: column.val };
+
+                for (const comp of column.comps)
+                    comp.update(update_obj, BINDING_FLAG.FROM_STORE);
+            }
+        } else if (ns == "scope") {
+
+            const update_obj = { [key]: val };
+
+            //Pass the data to this object children and parent
+            if (comp.par) {
+                comp.par.update(update_obj, BINDING_FLAG.FROM_STORE);
+                for (const child of comp.par.ch)
+                    child.update(update_obj, BINDING_FLAG.FROM_STORE);
+            }
+
+
+            for (const child of comp.ch)
+                child.update(update_obj, BINDING_FLAG.FROM_STORE);
+
+            comp.update(update_obj, BINDING_FLAG.FROM_STORE);
+
+        } else if (ns == "up") {
+
+            const update_obj = { [key]: val };
+
+            let par = comp.par;
+
+            while (par) {
+                par.update(update_obj, BINDING_FLAG.FROM_STORE);
+                par = par.par;
+            }
+        }
+
+        return val;
+    }
+    register_store(ns: string, key: string, comp: WickRTComponent) {
+        if (!ns) {
+            if (!store.has(key))
+                store.set(key, { val: undefined, comps: new Set() });
+            const column = store.get(key);
+            if (column) {
+                column.comps.add(comp);
+                if (column.val !== undefined)
+                    comp.update({ [key]: column.val });
+            }
+        }
+    }
+
+    unregister_store(ns: string, key: string, val: any, comp: WickRTComponent) {
+        if (!ns) {
+            if (!store.has(key))
+                return;
+            const column = store.get(key);
+            if (column) {
+                column.comps.delete(comp);
+                if (column.comps.size == 0)
+                    store.delete(key);
+            }
+        }
     }
 
     get p() { return this.context; }
