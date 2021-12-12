@@ -2,7 +2,6 @@ import glow from '@candlelib/glow';
 import { Logger } from "@candlelib/log";
 import URI from '@candlelib/uri';
 import Wick, { gatherWickElements } from '../../entry/wick-runtime.js';
-import { Observable } from '../index.js';
 import { ComponentElement } from '../runtime/component/component.js';
 import { Element } from "./element.js";
 import { Page, PageType } from "./page.js";
@@ -173,6 +172,8 @@ export class Router {
         /* */
         this.modal_stack = [];
 
+        this.current_url = new URI;
+
         window.onpopstate = (e: PopStateEvent = <any>{}) => {
 
             if (this.IGNORE_NAVIGATION) {
@@ -220,9 +221,11 @@ export class Router {
                 return this.loadPage(next_modal);
 
 
-            if (this.prev_url)
+            if (this.prev_url) {
 
+                history.replaceState({}, "ignored title", this.prev_url.toString());
                 return this.parseURL(this.prev_url.toString(), this.prev_url);
+            }
 
         }
         return new URI(this.current_url + "");
@@ -366,10 +369,14 @@ export class Router {
 
             u.hash = `modal:${wurl.path}`;
 
+            //document.location.hash = u.hash;
+
+            //* 
             history.replaceState({
                 modal_state: true,
                 modal_url: wurl.toString()
             }, "ignored title", u.toString());
+            //*/
 
             //trace modal stack and see if the modal already exists
             if (IS_SAME_PAGE)
@@ -397,7 +404,11 @@ export class Router {
 
                 page.transitionIn(transition);
 
+                page.transitionStart();
+
                 await transition.asyncPlay();
+
+                page.transitionComplete();
 
                 this.finalizePageDisconnects();
 
@@ -406,8 +417,8 @@ export class Router {
 
 
         } else {
+            this.prev_url = this.current_url;
             this.current_view = page;
-            this.prev_url = new URI(wurl);
             this.current_url = new URI(wurl);
 
             for (const modal of this.modal_stack) {
@@ -450,7 +461,7 @@ export class Router {
             page.transitionStart();
 
         await transition.asyncPlay();
-        
+
         if (!IS_SAME_PAGE)
             page.transitionComplete();
 
