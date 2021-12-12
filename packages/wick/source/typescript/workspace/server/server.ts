@@ -93,5 +93,5 @@ export async function initDevServer(
     logger.log(`HTTPS Server initialized and listening on port [ ${port} ] `);
     logger.log(`Checkout out your workspace at [ https://localhost:${port} ]!`);
 
-    initializeWebSocketServer(server);
+    initializeWebSocketServer(server, config);
 }
