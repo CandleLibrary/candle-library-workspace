@@ -23,16 +23,6 @@ export enum EditorCommand {
      * with a list of style strings registered to the component
      */
     GET_COMPONENT_STYLE_RESPONSE,
-
-    /**
-     * A message from a client instance indicating the
-     * client has loaded and is ready to communicate with
-     * the server. Should result in the initialization of
-     * file watchers for the source files that were used
-     * to render the endpoint.
-     */
-    REGISTER_CLIENT_ENDPOINT,
-
     /**
     * A server response to a EditorCommand.GET_COMPONENT_PATCH
     * request. Client instances should use the ComponentPatch
@@ -74,7 +64,17 @@ export enum EditorCommand {
      * Server response with a list of plugin paths that should be 
      * loaded into the client workspace
      */
-    PLUGIN_PATHS_RESPONSE
+    PLUGIN_PATHS_RESPONSE,
+
+
+    /**
+     * A message from a client instance indicating the
+     * client has loaded and is ready to communicate with
+     * the server. Should result in the initialization of
+     * file watchers for the source files that were used
+     * to render the endpoint.
+     */
+    REGISTER_CLIENT_COMPONENT
 }
 
 export const enum StyleSourceType {
@@ -108,12 +108,12 @@ export interface CommandsMap {
         command: EditorCommand.NOT_ALLOWED;
     };
 
-    [EditorCommand.REGISTER_CLIENT_ENDPOINT]: {
-        command: EditorCommand.REGISTER_CLIENT_ENDPOINT;
+    [EditorCommand.REGISTER_CLIENT_COMPONENT]: {
+        command: EditorCommand.REGISTER_CLIENT_COMPONENT;
         /**
-         * The API endpoint that this page represents
+         * The API component that this page represents
          */
-        endpoint: string;
+        comp_name: string;
     };
 
     [EditorCommand.GET_COMPONENT_STYLE]: {
