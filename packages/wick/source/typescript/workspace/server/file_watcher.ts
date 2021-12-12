@@ -7,7 +7,7 @@ import { createComponent } from '../../compiler/create_component.js';
 import { Session } from '../common/session.js';
 import { reloadComponent, swap_component_data } from './component_tools.js';
 import { addComponent, store } from './store.js';
-export const logger = Logger.createLogger("flame");
+export const logger = Logger.get("wick");
 let watchers: Map<string, FileWatcherHandler> = new Map();
 
 
@@ -45,13 +45,12 @@ export class FileWatcherHandler implements Sparky {
 
         if (!this.watcher) {
 
-            logger.log(`Creating watcher for file [ ${this.path} ]`);
-
             try {
-
                 this.watcher = watch(this.path, (r: any) => (this.type = r, spark.queueUpdate(this)));
+                logger.log(`Creating watcher for file [ ${this.path} ]`);
             } catch (e) {
                 logger.warn("Unable to watch path " + this.path);
+                logger.error(e);
             }
         }
     }
