@@ -133,7 +133,8 @@ export async function __componentDataToCompiledHTML__(
                 static_data_pack,
                 state,
                 template_map,
-                node
+                node,
+                comp_data
             );
 
         } else if (component_name && context.components?.has(component_name)) {
@@ -422,6 +423,7 @@ async function addContainer(
     state: htmlState,
     template_map: TemplatePackage["templates"],
     node: TemplateHTMLNode,
+    comp_data: string[] = [],
 ) {
     const {
         self: component,
@@ -475,7 +477,7 @@ async function addContainer(
     //get data hook 
     await processHooks(html, static_data_pack, node, template_map);
 
-    await processContainerHooks(html, static_data_pack, node, template_map);
+    await processContainerHooks(html, static_data_pack, node, comp_data);
 
     processAttributes(html.attributes, node);
 }
@@ -516,7 +518,7 @@ async function processContainerHooks(
     html: HTMLContainerNode,
     static_data_pack: StaticDataPack,
     node: TemplateHTMLNode,
-    template_map: TemplatePackage["templates"],
+    comp_data: string[] = [],
 ) {
     const
         hooks = getHookFromElement(html, static_data_pack.self),
@@ -592,6 +594,9 @@ async function processContainerHooks(
                                 model: model,
                                 prev: static_data_pack
                             });
+
+
+                            addAttribute(child_node, "class", "wk-null");
 
                             //const result = await addComponent(child_comp.HTML, new_static_data_pack, template_map);
 

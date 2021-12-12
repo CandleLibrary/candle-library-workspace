@@ -892,13 +892,15 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         } else {
 
-
             if (class_members["claim"]) {
                 if (+(parseInt(class_members["claim"])) != affinity) {
                     this.setStatus(Status.FOREIGN_HOST);
                     return 0;
                 }
             }
+
+            if (class_members["null"])
+                return 0;
 
             // Binding Text Node
             if (ele.tagName == "W-E") {
@@ -958,11 +960,11 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                 //Special Wick Elements
 
-                if (class_members["ctr"])
+                if (class_members["ctr"]) {
 
                     ({ sk, PROCESS_CHILDREN } = process_container(ele, scope_component, sk, PROCESS_CHILDREN));
 
-                else if (class_members["c"] && this.ele !== ele) {
+                } else if (class_members["c"] && this.ele !== ele) {
 
                     hydrateComponentElement(ele, component_chain);
                 }
