@@ -103,13 +103,29 @@ export function getFirstMatchingReferenceIdentifier(input_node: JSNode, id_value
     return null;
 }
 
-export function getFirstReferenceNode(node: JSNode): JSIdentifierClass {
-    for (const { node: id } of traverse(node, "nodes").filter("type",
+export function getFirstReferenceNode(node: JSNode): JSIdentifierClass | null {
+    const types = [
+        JSNodeType.MemberExpression,
         JSNodeType.IdentifierReference,
         JSNodeType.IdentifierProperty,
-        JSNodeType.IdentifierName | JSNodeClass.PROPERTY_NAME,
-    ))
-        return <JSIdentifierClass>id;
+        JSNodeType.IdentifierName | JSNodeClass.PROPERTY_NAME
+    ];
+    for (
+        const { node: id, meta: { skip } } of traverse(node, "nodes")
+            .filter("type", ...types)
+            .makeSkippable()
+    ) {
+        if (id.type == JSNodeType.MemberExpression) {
+            const [child] = id.nodes;
+
+            if (types.includes(child.type))
+                return child;
+
+            skip();
+            continue;
+        } else return <JSIdentifierClass>id;
+    }
+
     return null;
 }
 
