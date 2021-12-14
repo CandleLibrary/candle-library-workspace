@@ -3,7 +3,7 @@ import GlowAnimation from '@candlelib/glow';
 import { Environment, envIs } from '../../common/env.js';
 import { registerWatcherComponent, unregisterWatcherComponent } from '../../common/session_watchers.js';
 import { Context, UserPresets } from "../../compiler/common/context.js";
-import { BINDING_FLAG } from '../../index.js';
+import { BINDING_FLAG } from '../../types/all';
 import { Router } from '../radiate/router.js';
 import { WickRTComponent } from "./component/component.js";
 

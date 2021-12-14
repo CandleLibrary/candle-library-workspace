@@ -5,7 +5,7 @@ import { ComponentStyle, HTMLElementNode } from "../../types/all.js";
 import { ComponentData } from '../common/component.js';
 import { getElementAtIndex } from "../common/html.js";
 import { parse_css_selector } from "../source-code-parse/parse.js";
-import { renderWithFormatting, renderNewFormatted } from "../source-code-render/render.js";
+import { renderNew, renderNewFormatted } from "../source-code-render/render.js";
 
 export function UpdateSelector(
     node: CSSNode, name: string,

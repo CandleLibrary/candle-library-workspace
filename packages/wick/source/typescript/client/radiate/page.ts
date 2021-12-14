@@ -1,10 +1,10 @@
-import URI from '@candlelib/uri';
 import { Transition } from '@candlelib/glow';
+import URI from '@candlelib/uri';
+import { Environment, envIs } from '../../common/env.js';
 import { ComponentElement, WickRTComponent } from '../runtime/component/component.js';
 import { hydrateComponentElements } from '../runtime/component/html.js';
+import { rt } from '../runtime/runtime.js';
 import { Element } from './element.js';
-import { rt, WickEnvironment } from '../runtime/runtime.js';
-import { Environment, envIs } from '../../common/env.js';
 
 export const enum PageType {
     WICK_PAGE,
