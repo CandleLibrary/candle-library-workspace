@@ -40,7 +40,8 @@ export default <AnimationMethods><any>{
         this.PLAY = true;
         this.SCALE = scale;
         this.time = from;
-        spark.queueUpdate(this);
+        this.start = performance.now();
+        spark.queueUpdate(this, 1, 0, false, true);
         this.issueEvent("started");
         return this;
     },
@@ -108,12 +109,16 @@ export default <AnimationMethods><any>{
 
         if (!this.PLAY) return;
 
-        this.time += t * this.SCALE;
+        let diff = t - this.start;
+
+        this.time += diff * this.SCALE;
+
+        this.start = t;
 
         if (this.run(this.time)) {
             if (i++ > 10000)
                 this.issueStopped();
-            spark.queueUpdate(this);
+            spark.queueUpdate(this, 1, 0, false, true);
         } else if (this.REPEAT) {
             let scale = this.SCALE;
 

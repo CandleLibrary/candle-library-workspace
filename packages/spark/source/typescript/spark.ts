@@ -85,7 +85,7 @@ class Spark {
      * @param time_end - Tha m 
      * @param NOW - Forces the new scheduled task to occur with the current cycle
      */
-    queueUpdate(object: Sparky, time_start: number = 1, time_end: number = 0, NOW = false) {
+    queueUpdate(object: Sparky, time_start: number = 1, time_end: number = 0, NOW = false, high_priority = false) {
 
         if (NOW && this.ACTIVE_UPDATE) {
             if (object._SCHD_ == 1) return;
@@ -100,8 +100,10 @@ class Spark {
             if (IsInt && object._SCHD_ > 0)
                 if (this.SCHEDULE_PENDING)
                     return;
-                else
+                else {
+                    this.SCHEDULE_PENDING = true;
                     return caller(this.callback);
+                }
 
             // Forcibly assign a number to obj ._SCHD_. Perhaps warn of type is not 
             // number to begin with. 
@@ -111,7 +113,11 @@ class Spark {
 
             object._SCHD_ = ((time_start & 0xFFFF) | ((time_end) << 16)) << 1;
 
-            this.update_queue.push(object);
+            if (high_priority) {
+                this.update_queue.unshift(object);
+            } else {
+                this.update_queue.push(object);
+            }
 
             this.frame_time = perf.now() | 0;
 
@@ -149,7 +155,7 @@ class Spark {
         const
             uq = this.update_queue,
             time = timestamp,
-            diff = Math.ceil(time - this.frame_time) | 1,
+            diff = Math.ceil(time - this.frame_time) | 0,
             step_ratio = (diff * 0.06); //  step_ratio of 1 = 16.66666666 or 1000 / 60 for 60 FPS
 
         this.frame_time = time;
@@ -184,7 +190,7 @@ class Spark {
                 Errors by default are printed to console. 
             **/
             try {
-                o.scheduledUpdate(step_ratio, diff);
+                o.scheduledUpdate(step_ratio, timestamp);
             } catch (e) {
                 if (e instanceof Error)
                     this.handleError(e);
