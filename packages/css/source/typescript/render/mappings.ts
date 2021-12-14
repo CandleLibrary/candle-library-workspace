@@ -149,7 +149,7 @@ export const css_mappings: NodeMappings<CSSNode, "type"> = <NodeMappings<CSSNode
         },
         {
             type: CSSNodeType.AttributeSelector,
-            template: "\\[ @nodes[0] @match_type? @match_val? @mod? \\]",
+            template: "\\[ @nodes[0] @match_type? {match_val: \\\" @match_val \\\" } @mod? \\]",
             custom_render: (state, render_fn) => {
                 const new_node = Object.assign({}, state.node);
 
