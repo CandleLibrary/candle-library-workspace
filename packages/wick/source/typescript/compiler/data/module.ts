@@ -247,8 +247,11 @@ export async function importResource(
 
         case "@store":
             ref_type = BINDING_VARIABLE_TYPE.STORE_VARIABLE; flag = BINDING_FLAG.FROM_STORE;
-            if (["scope", "up"].includes(meta))
-                module_name = meta;
+            if (meta) {
+                if (["scope", "up", "session", "persist"].includes(meta.trim()))
+                    module_name = meta;
+
+            }
             break;
 
         case "@api":

@@ -90,7 +90,7 @@ export class WickRuntime {
 
         if (!(comp instanceof WickRTComponent)) return val;
 
-        if (!ns) {
+        if (!ns || ns == "persist") {
 
             if (!store.has(key))
                 this.register_store(ns, key, comp);
@@ -100,6 +100,10 @@ export class WickRuntime {
             if (column) {
 
                 column.val = val;
+
+                if (ns == "persist")
+                    this.setDatabaseData(key, val, DatabaseType.Indexed);
+
 
                 const update_obj = { [key]: column.val };
 
@@ -134,11 +138,10 @@ export class WickRuntime {
                 par = par.par;
             }
         }
-
         return val;
     }
     register_store(ns: string, key: string, comp: WickRTComponent) {
-        if (!ns) {
+        if (!ns || ns == "persist") {
             if (!store.has(key))
                 store.set(key, { val: undefined, comps: new Set() });
             const column = store.get(key);
@@ -147,11 +150,14 @@ export class WickRuntime {
                 if (column.val !== undefined)
                     comp.update({ [key]: column.val });
             }
+        } else if (ns == "session") {
+            registerWatcherComponent(comp, key);
         }
+
     }
 
     unregister_store(ns: string, key: string, val: any, comp: WickRTComponent) {
-        if (!ns) {
+        if (!ns || ns == "persist") {
             if (!store.has(key))
                 return;
             const column = store.get(key);
@@ -160,6 +166,8 @@ export class WickRuntime {
                 if (column.comps.size == 0)
                     store.delete(key);
             }
+        } else if (ns == "session") {
+            registerWatcherComponent(comp, key);
         }
     }
 

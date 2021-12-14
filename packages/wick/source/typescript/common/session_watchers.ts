@@ -1,7 +1,5 @@
 import { WickRTComponent } from '../client/runtime/component/component.js';
-import { BINDING_FLAG, FLAG_ID_OFFSET } from '../types/all.js';
-
-
+import { BINDING_FLAG } from '../types/all.js';
 
 export const enum Domain {
     WINDOW_RESIZE,
@@ -27,23 +25,9 @@ const domain_maps: { [key: string]: Domain; } = {
     height: Domain.WINDOW_RESIZE
 };
 
-
-function getDomainList(comp: WickRTComponent): Set<Domain> {
-    let domains: Set<Domain> = new Set;
-
-    for (const [name, flags] of Object.entries(comp.nlu || {})) {
-        if ((flags >> FLAG_ID_OFFSET.VALUE) & BINDING_FLAG.FROM_STORE) {
-            const val = domain_maps[name];
-            if (typeof val == "number") {
-                domains.add(val);
-            }
-        }
-    }
-
-    return domains;
-}
 export function registerWatcherComponent(
-    comp: WickRTComponent
+    comp: WickRTComponent,
+    domains: string
 ) {
 
     if (!inits)
@@ -55,29 +39,32 @@ export function registerWatcherComponent(
             }
         ];
 
-    for (const domain of getDomainList(comp)) {
+    for (const domain of [domain_maps[domains]]) {
+        if (domain !== undefined) {
 
-        const init = inits[domain];
+            const init = inits[domain];
 
-        if (!session_watcher_store[domain]) {
-            session_watcher_store[domain] = new Set;
-            if (init)
-                init.obj.addEventListener(init.event, init.func);
+            if (!session_watcher_store[domain]) {
+                session_watcher_store[domain] = new Set;
+                if (init)
+                    init.obj.addEventListener(init.event, init.func);
+            }
+
+            const set = session_watcher_store[domain];
+
+            if (set) set.add(comp);
+
+            if (init && init.init_data)
+                comp.update(init.init_data(), BINDING_FLAG.FROM_STORE);
         }
-
-        const set = session_watcher_store[domain];
-
-        if (set) set.add(comp);
-
-        if (init && init.init_data)
-            comp.update(init.init_data(), BINDING_FLAG.FROM_STORE);
     }
 };
 export function unregisterWatcherComponent(
-    comp: WickRTComponent
+    comp: WickRTComponent,
+    domains: string
 ) {
 
-    for (const domain of getDomainList(comp)) {
+    for (const domain of [domain_maps[domains]]) {
         if (!session_watcher_store[domain])
             continue;
 

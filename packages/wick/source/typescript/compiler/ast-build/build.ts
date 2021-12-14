@@ -166,10 +166,10 @@ export async function createCompiledComponentClass(
 
                 const bindings = [...component.root_frame.binding_variables.values()];
                 for (const b of bindings) {
-                    if ((b.flags & BINDING_FLAG.FROM_STORE) == BINDING_FLAG.FROM_STORE && b.class_index >= 0) {
+                    if ((b.flags & BINDING_FLAG.FROM_STORE) == BINDING_FLAG.FROM_STORE/*  && b.class_index >= 0 */) {
                         const external_name = b.external_name;
-                        appendStmtToFrame(class_info.init_frame, stmt(`w.rt.register_store("", "${external_name}", this)`));
-                        appendStmtToFrame(class_info.terminate_frame, stmt(`w.rt.unregister_store("", "${external_name}", this)`));
+                        appendStmtToFrame(class_info.init_frame, stmt(`w.rt.register_store("${b.module_name ?? ""}", "${external_name}", this)`));
+                        appendStmtToFrame(class_info.terminate_frame, stmt(`w.rt.unregister_store("${b.module_name ?? ""}", "${external_name}", this)`));
                     }
                 }
             }
