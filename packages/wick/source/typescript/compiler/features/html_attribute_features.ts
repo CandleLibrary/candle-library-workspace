@@ -156,7 +156,7 @@ registerFeature(
                             if (binding) {
                                 binding.flags |= BINDING_FLAG.FROM_OUTSIDE;
                                 const name = binding.external_name;
-                                console.log(binding);
+
                                 addInit(<any>build_system.js.stmt(`this.ch_map.set(this.ch[${child_comp_id}], ["${name}", "${child_binding.external_name}"])`));
                             }
                         }
