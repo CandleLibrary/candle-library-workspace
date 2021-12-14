@@ -1,6 +1,7 @@
 
 import GlowAnimation from '@candlelib/glow';
 import { Environment, envIs } from '../../common/env.js';
+import { logger } from '../../common/logger.js';
 import { registerWatcherComponent, unregisterWatcherComponent } from '../../common/session_watchers.js';
 import { Context, UserPresets } from "../../compiler/common/context.js";
 import { BINDING_FLAG } from '../../types/all';
@@ -11,8 +12,132 @@ let GLOW_CHECKED = false;
 let local_glow: any = null;
 let glow: typeof GlowAnimation | null = null;
 
+logger.activate();
+
+const enum DatabaseType {
+    Indexed
+}
 
 const store: Map<string, { val: any, comps: Set<WickRTComponent>; }> = new Map();
+class DataBaseOMR {
+
+    db: null | IDBDatabase;
+
+    errors: any;
+
+    active_promise: Promise<any> | null;
+
+    constructor() {
+        this.db = null;
+        this.active_promise = null;
+    }
+
+    async connect(): Promise<boolean> {
+
+        if (!this.db && !this.errors) {
+
+            this.active_promise = new Promise(res => {
+
+
+                const request = indexedDB.open("wick-session", 1);
+
+                request.onsuccess = db => {
+                    logger.log("Database connected");
+                    this.db = request.result;
+                    this.db.onerror = this.handle_error;
+                    res(true);
+                };
+
+                request.onerror = (e) => {
+                    this.handle_error(e);
+                    res(false);
+                };
+
+                request.onblocked = e => {
+                    logger.log("Connection blocked");
+                    res(false);
+                };
+
+                request.onupgradeneeded = e => {
+                    logger.log("Upgrade needed");
+                    this.db = request.result;
+                    this.db.onerror = (e) => this.handle_error(e);
+                    this.db.createObjectStore("session-data", { keyPath: null });
+                };
+            });
+
+            this.active_promise.finally(() => {
+                this.active_promise = null;
+            });
+
+            return this.active_promise;
+        }
+
+        if (this.active_promise)
+            return await this.active_promise;
+
+        if (this.errors)
+            return false;
+
+        return true;
+    }
+
+    handle_error(event: Event) {
+        this.errors = true;
+        //@ts-ignore
+        logger.warn(event.target.error);
+    }
+
+    async put(key: string, data: any): Promise<boolean> {
+        if (await this.connect()) {
+            return new Promise(res => {
+
+                if (!this.db)
+                    return false;
+
+                var transaction = this.db.transaction(["session-data"], "readwrite");
+
+                transaction.oncomplete = () => res(true);
+
+                transaction.onerror = () => res(false);
+
+                const store = transaction.objectStore("session-data");
+
+                store.put(data, key);
+            });
+        }
+
+        return false;
+    }
+
+    async get(key: string): Promise<any> {
+        if (await this.connect() && this.db) {
+            if (await this.connect()) {
+                return new Promise(res => {
+
+                    if (!this.db)
+                        return false;
+
+                    var transaction = this.db.transaction(["session-data"], "readonly");
+                    //transaction.oncomplete = () => res(true);
+                    transaction.onerror = () => res(undefined);
+
+                    const store = transaction.objectStore("session-data");
+
+                    const request = store.get(key);
+
+                    request.onerror = () => res(undefined);
+
+                    request.onsuccess = e => { res(request.result); };
+
+                });
+            }
+
+            return false;
+        }
+        return undefined;
+    }
+}
 
 export class WickRuntime {
     /**
@@ -51,6 +176,8 @@ export class WickRuntime {
 
     css_cache: Map<string, { css_ele: HTMLStyleElement, count: number; }>;
 
+    private db: DataBaseOMR;
+
     constructor() {
         this.registerSession = registerWatcherComponent;
         this.unregisterSession = unregisterWatcherComponent;
@@ -64,6 +191,25 @@ export class WickRuntime {
         this.router = <any>null;
         this.context = <any>null;
         this.root_components = [];
+        this.loadIndexedData();
+        this.db = new DataBaseOMR;
+    }
+    loadIndexedData() {
+
+    }
+    retrieveDatabaseData(key: string, DB: DatabaseType = DatabaseType.Indexed) {
+
+    }
+
+    setDatabaseData(key: string, val: any, DB: DatabaseType = DatabaseType.Indexed) {
+        if (DB == DatabaseType.Indexed)
+            this.db.put(key, val);
+    }
+
+    async getDatabaseData(key: string, DB: DatabaseType = DatabaseType.Indexed): Promise<any> {
+        if (DB == DatabaseType.Indexed) {
+            return this.db.get(key);
+        }
     }
 
     /**
@@ -86,14 +232,21 @@ export class WickRuntime {
         return local_glow;
     }
 
-    set_store<T = any>(ns: string, key: string, val: T, comp: WickRTComponent): T {
+    async set_store<T = any>(ns: string, key: string, val: T, comp: WickRTComponent): T {
 
         if (!(comp instanceof WickRTComponent)) return val;
 
         if (!ns || ns == "persist") {
 
-            if (!store.has(key))
+            if (!store.has(key)) {
                 this.register_store(ns, key, comp);
+                if (ns == "persist") {
+                    //Grab the value store within the database. 
+                    const store_value = await this.getDatabaseData(key, DatabaseType.Indexed);
+                    if (store_value !== undefined)
+                        val = store_value;
+                }
+            }
 
             const column = store.get(key);
 
@@ -103,7 +256,6 @@ export class WickRuntime {
 
                 if (ns == "persist")
                     this.setDatabaseData(key, val, DatabaseType.Indexed);
-
 
                 const update_obj = { [key]: column.val };
 

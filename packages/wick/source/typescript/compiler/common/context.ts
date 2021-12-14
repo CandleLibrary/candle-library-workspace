@@ -96,7 +96,7 @@ export class Context {
 
     /**
      * Test scripts strings defined within labeled test blocks when
-     * using the `@test` synthetic imports. Used in conjuction
+     * using the `@test` synthetic imports. Used in conjunction
      * with `@candlelib/cure` to run tests on individual component instances.
      */
     test_rig_sources: WeakMap<ComponentData, JSNode[]>;
@@ -247,7 +247,7 @@ export class Context {
 
         this.styles = new Map;
 
-        this.plugins = new PluginStore;
+        //this.plugins = new PluginStore;
 
         //this.options.USE_SHADOWED_STYLE = ((user_presets.options.USE_SHADOWED_STYLE) && (this.options.USE_SHADOW));
 
