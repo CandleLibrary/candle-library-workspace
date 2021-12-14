@@ -39,7 +39,7 @@ export function UpdateSelector(
             }
 
             if (!HAS_ROOT && ADD_COMPONENT_SCOPE) {
-                const ns = parse_css_selector(`.${name} ${renderWithFormatting(s)}`);
+                const ns = parse_css_selector(`.${name} ${renderNew(s)}`);
                 ns.pos = s.pos;
                 return ns;
             }
