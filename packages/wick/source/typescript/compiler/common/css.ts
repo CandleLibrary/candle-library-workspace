@@ -1,7 +1,7 @@
 import { tools } from "@candlelib/css";
-import { HTMLNode } from '../../types/wick_ast';
+import { HTMLElementNode } from '../../types/wick_ast';
 import { getAttributeValue, hasAttribute } from './html.js';
-export const css_selector_helpers: tools.selectors.SelectionHelpers<HTMLNode> = {
+export const css_selector_helpers: tools.selectors.SelectionHelpers<HTMLElementNode> = {
 
     getIndexFigures: (ele, tag) => ({ ele_index: 0, tag_index: 0 }),
 
@@ -18,7 +18,7 @@ export const css_selector_helpers: tools.selectors.SelectionHelpers<HTMLNode> = 
 
     hasClass: (ele, class_) => "attributes" in ele && ele.attributes
         .filter(({ name: key }) => key == "class")
-        .filter(({ value: v }) => v == class_)
+        .filter(({ value: v }) => v.toString().split(" ").map(b => b.trim()).includes(class_))
         .length > 0,
 
     hasID: (ele, id) => "attributes" in ele && ele.attributes
