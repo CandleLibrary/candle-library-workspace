@@ -146,7 +146,6 @@ Host a single component on a local server.
                                         `export * as ${value.hash} from "${value.url}";\n`
                                     ).join("\n")}`;
 
-                                    console.log(root);
 
                                     await writeFile(source_file_path, root, { encoding: "utf8" });
 
