@@ -1,9 +1,21 @@
-import { bidirectionalTraverse, copy, traverse, TraverseState } from "@candlelib/conflagrate";
-import { exp, JSNode, stmt } from "@candlelib/js";
 import {
-    BindingVariable, BINDING_FLAG,
+    bidirectionalTraverse,
+    copy,
+    traverse,
+    TraverseState
+} from "@candlelib/conflagrate";
+import {
+    exp,
+    JSNode,
+    stmt
+} from "@candlelib/js";
+import {
+    BindingVariable,
+    BINDING_FLAG,
     BINDING_VARIABLE_TYPE,
-    CompiledComponentClass, DefaultJSHandlerNodeType, HookTemplatePackage,
+    CompiledComponentClass,
+    DefaultJSHandlerNodeType,
+    HookTemplatePackage,
     IndirectHook,
     Node,
     STATIC_RESOLUTION_TYPE,
@@ -12,7 +24,8 @@ import {
 import { ExtendedType } from "../../types/hook";
 import { getHookHandlers } from '../build_system.js';
 import {
-    Binding_Var_Is_Directly_Accessed, getComponentBinding,
+    Binding_Var_Is_Directly_Accessed,
+    getComponentBinding,
     getExternalName,
     Name_Is_A_Binding_Variable
 } from "../common/binding.js";
@@ -25,9 +38,20 @@ import {
     getStatementsFromFrame
 } from "../common/frame.js";
 import { ErrorHash } from "../common/hash_name.js";
-import { convertObjectToJSNode, Expression_Contains_Await, getPropertyAST } from "../common/js.js";
-import { BindingIdentifierBinding, BindingIdentifierReference } from "../common/js_hook_types.js";
-import { getExpressionStaticResolutionType, getStaticValue, StaticDataPack } from "../data/static_resolution.js";
+import {
+    convertObjectToJSNode,
+    Expression_Contains_Await,
+    getPropertyAST
+} from "../common/js.js";
+import {
+    BindingIdentifierBinding,
+    BindingIdentifierReference
+} from "../common/js_hook_types.js";
+import {
+    getExpressionStaticResolutionType,
+    getStaticValue,
+    StaticDataPack
+} from "../data/static_resolution.js";
 
 
 export function addIndirectHook<T>(
@@ -358,7 +382,7 @@ export function processHookASTs(comp: ComponentData, comp_info: CompiledComponen
                     (
                         BINDING_VARIABLE_TYPE.INTERNAL_VARIABLE
                     )) > 0)
-                .map(v => comp_info.binding_records.get(v).index).sort();
+                .map(v => comp_info.binding_records.get(v).name).sort();
 
             if (ids.length > 0)
                 appendStmtToFrame(frame, stmt(`if(!this.check(${ids}))return 0;`));
@@ -451,7 +475,8 @@ function processBindingVariables(
     ) class_info.lu_public_variables.push(
         exp(`["${getExternalName(binding)}", {
             val:${val},
-            meta:${((((binding.flags | BINDING_FLAG.DEFAULT_BINDING_STATE) << FLAG_ID_OFFSET.VALUE) | index) >>> 0) + ""}
+            meta:${((((binding.flags | BINDING_FLAG.DEFAULT_BINDING_STATE) << FLAG_ID_OFFSET.VALUE) | index) >>> 0) + ""},
+            module:"${binding.module_name ?? ""}"
         }]`)
     );
 
