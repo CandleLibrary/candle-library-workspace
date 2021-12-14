@@ -9,7 +9,7 @@ import { rt, } from '../../client/runtime/runtime.js';
 import { Context, WickLibrary } from '../../index.js';
 import { EditorCommand } from "../../types/editor_types.js";
 import { PatchType } from "../../types/patch";
-import { logger } from '../common/logger.js';
+import { logger } from '../../common/logger.js';
 import { Session } from '../common/session.js';
 import { createSelection, getRuntimeComponentsFromName, updateActiveSelections } from './common_functions.js';
 import { EditorModel } from "./editor_model.js";
@@ -192,11 +192,11 @@ function initializeDefualtSessionDispatchHandlers(
             while (match.host)
                 match = match.host;
 
-            /*  while (match.par) {
-                 if (!match.is(Status.FOREIGN_HOST))
-                     break;
-                 match = match.par;
-             } */
+            while (match.par) {
+                if (!match.is(Status.FOREIGN_HOST))
+                    break;
+                match = match.par;
+            }
 
             names.add(match.name);
         }

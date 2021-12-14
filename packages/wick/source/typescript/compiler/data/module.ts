@@ -1,6 +1,6 @@
 import { JSNode } from "@candlelib/js";
 import URI from '@candlelib/uri';
-import { error, warn } from '../../entry/logger.js';
+import { error, warn } from '../../common/logger.js';
 import radiate from '../../entry/wick-radiate.js';
 import {
     BINDING_FLAG,

@@ -5,7 +5,7 @@ import { ComponentData } from '../../compiler/common/component.js';
 import { Context } from '../../compiler/common/context.js';
 import { createComponent } from '../../compiler/create_component.js';
 import { EndpointMapper } from "../../types/config.js";
-import { logger } from '../common/logger.js';
+import { logger } from '../../common/logger.js';
 
 export function mapEndpoints(uri: URI, working_directory: URI) {
 

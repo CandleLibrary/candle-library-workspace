@@ -1,5 +1,5 @@
 import * as b_sys from "./build_system.js";
-import { debug } from '../entry/logger.js';
+import { debug } from '../common/logger.js';
 
 export async function init_build_system() {
 

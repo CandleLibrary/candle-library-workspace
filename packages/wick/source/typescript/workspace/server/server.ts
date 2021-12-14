@@ -18,7 +18,7 @@ import { workspace_component_dispatch } from '../dispatchers/workspace_component
 import { workspace_editor_dispatch } from '../dispatchers/workspace_editor_dispatch.js';
 import { workspace_modules_dispatch } from '../dispatchers/workspace_modules_dispatch.js';
 import { workspace_plugin_dispatch } from '../dispatchers/workspace_plugin_dispatch.js';
-import { logger } from '../common/logger.js';
+import { logger } from '../../common/logger.js';
 import { ServerSession } from './session.js';
 import { initializeDefualtSessionDispatchHandlers } from './session_handlers.js';
 import { loadComponents } from './store.js';

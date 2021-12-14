@@ -11,7 +11,7 @@ import {
 import URI from '@candlelib/uri';
 import { Environment, setEnv } from '../common/env.js';
 import { init_build_system } from '../compiler/init_build_system.js';
-import { logger } from '../workspace/common/logger.js';
+import { logger } from '../common/logger.js';
 import { create_config_arg_properties } from './config_arg_properties.js';
 
 const

@@ -1,5 +1,5 @@
 import { EditorCommand } from "../../types/editor_types.js";
-import { logger } from '../common/logger.js';
+import { logger } from '../../common/logger.js';
 import { PluginFrame } from './editor_model.js';
 import { WorkspaceSystem } from "./types/workspace_system.js";
 

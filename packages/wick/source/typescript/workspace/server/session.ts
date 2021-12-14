@@ -1,6 +1,6 @@
 import { WebSocket } from "ws";
 import { ComponentData } from '../../compiler/common/component.js';
-import { logger } from '../common/logger.js';
+import { logger } from '../../common/logger.js';
 import { Session } from '../common/session.js';
 import { getComponentDependencies } from './component_tools.js';
 import { getPageWatcher } from './file_watcher.js';
