@@ -68,20 +68,26 @@ export async function componentDataToCompiledHTML(
 
     const template_map = new Map;
 
-    const { node } = await createCompElement(
-        {
-            context,
-            self: comp,
-            model: model,
-            root_element: comp.HTML,
-            prev: null
-        },
+    const node = (await integrateComponentElement(
+        comp.HTML,
+        comp.name,
+        createBaseSDP(context, model),
         template_map
-    );
+    )).node;
 
     return { html: [node], templates: template_map };
 }
 
+
+function createBaseSDP(context: Context, model: null): StaticDataPack {
+    return <StaticDataPack>{
+        context,
+        model: model,
+        prev: null,
+        claim_id: 0,
+        claim_top: 0
+    };
+}
 
 /**
  * Compile component HTML information (including child component and slot information), into a string containing the components html
@@ -98,8 +104,6 @@ export async function __componentDataToCompiledHTML__(
     static_data_pack: StaticDataPack,
     template_map: TemplatePackage["templates"] = new Map,
     state: htmlState = htmlState.IS_ROOT | htmlState.IS_COMPONENT,
-    extern_children: { USED: boolean; child: HTMLNode; id: number; }[] = [],
-    comp_data = [static_data_pack.self.name]
 ): Promise<TemplatePackage> {
 
     const { context, } = static_data_pack;
@@ -120,8 +124,7 @@ export async function __componentDataToCompiledHTML__(
             component_name: component_name,
             slot_name: slot_name,
             name_space: namespace_id
-        }: HTMLNode = html,
-            children = c.map(i => ({ USED: false, child: i, id: comp_data.length - 1 }));
+        }: HTMLNode = html;
 
         if (namespace_id)
             node.namespace = namespace_id;
@@ -134,73 +137,57 @@ export async function __componentDataToCompiledHTML__(
                 state,
                 template_map,
                 node,
-                comp_data
             );
 
         } else if (component_name && context.components?.has(component_name)) {
 
-            ({ node, state } =
-                await integrateComponentElement(
-                    html,
-                    static_data_pack,
-                    component_name,
-                    state,
-                    node,
-                    template_map,
-                    extern_children,
-                    children,
-                    comp_data,
-                )
+            const data = await integrateComponentElement(
+                html,
+                component_name,
+                static_data_pack,
+                template_map,
             );
+
+            node = data.node;
+
+            static_data_pack = Object.assign({}, static_data_pack, {
+                claim_top: data.claim_top
+            });
 
         } else if (tag_name) {
 
-            if (tag_name == "SLOT" && extern_children.length > 0 && slot_name) {
+            /* if (tag_name == "SLOT" && slot_name) {
 
                 let r_ = await processSlot(
                     html,
                     static_data_pack,
                     template_map,
                     slot_name,
-                    extern_children,
                 );
 
                 if (r_.html.length > 0)
                     return r_;
-            }
+            } */
 
             await processElement(html, static_data_pack, node, tag_name, state, template_map);
 
         } else if ("IS_BINDING" in html) {
 
-            node = await resolveHTMLBinding(html, static_data_pack, state, node, comp_data);
+            node = await resolveHTMLBinding(html, static_data_pack, node);
 
         } else if ("data" in html)
 
             processTextNode(node, html.data);
 
-        const child_state = (((state) & (htmlState.IS_INTERLEAVED | htmlState.IS_COMPONENT))
-            == (htmlState.IS_INTERLEAVED | htmlState.IS_COMPONENT))
-            ? htmlState.IS_INTERLEAVED : 0;
-
         if (!(state & htmlState.IS_ROOT))
-            addClaim(node, html, comp_data);
+            addClaim(node, html, static_data_pack);
 
-        for (const { child } of children.filter(n => !n.USED)) {
-
-            const { html } = await __componentDataToCompiledHTML__(
-                child,
-                static_data_pack,
-                template_map,
-                child_state,
-                extern_children,
-                comp_data
-            );
-            if (!node.children)
-                node.children = [];
-
-            node.children.push(...html);
-        }
+        await processChildren(
+            node,
+            html,
+            static_data_pack,
+            template_map
+        );
 
     }
 
@@ -209,6 +196,129 @@ export async function __componentDataToCompiledHTML__(
     return { html: [node], templates: template_map };
 }
 
+async function processChildren(
+    node: TemplateHTMLNode,
+    html: HTMLNode,
+    static_data_pack: StaticDataPack,
+    template_map: Map<string, TemplateHTMLNode>
+) {
+    const child_state = 0;
+    const children = (html.nodes || []).map(i => ({ USED: false, child: i, }));
+    for (const { child } of children.filter(n => !n.USED)) {
+
+        const { html } = await __componentDataToCompiledHTML__(
+            child,
+            static_data_pack,
+            template_map,
+            child_state,
+        );
+        if (!node.children)
+            node.children = [];
+
+        node.children.push(...html);
+    }
+}
+
+async function integrateComponentElement(
+    root_html: HTMLElementNode,
+    component_name: string,
+    static_data_pack: StaticDataPack,
+    template_map: TemplatePackage["templates"] = new Map,
+) {
+
+    const { context, self: prev_comp } = static_data_pack;
+
+    if (!component_name)
+        throw new Error("component_name not defined");
+
+    const c_comp = context.components.get(component_name);
+
+    if (!c_comp)
+        throw new Error(`Component ${component_name} not found.`);
+
+    const
+        model = prev_comp ? null : static_data_pack.model,
+        claims = c_comp.root_ele_claims,
+        claim_top = claims.length + static_data_pack.claim_top;
+
+    let
+        claim_id = static_data_pack.claim_top,
+        last_node: TemplateHTMLNode | null = null,
+        last_dp: StaticDataPack | null = prev_comp == null ? null : static_data_pack,
+        root_node: TemplateHTMLNode | null = null,
+        last_comp: ComponentData | null = null;
+
+    const new_node = Object.assign({}, root_html, { component_name: undefined });
+    for (const component_name of claims) {
+
+        const c_comp = context.components.get(component_name);
+        const LAST_COMP = claims.indexOf(component_name) == claims.length - 1;
+
+        if (!c_comp)
+            throw new Error(`Component ${component_name} not found.`);
+
+        const html = <HTMLElementNode>c_comp.HTML;
+
+        if (root_node == null) {
+            last_dp = {
+                root_element: new_node,
+                self: c_comp,
+                model: LAST_COMP ? model : null,
+                context: context,
+                prev: LAST_COMP ? prev_comp ? static_data_pack : null : null,
+                claim_id: claim_id,
+                claim_top
+            };
+            ({ html: [root_node] } = await __componentDataToCompiledHTML__(
+                c_comp.HTML,
+                last_dp,
+                template_map,
+                htmlState.IS_COMPONENT | htmlState.IS_ROOT,
+            ));
+
+        } else {
+            last_dp = {
+                root_element: new_node,
+                self: c_comp,
+                model: LAST_COMP ? model : null,
+                context: context,
+                prev: LAST_COMP ? prev_comp ? static_data_pack : null : null,
+                claim_id: claim_id,
+                claim_top
+            };
+            await processChildren(
+                root_node,
+                c_comp.HTML,
+                last_dp,
+                template_map
+            );
+        };
+
+        claim_id += 1;
+
+        processAttributes(html.attributes, root_node);
+
+        addAttribute(root_node, "class", c_comp.name);
+
+        if (!LAST_COMP && last_comp)
+            await processHooks(html, last_dp, root_node, new Map, last_comp);
+        else if (prev_comp && LAST_COMP) {
+            await processHooks(root_html, static_data_pack, root_node, template_map, c_comp);
+        }
+
+        last_comp = c_comp;
+        last_node = root_node;
+    }
+
+    if (!last_node)
+        throw new Error("Last node not defined");
+
+
+
+    addAttribute(last_node, "class", "wk-c-" + static_data_pack.claim_top);
+
+    return { node: last_node, claim_top };
+}
 
 function processTextNode(node: TemplateHTMLNode, data: string) {
     node.data = data;
@@ -224,34 +334,19 @@ async function processElement(
 ) {
     await processHooks(html, static_data_pack, node, template_map);
 
-    const COMPONENT_IS_ROOT_ELEMENT = static_data_pack.self.HTML == html;
-
     node.tagName = tag_name.toLocaleLowerCase();
 
     setScopeAssignment(state, node, html);
 
     processAttributes(html.attributes, node);
-
-    if (COMPONENT_IS_ROOT_ELEMENT)
-        addAttribute(node, "class", "wk-c");
-
 }
 
 function addClaim(
     node: TemplateHTMLNode,
     html: HTMLElementNode,
-    comp_data: string[],
+    sdp: StaticDataPack,
 ) {
-
-    if (!html.comp)
-        throw new Error("Missing component name");
-
-    const i = comp_data.indexOf(html.comp);
-
-    if (i < 0)
-        throw new Error("Invalid component claim information");
-
-    addAttribute(node, "class", "wk-claim-" + i);
+    addAttribute(node, "class", "wk-claim-" + sdp.claim_id);
 
 }
 
@@ -346,84 +441,12 @@ async function processSlot(
     return r_;
 }
 
-
-async function integrateComponentElement(
-    html: HTMLElementNode,
-    static_data_pack: StaticDataPack,
-    component_name: string,
-    state: htmlState,
-    node: TemplateHTMLNode,
-    template_map: TemplatePackage["templates"],
-    extern_children: { USED: boolean; child: HTMLNode; id: number; }[] = [],
-    children: { USED: boolean; child: HTMLNode; id: number; }[] = [],
-    comp_data: string[] = [],
-) {
-
-    const { context, self: comp } = static_data_pack;
-
-    const c_comp = context.components.get(component_name);
-
-    if (!c_comp)
-        throw new Error(`Component ${component_name} not found.`);
-
-    const { state: new_state, node: new_node } = await createCompElement(
-        {
-            root_element: html || c_comp.HTML,
-            self: c_comp,
-            model: null,
-            context: context,
-            prev: comp == null ? null : static_data_pack
-        },
-        template_map,
-        extern_children,
-        children,
-        comp_data,
-    );
-
-    processAttributes(html.attributes, new_node);
-
-    await processHooks(html, static_data_pack, new_node, template_map, c_comp);
-
-    return { state: new_state, node: new_node };
-}
-
-async function createCompElement(
-    new_static_data_pack: StaticDataPack,
-    template_map: Map<string, TemplateHTMLNode> = new Map,
-    extern_children: { USED: boolean; child: HTMLNode; id: number; }[] = [],
-    children: { USED: boolean; child: HTMLNode; id: number; }[] = [],
-    comp_data: string[] = [],
-) {
-    const c_comp = new_static_data_pack.self;
-    const claims = c_comp.root_ele_claims;
-
-    /* if (htmlState.IS_COMPONENT & state)
-        state |= htmlState.IS_INTERLEAVED; */
-
-    const { html: [node] } = await __componentDataToCompiledHTML__(
-        c_comp.HTML,
-        new_static_data_pack,
-        template_map,
-        htmlState.IS_COMPONENT | htmlState.IS_ROOT,
-        extern_children.concat(children),
-        [...comp_data, ...claims]
-    );
-
-    addAttribute(node, "class", ...claims);
-
-    //  comp_data.push(c_comp.name);
-    //Merge node attribute data with host entry data, overwrite if necessary
-
-    return { state: htmlState.IS_COMPONENT | htmlState.IS_ROOT, node };
-}
-
 async function addContainer(
     html: HTMLContainerNode,
     static_data_pack: StaticDataPack,
     state: htmlState,
     template_map: TemplatePackage["templates"],
     node: TemplateHTMLNode,
-    comp_data: string[] = [],
 ) {
     const {
         self: component,
@@ -477,7 +500,7 @@ async function addContainer(
     //get data hook 
     await processHooks(html, static_data_pack, node, template_map);
 
-    await processContainerHooks(html, static_data_pack, node, comp_data);
+    await processContainerHooks(html, static_data_pack, node);
 
     processAttributes(html.attributes, node);
 }
@@ -518,7 +541,6 @@ async function processContainerHooks(
     html: HTMLContainerNode,
     static_data_pack: StaticDataPack,
     node: TemplateHTMLNode,
-    comp_data: string[] = [],
 ) {
     const
         hooks = getHookFromElement(html, static_data_pack.self),
@@ -587,18 +609,12 @@ async function processContainerHooks(
                     if (child_comp && node.children)
                         for (const model of data) {
 
-                            const { node: child_node } = await createCompElement({
-                                self: child_comp,
-                                root_element: child_comp.HTML,
-                                context: static_data_pack.context,
-                                model: model,
-                                prev: static_data_pack
-                            });
-
+                            const child_node = (await integrateComponentElement(
+                                child_comp.HTML,
+                                child_comp.name,
+                                createBaseSDP(context, model))).node;
 
                             addAttribute(child_node, "class", "wk-null");
-
-                            //const result = await addComponent(child_comp.HTML, new_static_data_pack, template_map);
 
                             node.children.push(child_node);
                         }
@@ -609,7 +625,7 @@ async function processContainerHooks(
 }
 
 function processAttributes(
-    attributes: HTMLElementNode["attributes"],
+    attributes: HTMLElementNode["attributes"] | undefined,
     node: TemplateHTMLNode,
 ) {
 
@@ -709,24 +725,22 @@ async function processHooks(
 async function resolveHTMLBinding(
     html: WickBindingNode,
     static_data_pack: StaticDataPack,
-    state: htmlState,
     node: TemplateHTMLNode,
-    comp_data: string[],
 ): Promise<TemplateHTMLNode> {
     //*
 
 
     let value: any = null, child_html: any = null, type: any = null;
+
     const
         hook = getHookFromElement(html, static_data_pack.self)[0];
+
 
     if (hook) {
 
         type = getExpressionStaticResolutionType(hook.value[0], static_data_pack);
 
-        ({ value, html: child_html } = hook
-            ? await getStaticValue(<any>hook.value[0], static_data_pack)
-            : { value: null, html: null });
+        ({ value, html: child_html } = await getStaticValue(<any>hook.value[0], static_data_pack));
     }
 
     node.tagName = "w-b";

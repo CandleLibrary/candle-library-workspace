@@ -36,6 +36,8 @@ export interface StaticDataPack {
     model: object | null;
     context: Context;
     prev: StaticDataPack | null;
+    claim_id: number;
+    claim_top: number;
 
 }
 
@@ -68,6 +70,7 @@ export async function getStaticValue(
     const ast = await getStaticValueAstFromSourceAST(
         input_ast, static_data_pack, ASSUME_RUNTIME, input_args
     );
+
 
     let html = null, value = null;
 
@@ -254,7 +257,6 @@ export async function getDefaultBindingValueAST(
                 return await <any>convertObjectToJSNode(context.active_template_data[binding.external_name]);
 
         } else if (binding.type == BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE) {
-
             //check current attributes on the guest element for any values
 
             const external_name = binding.external_name;

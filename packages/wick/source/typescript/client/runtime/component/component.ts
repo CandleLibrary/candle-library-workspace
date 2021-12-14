@@ -1,9 +1,8 @@
 import { Transition } from '@candlelib/glow';
 import spark, { Sparky } from "@candlelib/spark";
-import { id } from '../../../../../../wind/build/tables.js';
 import { Environment, envIs } from '../../../common/env.js';
 import { Context } from '../../../compiler/common/context.js';
-import { BINDING_FLAG, ObservableModel, ObservableWatcher, FLAG_ID_OFFSET } from "../../../types/all";
+import { BINDING_FLAG, FLAG_ID_OFFSET, ObservableModel, ObservableWatcher } from "../../../types/all";
 import { rt } from "../runtime.js";
 import { Status } from './component_status.js';
 import { WickContainer } from "./container.js";
@@ -134,7 +133,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     /**
      * Store for attribute name to internal cached value
      */
-    attr: Map<string, { meta: number, val: any; }>;
+    attr: Map<string, { meta: number, val: any, module: string; }>;
     /**
      * Mapping between child attribute name and internal binding 
      * name.
@@ -148,27 +147,35 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
     }
 
     getStatus(): number {
-        return parseInt(this.ele.dataset["wkstat"] ?? "0");
-        //return this.status
+
+        //return parseInt(this.ele.dataset["wkstat"] ?? 0);
+        return this.status;
     }
 
     setStatus(...flags: Status[]) {
-        //this.status |= flags.reduce((r, t) => r | t, 0);
-        this.ele.dataset["wkstat"] = this.getStatus() | flags.reduce((r, t) => r | t, 0);
+
+        //console.log("a", parseInt(this.ele.dataset["wkstat"] ?? "0"), this.status, this.ele.dataset["wkstat"]);
+        this.status |= flags.reduce((r, t) => r | t, 0);
+        //this.ele.dataset["wkstat"] = this.getStatus() | flags.reduce((r, t) => r | t, 0);
+
+        // console.log("b", parseInt(this.ele.dataset["wkstat"] ?? "0"), this.status, this.ele.dataset["wkstat"]);
     }
 
     removeStatus(...flags: Status[]) {
 
-        const status = this.getStatus();
-        this.ele.dataset["wkstat"] = (status ^ (status & flags.reduce((r, t) => r | t, 0)));
 
-        //this.status ^ (status & flags.reduce((r, t) => r | t, 0));
+        const status = this.getStatus();
+        //this.ele.dataset["wkstat"] = (status ^ (status & flags.reduce((r, t) => r | t, 0)));
+
+        this.status ^= (status & flags.reduce((r, t) => r | t, 0));
+
     }
 
     constructor(
         existing_element = null,
         originator: WickRTComponent | null = null,
-        parent_chain: WickRTComponent[] = [],
+        claim_id: number = 0,
+        claim_tip: number = 0,
         default_model_name = "",
         context: Context = rt.context
     ) {
@@ -226,9 +233,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         if (existing_element) {
             this.ele = existing_element;
-            this.integrateElement(existing_element, true, parent_chain.concat(this));
+            this.integrateElement(existing_element, true, claim_id, claim_tip);
         } else
-            this.ele = this.createElement(context, [this]);
+            this.ele = this.createElement(context, claim_id, claim_tip, [this]);
 
 
         this.ele.dataset.wrtc = this.name;
@@ -449,8 +456,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         if (!this.is(Status.TRANSITIONED_IN)) {
             this.setStatus(Status.TRANSITIONED_OUT);
 
-            //this.removeFromDOM();
-
             if (this.is(Status.DESTROY_AFTER_TRANSITION))
                 this.destructor();
 
@@ -557,6 +562,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             if (!ch.is(Status.CONTAINER_COMPONENT))
                 ch.transitionIn(row, col, DESCENDING, trs);
 
+        if (this.originator)
+            this.originator.transitionIn(row, col, DESCENDING, trs);
+
         try {
             this.oTI(row, col, DESCENDING, trs.in);
             this.setStatus(Status.TRANSITIONED_IN);
@@ -662,8 +670,11 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             if (map) {
 
                 const [own, child] = map;
-                const update_val = { [own]: ch.get_attr(child) };
-                this.update(update_val, BINDING_FLAG.FROM_OUTSIDE);
+                const val = ch.get_attr(child);
+                const update_val = { [own]: val };
+                if (val !== undefined)
+                    this.update(update_val, BINDING_FLAG.FROM_OUTSIDE);
+
 
             }
             ch.removeStatus(Status.DIRTY);
@@ -681,10 +692,16 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
             if (store) {
 
-                const { meta } = this.decodeAttribute(store);
+                const { meta, module } = store;
 
-                if (flags && ((meta >>> FLAG_ID_OFFSET.VALUE) & flags) == flags) {
-                    this.set_attr(name, data[name]);
+                const state = (meta >>> FLAG_ID_OFFSET.VALUE);
+
+                if (flags && (state & flags) == flags) {
+                    if (flags & BINDING_FLAG.FROM_OUTSIDE && state & BINDING_FLAG.FROM_STORE) {
+                        rt.set_store(module, name, data[name], this);
+                    } else {
+                        this.set_attr(name, data[name]);
+                    }
                 }
             }
         }
@@ -721,11 +738,11 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                 store.val = attribute_value;
 
-                if (typeof attribute_value != "object")
-                    this.ele.dataset[name] = attribute_value;
-                else {
-                    console.log("Cannot store an object");
-                }
+                //if (typeof attribute_value != "object") {
+                ////    this.ele.dataset[name] = attribute_value;
+                //} else {
+                ////  console.log("Cannot store an object");
+                //}
 
                 if (
                     !this.call_set.has(index)
@@ -782,11 +799,10 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
      */
     check(...ids: string[]) {
 
-        const comp: { [key: string]: any; } = <any>this;
-
-        for (const id of ids)
-            if (comp[id] === undefined)
+        for (const id of ids) {
+            if (this.attr.get(id)?.val === undefined)
                 return false;
+        }
 
         return true;
     }
@@ -932,10 +948,11 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
          */
         ele: HTMLElement,
         root: boolean = true,
-        component_chain: WickRTComponent[] = [this]
+        claim_id: number = 0,
+        claim_tip: number = 0,
     ): number {
 
-        let sk = 0, PROCESS_CHILDREN = true, affinity = component_chain.length - 1;
+        let sk = 0, PROCESS_CHILDREN = true;
 
         let scope_component: WickRTComponent = this;
 
@@ -944,6 +961,14 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 const [, key, val] = v.split("-").slice();
                 return [key, val ?? "true"];
             })));
+
+        if (class_members["claim"] && !root) {
+            if (+(parseInt(class_members["claim"])) != claim_id) {
+                this.setStatus(Status.FOREIGN_HOST);
+                iterateElementChildren(ele, scope_component, claim_id, claim_tip);
+                return 0;
+            }
+        }
 
         if (root) {
 
@@ -958,19 +983,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
             this.se(0, ele);
 
-            if (class_members["claim"]) {
-                if (+(parseInt(class_members["claim"])) != affinity)
-                    this.setStatus(Status.FOREIGN_HOST);
-            }
-
         } else {
 
-            if (class_members["claim"]) {
-                if (+(parseInt(class_members["claim"])) != affinity) {
-                    this.setStatus(Status.FOREIGN_HOST);
-                    return 0;
-                }
-            }
+
 
             if (class_members["null"])
                 return 0;
@@ -1020,14 +1035,14 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                 } else if (class_members["r"]) {
 
-                    const
-                        index = +(class_members["r"]),
-                        lu_index = index % 50,
-                        comp_index = (index / 50) | 0;
-
-                    scope_component = component_chain[comp_index];
-
-                    scope_component.se(lu_index, ele);
+                    /*  const
+                         index = +(class_members["r"]),
+                         lu_index = index % 50,
+                         comp_index = (index / 50) | 0;
+ 
+                     scope_component = component_chain[comp_index];
+ 
+                     scope_component.se(lu_index, ele); */
                 }
 
 
@@ -1037,9 +1052,12 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
                     ({ sk, PROCESS_CHILDREN } = process_container(ele, scope_component, sk, PROCESS_CHILDREN));
 
-                } else if (class_members["c"] && this.ele !== ele) {
+                } else if (class_members["c"] !== undefined && this.ele !== ele) {
 
-                    hydrateComponentElement(ele, component_chain);
+                    const comp = hydrateComponentElement(ele, claim_id, parseInt(class_members["c"]));
+
+                    if (comp)
+                        this.addChild(comp);
                 }
 
             }
@@ -1049,7 +1067,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         }
 
 
-        iterateElementChildren(ele, scope_component, component_chain);
+        iterateElementChildren(ele, scope_component, claim_id, claim_tip);
 
         return sk;
     }
@@ -1169,13 +1187,13 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         return <HTMLElement>temp_ele.firstElementChild;
     }
 
-    createElement(context: Context, parent_chain: WickRTComponent[]) {
+    createElement(context: Context, claim_id: number, claim_tip: number) {
 
         const ele = this.ce();
 
-        hydrateComponentElement(ele, parent_chain, this);
+        hydrateComponentElement(ele, 0, 0, this);
 
-        this.integrateElement(ele, true, parent_chain);
+        this.integrateElement(ele, true, claim_id, claim_tip);
 
         return ele;
     }
@@ -1223,7 +1241,8 @@ function process_container(
 function iterateElementChildren(
     ele: HTMLElement,
     scope_component: WickRTComponent,
-    component_chain: WickRTComponent[]
+    claim_id: number = 0,
+    claim_tip: number = 0,
 ) {
 
     let skip_count = 0;
@@ -1233,6 +1252,6 @@ function iterateElementChildren(
         if (skip_count-- > 0) continue;
 
         skip_count = scope_component
-            .integrateElement(<HTMLElement>child, false, component_chain);
+            .integrateElement(<HTMLElement>child, false, claim_id, claim_tip);
     }
 }
