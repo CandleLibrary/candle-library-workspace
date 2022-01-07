@@ -12,19 +12,20 @@ import lantern, {
 import URI from '@candlelib/uri';
 import { WebSocketServer } from "ws";
 import { rt } from '../../client/runtime/runtime.js';
+import { logger } from '../../common/logger.js';
 import { WickCompileConfig } from '../../types/config.js';
 import { set_resolved_working_directory } from '../dispatchers/resolved_working_directory.js';
 import { workspace_component_dispatch } from '../dispatchers/workspace_component_dispatch.js';
 import { workspace_editor_dispatch } from '../dispatchers/workspace_editor_dispatch.js';
 import { workspace_modules_dispatch } from '../dispatchers/workspace_modules_dispatch.js';
 import { workspace_plugin_dispatch } from '../dispatchers/workspace_plugin_dispatch.js';
-import { logger } from '../../common/logger.js';
 import { ServerSession } from './session.js';
 import { initializeDefualtSessionDispatchHandlers } from './session_handlers.js';
 import { loadComponents } from './store.js';
 
 URI.server();
-function initializeWebSocketServer(lantern: LanternServer<any>, config: WickCompileConfig) {
+export function initializeWebSocketServer(lantern: LanternServer<any>, connection_handler: (connection: ServerSession) => void) {
+
     const ws_logger = logger.get("web-socket");
     ws_logger.debug("Initializing WebSocket server");
 
@@ -42,7 +43,7 @@ function initializeWebSocketServer(lantern: LanternServer<any>, config: WickComp
 
     ws_server.on("connection", (connection) => {
         ws_logger.debug("Connection Made");
-        initializeDefualtSessionDispatchHandlers(new ServerSession(connection), config);
+        connection_handler(new ServerSession(connection));
     });
 
     ws_server.on("close", () => {
@@ -52,6 +53,7 @@ function initializeWebSocketServer(lantern: LanternServer<any>, config: WickComp
     ws_server.on("error", e => {
         ws_logger.debug("error").error(e);
     });
+
 }
 
 
@@ -93,5 +95,6 @@ export async function initDevServer(
     logger.log(`HTTPS Server initialized and listening on port [ ${port} ] `);
     logger.log(`Checkout out your workspace at [ https://localhost:${port} ]!`);
 
-    initializeWebSocketServer(server, config);
+
+    await initializeWebSocketServer(server, connection => initializeDefualtSessionDispatchHandlers(connection, config));
 }

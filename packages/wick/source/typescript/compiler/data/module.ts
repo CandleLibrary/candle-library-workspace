@@ -12,9 +12,10 @@ import {
 import { processWickCSS_AST } from '../ast-parse/parse.js';
 import { parseSource } from "../ast-parse/source.js";
 import { addBindingVariable, addWriteFlagToBindingVariable, addSourceLocationToBindingVariable } from "../common/binding.js";
-import { addPendingModuleToContext } from '../common/common.js';
+import { addFlagToPendingModule, addPendingModuleToContext } from '../common/common.js';
 import { ComponentData, mergeComponentData } from '../common/component.js';
 import { Context } from '../common/context.js';
+import { MODULE_FLAG } from '../common/ModuleFlag.js';
 import { parse_css } from '../source-code-parse/parse.js';
 
 
@@ -122,7 +123,7 @@ export async function importResource(
     let module_name = "";
 
     const
-        [url, meta] = from_value.split(":"),
+        [url, meta] = from_value.split("|"),
 
         uri = <URI>URI.resolveRelative(url, component.location);
 
@@ -250,7 +251,24 @@ export async function importResource(
             if (meta) {
                 if (["scope", "up", "session", "persist"].includes(meta.trim()))
                     module_name = meta;
+                else {
+                    // Attempt to load the resource located at the meta location as 
+                    // a store module.
 
+                    const url = <URI>URI.resolveRelative(meta, component.location);
+
+                    if (await url.DOES_THIS_EXIST()) {
+
+                        module_name = getModuleName(context, url, component.location);
+
+                        addFlagToPendingModule(context, url, component.location, MODULE_FLAG.IS_STORE);
+
+                    } else {
+                        console.warn(`Store location [ ${meta} ] referenced from [ ${component.location} ] does not exists.`);
+
+
+                    }
+                }
             }
             break;
 

@@ -36,9 +36,9 @@ type PageRenderHooks = {
 
 function renderBasicWickPageInit(component_class_declarations: string, context: Context) {
     return `
-    import w from "/@cl/wick-rt/";
+    import D_w_ from "/@cl/wick-rt/";
 
-    w.hydrate();
+    D_w_.queue_hydrate();
 `;
 }
 
@@ -54,7 +54,7 @@ function renderComponentInit(component_class_declarations: string, context: Cont
     return `
     const w = wick;
 
-    w.appendPresets(${renderPresets(context, resolve_import_path)});
+    w.rt.appendPresets(${renderPresets(context, resolve_import_path)});
 
     ${component_class_declarations}
     `;
@@ -219,7 +219,7 @@ export async function RenderPage(
         templates = [...template_map.values()].map(t => htmlTemplateToString(t, 1)).join("\n");
     }
 
-    let script = "", style = "", head = "";
+    let script_data = [], style_data = [], head = "";
 
     for (const comp of components_to_process) {
 
@@ -236,11 +236,14 @@ export async function RenderPage(
         }
 
         if (INTEGRATE_COMPONENTS)
-            script += "\n" + `w.rt.rC(${class_string});`;
+            script_data.push("\n" + `w.rt.rC(${class_string});`);
 
         if (STATIC_RENDERED_CSS)
-            style += componentDataToCSS(comp);
+            style_data.push(componentDataToCSS(comp));
     }
+
+    const style = style_data.join("\n");
+    const script = script_data.join("\n");
 
     const page = comp.RADIATE
         ? renderRadiatePageString(context, templates, html, head, script, style, hooks)
@@ -252,36 +255,50 @@ export async function RenderPage(
 }
 
 
-export function getDependentComponents(comp: ComponentData, context: Context) {
-    const
-        candidate_components = [comp],
+export function getDependentComponents(comp: ComponentData, ctx: Context): ComponentData[] {
 
-        components_to_process: ComponentData[] = [],
+    const names = getDependentComponentsInternal(comp, ctx);
 
-        applicable_components = new Set([comp.name]);
+    //@ts-ignore
+    return [...names.values()].map(n => ctx.components.get(n)).reverse();
+}
 
-    while (candidate_components.length > 0) {
+function getDependentComponentsInternal(
+    comp: ComponentData,
+    context: Context,
+    applicable_components: Set<string> = new Set()
+): Set<string> {
 
-        const comp = candidate_components.shift();
 
-        if (comp) {
+    if (!applicable_components.has(comp.name))
+        applicable_components.add(comp.name);
+    else
+        return applicable_components;
 
-            components_to_process.push(comp);
+    for (const comp_name of comp.local_component_names.values()) {
 
-            for (const comp_name of comp.local_component_names.values()) {
+        if (!applicable_components.has(comp_name)) {
 
-                if (!applicable_components.has(comp_name)) {
+            const comp_ = context.components.get(comp_name);
 
-                    applicable_components.add(comp_name);
+            if (!comp_)
+                throw new Error("Failed to get comp " + comp_name);
 
-                    const comp = context.components.get(comp_name);
-
-                    if (comp) candidate_components.push(comp);
-                }
-            }
+            getDependentComponentsInternal(comp_, context, applicable_components);
         }
     }
-    return components_to_process;
+
+    for (const comp_name of comp.root_ele_claims) {
+
+        const comp_ = context.components.get(comp_name);
+
+        if (!comp_)
+            throw new Error("Failed to get comp " + comp_name);
+
+        getDependentComponentsInternal(comp_, context, applicable_components);
+    }
+
+    return applicable_components;
 }
 
 
@@ -361,15 +378,16 @@ function renderRadiatePageString(
     ${head.split("\n").join("\n    ")}
     ${boiler_plate}
 
-    <style id="wick-app-style">
-    ${style.split("\n").join("\n            ")}
-    </style>
-
     <style id="radiate">
+
+        .radiate-app-view {
+            position:unset;
+            width:unset;
+            height:unset;
+        }
+
         .radiate-page {
-            position:absolute;
-            top:0;
-            left:0;
+            width:100%;
         }
 
         .radiate-hide {
@@ -390,6 +408,10 @@ function renderRadiatePageString(
             height:100vh;
         }
     </style>
+
+    <style id="wick-app-style">
+    ${style.split("\n").join("\n            ")}
+    </style>
   </head>
   <body>
     <script> document.body.classList.toggle("radiate-init"); </script>
@@ -397,8 +419,8 @@ ${html}
 ${templates}
     <script type=module id="wick-init-script">
       ${hooks.init_script_render(script.split("\n").join("\n      "), context)}
-    </script>
-    <script type=module id="wick-component-script">
+    
+    
       ${hooks.init_components_render(script.split("\n").join("\n      "), context, hooks.resolve_import_path)}
     </script>
   </body>
@@ -408,7 +430,7 @@ ${templates}
 
 function renderPresets(context: Context, resolve_import_path: (string: string) => string = _ => _) {
     const out_value = {
-        repo: [...context.repo.values()].map(repo => [repo.hash, resolve_import_path(repo.url)])
+        repo: [...context.repo.values()].map(repo => (console.log(repo), [repo.hash, resolve_import_path(repo.url), repo.flag || 0]))
     };
     return JSON.stringify(out_value);
 }

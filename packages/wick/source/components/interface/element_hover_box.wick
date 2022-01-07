@@ -1,4 +1,4 @@
-import { selections } from "@model:flame-editor";
+import { selections } from "@model|flame-editor";
 import boxes from "./element_hover_box_ele.wick";
 
 

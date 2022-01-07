@@ -172,6 +172,8 @@ export class WickContainer implements Sparky, ObservableWatcher {
      */
     last_dom_element: null | HTMLElement;
 
+    empty_index: number;
+
     constructor(
         component_constructors: typeof WickRTComponent[],
         component_attributes: [string, string][][],
@@ -226,6 +228,8 @@ export class WickContainer implements Sparky, ObservableWatcher {
         this.components_pending_removal = [];
         this.ele = element;
 
+        this.empty_index = -1;
+
         if (null_elements.length > 0 || this.ele.getAttribute("element") == "null") {
 
             this.USE_NULL_ELEMENT = true;
@@ -241,7 +245,7 @@ export class WickContainer implements Sparky, ObservableWatcher {
                 this.last_dom_element = null_elements[null_elements.length - 1];
 
                 for (const comp of hydrateComponentElements(null_elements)) {
-                    comp.connect();
+                    comp.initialize().connect();
                     this.active_comps.push(<ContainerComponent>comp);
                     this.comps.push(<ContainerComponent>comp);
                     this.mounted_comps.push(<ContainerComponent>comp);
@@ -261,7 +265,7 @@ export class WickContainer implements Sparky, ObservableWatcher {
             if (this.ele.childElementCount > 0) {
                 for (const comp of hydrateComponentElements(Array.from(<HTMLElement[]><any>this.ele.children))) {
                     comp.par = parent_comp;
-                    comp.connect();
+                    comp.initialize().connect();
                     this.active_comps.push(<ContainerComponent>comp);
                     this.comps.push(<ContainerComponent>comp);
                     this.mounted_comps.push(<ContainerComponent>comp);
@@ -620,35 +624,65 @@ export class WickContainer implements Sparky, ObservableWatcher {
 
         let i = 0;
 
-        while (i < active_window_start && i < output_length) {
+        if (output_length > 0) {
 
-            if (output[i].is(Status.CONNECTED)) {
-                const { row, col } = getColumnRow(i, offset, this.columns);
-                this.prepareTransitioningComp(output[i], TransitionType.OUT, DESCENDING, row, col);
+            this.mounted_comps.length = 0;
 
+            let _last_comp: WickRTComponent | undefined;
+
+            while (i < active_window_start && i < output_length) {
+
+                if (output[i].is(Status.CONNECTED)) {
+                    const { row, col } = getColumnRow(i, offset, this.columns);
+                    this.prepareTransitioningComp(output[i], TransitionType.OUT, DESCENDING, row, col);
+
+                    if (_last_comp)
+                        _last_comp.ele.insertAdjacentElement("afterend", output[i].ele);
+
+                    _last_comp = output[i];
+
+                    this.mounted_comps.push(_last_comp);
+                }
+
+                i++;
             }
 
-            i++;
-        }
+            while (i < upper_bound) {
 
-        while (i < upper_bound) {
-
-            const { row, col } = getColumnRow(i, offset, this.columns);
-
-            if (output[i].is(Status.CONNECTED))
-                this.prepareTransitioningComp(output[i], TransitionType.ARRANGE, DESCENDING, row, col);
-            else
-                this.prepareTransitioningComp(output[i], TransitionType.IN, DESCENDING, row, col);
-            i++;
-        }
-
-        while (i < output_length) {
-
-            if (output[i].is(Status.CONNECTED)) {
                 const { row, col } = getColumnRow(i, offset, this.columns);
-                this.prepareTransitioningComp(output[i], TransitionType.OUT, DESCENDING, row, col);
+
+                if (output[i].is(Status.CONNECTED)) {
+
+                    this.prepareTransitioningComp(output[i], TransitionType.ARRANGE, DESCENDING, row, col);
+
+                    if (_last_comp)
+                        _last_comp.ele.insertAdjacentElement("afterend", output[i].ele);
+
+                    _last_comp = output[i];
+
+                    this.mounted_comps.push(_last_comp);
+                } else
+                    this.prepareTransitioningComp(output[i], TransitionType.IN, DESCENDING, row, col);
+                i++;
             }
-            i++;
+
+            while (i < output_length) {
+
+                if (output[i].is(Status.CONNECTED)) {
+
+                    const { row, col } = getColumnRow(i, offset, this.columns);
+
+                    this.prepareTransitioningComp(output[i], TransitionType.OUT, DESCENDING, row, col);
+
+                    if (_last_comp)
+                        _last_comp.ele.insertAdjacentElement("afterend", output[i].ele);
+
+                    _last_comp = output[i];
+
+                    this.mounted_comps.push(_last_comp);
+                }
+                i++;
+            }
         }
     }
 
@@ -840,7 +874,7 @@ export class WickContainer implements Sparky, ObservableWatcher {
         if (this.filter) {
 
             for (const comp of this.comps) {
-                if (!this.filter(comp.container_model)) {
+                if (!this.filter(comp.container_model ?? {})) {
                     if (comp.is(Status.CONNECTED)) {
                         this.components_pending_removal.push(comp);
                     }
@@ -853,8 +887,9 @@ export class WickContainer implements Sparky, ObservableWatcher {
             this.active_comps.push(...this.comps);
         }
 
-        if (this.sort)
-            this.active_comps.sort(this.sort);
+        if (this.sort) {
+            this.active_comps.sort((a, b) => this.sort(a.container_model ?? {}, b.container_model ?? {}));
+        }
 
 
         this.UPDATE_FILTER = false;
@@ -889,26 +924,30 @@ export class WickContainer implements Sparky, ObservableWatcher {
             numeric = Math.max(0, numeric);
             if (this.limit != numeric) {
                 this.limit = numeric;
-                spark.queueUpdate(this);
+                this.update();
             }
         } else {
             this.limit = Infinity;
-            spark.queueUpdate(this);
+            this.update();
         }
     }
 
     updateShift(value: number) {
         if (typeof value == "number" && this.columns != value) {
             this.columns = value;
-            spark.queueUpdate(this);
+            this.update();
         }
     }
 
     updateOffset(value: number) {
         if (typeof value == "number" && this.offset != value) {
             this.offset = value;
-            spark.queueUpdate(this);
+            this.update();
         }
+    }
+
+    update() {
+        spark.queueUpdate(this);
     }
 
     /**
@@ -982,32 +1021,46 @@ export class WickContainer implements Sparky, ObservableWatcher {
 
             this.active_comps.length = 0;
 
-            this.primeTransitions(transition);
+            if (!this.mountEmpty(transition)) {
 
-            transition.play();
+                this.primeTransitions(transition);
+
+                transition.play();
+
+            } else {
+
+                this.scheduledUpdate();
+
+                transition.play();
+            }
 
         } else {
 
             const
-                exists = new Map(new_items.map(e => [e, true])),
-                out: ContainerComponent[] = [];
-
+                candidates = new Map(new_items.map(e => [e, true])),
+                out: any[] = [];
 
             for (let i = 0, l = this.active_comps.length; i < l; i++)
-                if (exists.has(this.active_comps[i].container_model))
-                    exists.set(this.active_comps[i].container_model, false);
+                if (candidates.has(this.active_comps[i].container_model))
+                    candidates.set(this.active_comps[i].container_model, false);
 
             for (let i = 0, l = this.comps.length; i < l; i++)
-                if (!exists.has(this.comps[i].container_model)) {
+                if (!candidates.has(this.comps[i].container_model)) {
                     this.prepareTransitioningComp(this.comps[0], TransitionType.OUT, false, -1, -1);
                     this.comps[i].index = -1;
                     this.comps.splice(i, 1);
                     l--;
                     i--;
                 } else
-                    exists.set(this.comps[i].container_model, false);
+                    candidates.set(this.comps[i].container_model, false);
 
-            exists.forEach((v, k) => { if (v) out.push(k); });
+            for (const [val, DOES_NOT_EXIST] of candidates)
+                if (DOES_NOT_EXIST) {
+                    if (typeof val !== "object") {
+                        out.push({ value: val });
+                    } else
+                        out.push(val);
+                }
 
             if (out.length > 0) {
                 // Wrap models into components
@@ -1028,13 +1081,71 @@ export class WickContainer implements Sparky, ObservableWatcher {
 
             this.scheduledUpdate();
 
-
             if (!this.SCRUBBING) {
                 transition.play();
             }
         }
     }
+
+    addEmpty(index: number) {
+        this.empty_index = index;
+        if (this.active_comps.length == 0)
+            this.filter_new_items();
+    }
+
     addEvaluator(evaluator: (a: any) => boolean, index: number) { this.evaluators[index] = evaluator; }
+
+    mountEmpty(transition?: Transition) {
+        if (this.empty_index != -1) {
+
+            const component = this.createComp(this.empty_index);
+
+            this.active_comps.push(component);
+
+            this.comps.push(component);
+
+            this.filterExpressionUpdate(transition);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private createComp(j: number, model: any = null) {
+        let comp = <ContainerComponent>hydrateTemplateElement(this.comp_constructors[j].name);
+
+        if (!comp)
+            throw new Error("Unable create container component");
+
+        this.parent.addChild(comp);
+
+        comp.setStatus(Status.CONTAINER_COMPONENT);
+
+        comp.container = this;
+
+        comp.hydrate().initialize(model);
+
+        comp.disconnect();
+
+        const attrib_list = this.comp_attributes[j];
+
+        if (attrib_list)
+            for (const [key, value] of attrib_list) {
+
+                if (!key) continue;
+
+                if (key == "class") {
+                    if (value)
+                        comp.ele.classList.add(...value.split(" "));
+                } else
+                    comp.ele.setAttribute(key, value ?? "");
+            }
+
+        comp.container_model = model;
+
+        return comp;
+    }
 
     /**
      * Called by the ModelContainer when Models have been added to it.
@@ -1059,41 +1170,12 @@ export class WickContainer implements Sparky, ObservableWatcher {
 
                 for (let j = 0; j < cstr_l; j++) {
 
+                    if (j == this.empty_index) continue;
+
                     const evaluator = this.evaluators[j];
 
                     if (j == cstr_l - 1 || (evaluator && evaluator(model))) {
-
-                        component = <ContainerComponent>hydrateTemplateElement(this.comp_constructors[j].name);
-
-                        if (!component)
-                            throw new Error("Unable create container component");
-
-                        this.parent.addChild(component);
-
-                        component.setStatus(Status.CONTAINER_COMPONENT);
-
-                        component.container = this;
-
-                        component.hydrate().initialize(model);
-
-                        component.disconnect();
-
-                        const attrib_list = this.comp_attributes[j];
-
-                        if (attrib_list)
-                            for (const [key, value] of attrib_list) {
-
-                                if (!key) continue;
-
-                                if (key == "class") {
-                                    if (value)
-                                        component.ele.classList.add(...value.split(" "));
-                                } else
-                                    component.ele.setAttribute(key, value ?? "");
-                            }
-
-                        component.container_model = model;
-
+                        component = this.createComp(j, model);
                         break;
                     }
                 }

@@ -327,19 +327,19 @@ export function getCompiledBindingVariableName(
 
             case BINDING_VARIABLE_TYPE.MODULE_VARIABLE:
                 if (!module_name) binding.pos.throw("Unable to locate module name");
-                return `${comp_name}.context.api.${module_name}.default`;
+                return `${comp_name}.rt.context.api.${module_name}.default`;
 
             case BINDING_VARIABLE_TYPE.MODULE_NAMESPACE_VARIABLE:
                 if (!module_name) binding.pos.throw("Unable to locate module name");
-                return `${comp_name}.context.api.${module_name}.module`;
+                return `${comp_name}.rt.context.api.${module_name}.module`;
 
             case BINDING_VARIABLE_TYPE.MODULE_MEMBER_VARIABLE:
                 if (!module_name)
                     return `${comp_name}.context.api.${external_name}`;
-                return `${comp_name}.context.api.${module_name}.module.${external_name}`;
+                return `${comp_name}.rt.context.api.${module_name}.module.${external_name}`;
 
             case BINDING_VARIABLE_TYPE.RADIATE_ROUTER_VARIABLE:
-                return `${comp_name}.context.api.router`;
+                return `${comp_name}.rt.context.api.router`;
 
             case BINDING_VARIABLE_TYPE.UNDECLARED:
                 const global_names = getSetOfEnvironmentGlobalNames();
@@ -398,8 +398,7 @@ export function getModuleName(binding: BindingVariable) {
 
 export function haveStaticPluginForRefName(name: string, context: Context) {
 
-
-    return context.plugins.hasPlugin(PLUGIN_TYPE.STATIC_DATA_FETCH, name);
+    return context.plugins?.hasPlugin(PLUGIN_TYPE.STATIC_DATA_FETCH, name);
 }
 
 /**

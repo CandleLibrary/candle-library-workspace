@@ -24,28 +24,38 @@ registerFeature(
 
                 async prepareHTMLNode(node, host_node, host_element, index, skip, component, context) {
 
-                    if (node.name == "value" && (host_node.tag == "INPUT" || host_node.tag == "TEXTAREA")) {
+                    if (node.name == "value" && (
+                        host_node.tag == "INPUT"
+                        || host_node.tag == "TEXTAREA"
+                        || host_node.tag == "SELECT"
+                    )) {
 
                         if (host_node.tag == "TEXTAREA") {
 
 
                             // Process the primary expression for Binding Refs and static
                             // data
-                            const ast = await build_system.processBindingAsync(node.value, component, context);
+
+                            const primary = await build_system.processBindingAsync(node.value, component, context);
+
+                            const secondary = await build_system.processSecondaryBindingAsync(node.value, component, context);
 
                             // Create an indirect hook for container data attribute
 
-                            build_system.addIndirectHook(component, GeneralInputValueHook, ast, index);
+                            build_system.addIndirectHook(component, GeneralInputValueHook, {
+                                primary,
+                                secondary
+                            }, index);
 
                             // Remove the attribute from the container element
 
                             return null;
                         }
 
-                        if (host_node.attributes?.some(
+                        if (host_node.tag == "SELECT" || host_node.attributes?.some(
                             val => [
                                 "text", "number", "month", "email", "time", "url", "week", "tel", "date", "color"
-                            ].includes((<string>val.value).toLocaleLowerCase()))
+                            ].includes(String(<string>val.value ?? "").toLowerCase()))
                         ) {
 
 
@@ -67,7 +77,7 @@ registerFeature(
                             return null;
                         }
 
-                        if (host_node.attributes?.some(val => val.value == "checkbox")) {
+                        if (host_node.attributes?.some(val => val.name == "type" && val.value == "checkbox")) {
 
 
                             // Process the primary expression for Binding Refs and static

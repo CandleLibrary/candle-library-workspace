@@ -73,8 +73,8 @@ export function Element_Is_Wick_Component(ele: HTMLElement) {
     return (
         ele
         &&
-        ele.classList.contains("wk-c")
-        &&
+        //ele.classList.contains("wk-c")
+        //&&
         [...getComponentNames(ele)].length > 0
     );
 }
@@ -174,7 +174,7 @@ export function hydrateContainerElement(
     const
         comp_constructors = (<string>ele.dataset["wkctr"])
             .split(" ")
-            .map(name => parent.context.component_class.get(name)),
+            .map(name => parent.rt.context.component_class.get(name)),
 
         comp_attributes = (ele.dataset["wkctra"] ?? "")
             .split(":")

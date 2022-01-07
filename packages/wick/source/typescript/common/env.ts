@@ -1,10 +1,9 @@
 let ENV = 0;
 export const enum Environment {
-
     WICK = 4,
     RADIATE = 1,
-
-    WORKSPACE = 2
+    WORKSPACE = 2,
+    APP = 8
 }
 
 /**

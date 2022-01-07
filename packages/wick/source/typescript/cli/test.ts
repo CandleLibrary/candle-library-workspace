@@ -149,7 +149,7 @@ Test components that have been defined with the \`@test\` synthetic import
 
                         if (module_dependencies.size > 0) {
                             const module_mapping = [...module_dependencies.values()].map(m => `["${m.hash}", "${m.url}"]`);
-                            component_strings.push(`await wick.appendPresets({"repo":[${module_mapping}]});`);
+                            component_strings.push(`await wick.rt.appendPresets({"repo":[${module_mapping}]});`);
                         }
 
                         component_strings.push(`wick.rt.rC(${class_string})`);
@@ -242,7 +242,7 @@ import spark from "@candlelib/spark";
 
 import wick from "@candlelib/wick";
 
-await wick.appendPresets({});
+await wick.rt.appendPresets({});
 
 ${component_strings.join("\n")};
 

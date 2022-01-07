@@ -251,6 +251,17 @@ function integrateParentComponentScope(
                         BINDING_FLAG.FROM_PRESETS | BINDING_FLAG.FROM_OUTSIDE
                     );
                 } break;
+            case BINDING_VARIABLE_TYPE.STORE_VARIABLE: {
+                addBindingVariable(
+                    component.root_frame,
+                    binding.internal_name,
+                    {},
+                    BINDING_VARIABLE_TYPE.STORE_VARIABLE,
+                    binding.external_name,
+                    BINDING_FLAG.FROM_STORE,
+                    binding.module_name
+                );
+            } break;
             case BINDING_VARIABLE_TYPE.INTERNAL_VARIABLE: {
                 addBindingVariable(
                     component.root_frame,

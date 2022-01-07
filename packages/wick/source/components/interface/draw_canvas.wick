@@ -1,4 +1,4 @@
-import { draw_objects, selection_box, sc } from "@model:flame-editor";
+import { draw_objects, selection_box, sc } from "@model|flame-editor";
 import { sys } from "@api";
 
 var canvas = "@canvas", ctx = "@ctx2d";

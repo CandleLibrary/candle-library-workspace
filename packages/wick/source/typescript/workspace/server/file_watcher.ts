@@ -43,7 +43,7 @@ export class FileWatcherHandler implements Sparky {
     addSession(session: Session) {
         this.sessions.add(session);
 
-        if (!this.watcher) {
+        if (!this.watcher && this.path != "auto_generated") {
 
             try {
                 this.watcher = watch(this.path, (r: any) => (this.type = r, spark.queueUpdate(this)));

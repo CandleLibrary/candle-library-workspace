@@ -74,7 +74,15 @@ export enum EditorCommand {
      * file watchers for the source files that were used
      * to render the endpoint.
      */
-    REGISTER_CLIENT_COMPONENT
+    REGISTER_CLIENT_COMPONENT,
+
+    /**
+     * Reply to GET_STORE request. Returns an object representing
+     * the current APP store file.
+     */
+    GET_STORE_REPLY,
+    GET_STORE,
+    SET_STORE,
 }
 
 export const enum StyleSourceType {
@@ -178,6 +186,20 @@ export interface CommandsMap {
     [EditorCommand.APPLY_COMPONENT_CHANGES]: {
         command: EditorCommand.APPLY_COMPONENT_CHANGES;
         changes: (Change[ChangeType.CSSRule] | Change[ChangeType.Attribute])[];
+    };
+
+    [EditorCommand.GET_STORE]: {
+        command: EditorCommand.GET_STORE;
+    };
+
+    [EditorCommand.SET_STORE]: {
+        command: EditorCommand.SET_STORE;
+        data: any;
+    };
+
+    [EditorCommand.GET_STORE_REPLY]: {
+        command: EditorCommand.GET_STORE_REPLY;
+        data: any;
     };
 }
 

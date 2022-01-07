@@ -4,13 +4,12 @@ import {
     Element_Is_Wick_Component,
     Element_Is_Wick_Template, hydrateComponentElements
 } from "../client/runtime/component/html.js";
-import { rt } from "../client/runtime/runtime.js";
-import { loadModules } from "../client/runtime/load_modules.js";
 import { Observable } from '../client/runtime/observable/observable.js';
 import { ObservableArray } from '../client/runtime/observable/observable_array.js';
 import { ObservableScheme__ } from '../client/runtime/observable/observable_prototyped.js';
+import { rt } from "../client/runtime/runtime.js";
 import { Environment, envIs } from '../common/env.js';
-import { Context, UserPresets } from '../compiler/common/context.js';
+import { Context } from '../compiler/common/context.js';
 
 let
     nop = (_: any) => !0,
@@ -42,8 +41,6 @@ const wick = Object.assign(wick_root, {
 
     setWrapper: nop,
 
-    init_module_promise: <Promise<any> | null>null,
-
     objects: {
         WickRTComponent: WickRTComponent,
         Context: Context,
@@ -53,34 +50,16 @@ const wick = Object.assign(wick_root, {
             return <any>new ObservableScheme__(obj);
         }
     },
-    /**
-     * Integrate the givin set of UserPresets with
-     * the runtime context.
-     * @param presets_options 
-     * @returns 
-     */
-    async appendPresets(presets_options: UserPresets) {
-
-
-        wick.rt.setPresets(presets_options);
-
-        // Load API modules
-        wick.init_module_promise = loadModules(presets_options, wick.rt.context);
-
-        return wick.init_module_promise;
-    },
 
     /**
      * Loads templates and hydrates page. Assumes hydratable component 
      * data has already been loaded.
      */
-    async hydrate() {
+    async queue_hydrate() {
 
         window.addEventListener("load", async () => {
 
-            if (wick.init_module_promise)
-
-                await wick.init_module_promise;
+            await rt.init_module_promise;
 
             // Assuming wick.rt.setPresets has been called already.
 

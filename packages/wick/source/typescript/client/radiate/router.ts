@@ -352,7 +352,7 @@ export class Router {
         let app_ele = document.getElementById("app");
 
         if (!app_ele)
-            throw ("App element not found");
+            throw new Error("App element not found");
 
         let finalizing_pages: Page[] = this.finalizing_pages;
 
@@ -511,6 +511,8 @@ export class Router {
             return this.loadNonWickPage(url);
         }
 
+
+
         if (app_source && dom_app) {
 
             var page: Page | null = null;
@@ -518,6 +520,16 @@ export class Router {
             gatherWickElements(<HTMLElement><any>DOM);
 
             if (document == DOM) {
+
+                const radiate_app = document.createElement("div");
+                radiate_app.classList.add("radiate-app-view");
+                radiate_app.id = "app";
+                if (dom_app.parentElement == document.body)
+                    dom_app.parentElement.replaceChild(radiate_app, dom_app);
+                else
+                    throw new Error("Radiate app is not a top level element!");
+
+
                 // APP_PAGE Element is used as a stage for all element containers
                 var app_page: ComponentElement = <ComponentElement>document.createElement(dom_app.tagName);
 
@@ -526,9 +538,9 @@ export class Router {
                 // Move all elements into app page
                 app_page.append(...Array.from(app_source.childNodes));
 
-                dom_app.appendChild(app_page);
+                radiate_app.appendChild(app_page);
 
-                dom_app.classList.remove(...dom_app.classList.toString().split(" "));
+                //radiate_app.classList.remove(...dom_app.classList.toString().split(" "));
 
                 page = new Page(url, app_page);
 
@@ -560,7 +572,7 @@ export class Router {
                 if (wick_script)
                     await (async_function("wick", wick_script.innerHTML))(this.wick);
 
-                await this.wick.init_module_promise;
+                await this.wick.rt.init_module_promise;
 
                 const wick_style = DOM.getElementById("wick-app-style");
 

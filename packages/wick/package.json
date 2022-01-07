@@ -6,7 +6,8 @@
     "types": "./build/index",
     "type": "module",
     "bin": {
-        "candle.wick": "./index.js"
+        "candle.wick": "./index.js",
+        "candle.wick.app": "./index.js"
     },
     "scripts": {
         "test": "candle.cure ./test/*"

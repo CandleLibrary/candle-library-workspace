@@ -5,6 +5,7 @@ import { ComponentData } from './component.js';
 import { ModuleHash } from "./hash_name.js";
 import { Context } from './context.js';
 import URI from '@candlelib/uri';
+import { MODULE_FLAG } from './ModuleFlag';
 
 /**
  * Set the givin Lexer as the pos val for each node
@@ -32,6 +33,24 @@ export function addPendingModuleToContext(
     resource_location: URI,
     requesting_source: URI,
 ): string {
+    let url = getResolvedURI(resource_location, requesting_source);
+
+    const hash = ModuleHash(url);
+
+    const mod = context.repo.get(url);
+
+    if (!mod)
+        context.repo.set(url, {
+            url: url,
+            hash: hash,
+            module: null,
+            flag: 0
+        });
+
+    return hash;
+}
+
+function getResolvedURI(resource_location: URI, requesting_source: URI) {
     let resolved_uri = resource_location;
     let url = resolved_uri.toString();
 
@@ -41,18 +60,23 @@ export function addPendingModuleToContext(
     } else if (!resource_location.host) {
         url = resolved_uri.path;
     }
-
-
-    const hash = ModuleHash(url);
-
-    context.repo.set(url, {
-        url: url,
-        hash: hash,
-        module: null
-    });
-
-    return hash;
+    return url;
 }
+
+export function addFlagToPendingModule(
+    context: Context,
+    resource_location: URI,
+    requesting_source: URI,
+    flag: MODULE_FLAG
+) {
+
+    let url = getResolvedURI(resource_location, requesting_source);
+
+    const mod = context.repo.get(url);
+
+    if (mod)
+        mod.flag |= flag;
+};
 
 /** JS COMMON */
 /**

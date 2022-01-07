@@ -24,6 +24,7 @@ import {
     ContainerScrubHook,
     ContainerShiftHook,
     ContainerSortHook,
+    ContainerUseIfEmptyHook,
     ContainerUseIfHook
 } from "../features/container_features.js";
 import { processHookForHTML } from "./hooks.js";
@@ -550,7 +551,10 @@ async function processContainerHooks(
         limit_hook = hooks.find(t => t.type == ContainerLimitHook),
         offset_hook = hooks.find(t => t.type == ContainerOffsetHook),
         shift_hook = hooks.find(t => t.type == ContainerShiftHook),
-        use_if_hooks = hooks.filter(t => t.type == ContainerUseIfHook);
+        use_if_hooks = hooks.filter(t => t.type == ContainerUseIfHook),
+        use_if_empty_hooks = hooks.filter(t => t.type == ContainerUseIfEmptyHook);
+
+    const valid_containers = html.component_names.filter((i, j) => !use_if_empty_hooks.some(i => i.value[0].comp_index == j));
 
     if (data_hook) {
 
@@ -601,7 +605,7 @@ async function processContainerHooks(
 
                     const
 
-                        comp_name = html.component_names[0],
+                        comp_name = valid_containers[0],
 
                         child_comp = static_data_pack.context.components.get(comp_name);
 
@@ -612,7 +616,7 @@ async function processContainerHooks(
                             const child_node = (await integrateComponentElement(
                                 child_comp.HTML,
                                 child_comp.name,
-                                createBaseSDP(context, model))).node;
+                                createBaseSDP(static_data_pack.context, model))).node;
 
                             addAttribute(child_node, "class", "wk-null");
 

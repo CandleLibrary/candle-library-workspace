@@ -1,23 +1,22 @@
 
 import { CSS_Transform2D } from '@candlelib/css';
 import glow from '@candlelib/glow';
-import { WickRTComponent } from "../../client/runtime/component/component.js";
+import { setRegisterHook, WickRTComponent } from "../../client/runtime/component/component.js";
 import { Status } from '../../client/runtime/component/component_status.js';
 import { WickContainer } from "../../client/runtime/component/container";
-import { hydrateComponentElement, hydrateTemplateElement, String_Is_Wick_Hash_ID } from '../../client/runtime/component/html.js';
-import { rt, } from '../../client/runtime/runtime.js';
-import { Context, WickLibrary } from '../../index.js';
+import { hydrateTemplateElement } from '../../client/runtime/component/html.js';
+import { rt } from '../../client/runtime/runtime.js';
+import { Environment, envIs } from '../../common/env.js';
+import { logger } from '../../common/logger.js';
+import { WickLibrary } from '../../index.js';
+import { FLAG_ID_OFFSET } from "../../types/all.js";
 import { EditorCommand } from "../../types/editor_types.js";
 import { PatchType } from "../../types/patch";
-import { logger } from '../../common/logger.js';
 import { Session } from '../common/session.js';
-import { createSelection, getRuntimeComponentsFromName, updateActiveSelections } from './common_functions.js';
+import { createSelection, getRuntimeComponentsFromName } from './common_functions.js';
 import { EditorModel } from "./editor_model.js";
 import { loadPlugins } from './plugin.js';
-import { setRegisterHook } from "../../client/runtime/component/component.js";
 import { EditedComponent, WorkspaceSystem } from "./types/workspace_system.js";
-import { Environment, envIs } from '../../common/env.js';
-import { FLAG_ID_OFFSET } from "../../types/all.js";
 
 const patch_logger = logger.get("patch").activate();
 export function revealEventIntercept(sys: WorkspaceSystem) {

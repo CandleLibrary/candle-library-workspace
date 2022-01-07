@@ -125,6 +125,19 @@ export async function createCompiledComponentClass(
                 nluf
             } = createLookupTables(class_info);
 
+            //Session Variables - enabled if the component has session bindings
+            if (component.root_frame.binding_variables) {
+
+                const bindings = [...component.root_frame.binding_variables.values()];
+                for (const b of bindings) {
+                    if ((b.flags & BINDING_FLAG.FROM_STORE) == BINDING_FLAG.FROM_STORE/*  && b.class_index >= 0 */) {
+                        const external_name = b.external_name;
+                        appendStmtToFrame(class_info.init_frame, stmt(`w.rt.register_store("${b.module_name ?? ""}", "${external_name}", this)`));
+                        appendStmtToFrame(class_info.terminate_frame, stmt(`w.rt.unregister_store("${b.module_name ?? ""}", "${external_name}", this)`));
+                    }
+                }
+            }
+
             for (const hook of component.indirect_hooks)
                 await processIndirectHook(component, context, hook, class_info, ALLOW_STATIC_REPLACE);
 
@@ -160,19 +173,6 @@ export async function createCompiledComponentClass(
             else
                 appendStmtToFrame(class_info.init_frame, ...getStatementsFromRootFrame(root_frame));
 
-
-            //Session Variables - enabled if the component has session bindings
-            if (component.root_frame.binding_variables) {
-
-                const bindings = [...component.root_frame.binding_variables.values()];
-                for (const b of bindings) {
-                    if ((b.flags & BINDING_FLAG.FROM_STORE) == BINDING_FLAG.FROM_STORE/*  && b.class_index >= 0 */) {
-                        const external_name = b.external_name;
-                        appendStmtToFrame(class_info.init_frame, stmt(`w.rt.register_store("${b.module_name ?? ""}", "${external_name}", this)`));
-                        appendStmtToFrame(class_info.terminate_frame, stmt(`w.rt.unregister_store("${b.module_name ?? ""}", "${external_name}", this)`));
-                    }
-                }
-            }
 
             //Ensure there is an async init method
             for (const function_block of out_frames)
@@ -585,6 +585,57 @@ export async function finalizeBindingExpression(
                 }
                 break;
 
+
+            case JST.CallExpression: {
+
+                //@ts-ignore
+                if (Node_Is_Binding_Identifier(node.nodes[0])) {
+                    const
+                        [ref, args] = node.nodes,
+                        //@ts-ignore
+                        name = <string>ref.value,
+                        comp_var: BindingVariable = getComponentBinding(name, component);
+
+                    if (Binding_Var_Is_Store_Variable(comp_var)) {
+
+
+                        const name = comp_var.external_name;
+
+                        const meta = comp_var.module_name ?? "";
+
+                        if (meta == "persist") {
+                            const
+                                update_action = "this.rt.set_store",
+
+                                call: JSCallExpression = <any>parse_js_exp(
+                                    `await ${update_action}("persist-init", "${name}", this)`
+                                );
+
+                            call.nodes[0].nodes[1]?.nodes.splice(2, 0, args.nodes[0]);
+
+                            NEED_ASYNC = true;
+
+                            mutate(setPos(call, node.pos));
+                        } else {
+
+                            const
+                                update_action = "this.rt.get_store",
+
+                                call: JSCallExpression = <any>parse_js_exp(
+                                    `await ${update_action}("${meta}", "${name}", this)`
+                                );
+
+                            call.nodes[0].nodes[1]?.nodes.push(...args.nodes);
+
+                            NEED_ASYNC = true;
+
+                            mutate(setPos(call, node.pos));
+                        }
+                    }
+                }
+                break;
+            }
+
             case JST.AssignmentExpression:
 
                 //@ts-ignore
@@ -602,7 +653,7 @@ export async function finalizeBindingExpression(
 
                     if (Binding_Var_Is_Store_Variable(comp_var)) {
 
-                        const update_action = "wick.rt.set_store";
+                        const update_action = "this.rt.set_store";
 
                         const name = comp_var.external_name;
 

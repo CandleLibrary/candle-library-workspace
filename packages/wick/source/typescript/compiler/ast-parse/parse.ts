@@ -227,6 +227,7 @@ export async function processWickHTML_AST(
     context: Context,
     USE_AS_PRIMARY_HTML: boolean = true,
     APPEND_TO_COMPONENT_INLINE_HTML = true,
+    REWORK: boolean = false,
     location: string = component.location + ""
 ): Promise<HTMLNode> {
     //Process the import list
@@ -247,7 +248,7 @@ export async function processWickHTML_AST(
     } = { ast: null },
         attribute_handlers = html_handlers[Math.max((HTMLNodeType.HTMLAttribute >>> 23) - WICK_AST_NODE_TYPE_BASE, 0)];
 
-    let last_element = null, ele_index = component.element_counter;
+    let last_element = null;
 
     //Remove content-less text nodes.
     for (const { node, meta: { prev, next, mutate } } of traverse(ast, "nodes")
@@ -317,7 +318,7 @@ export async function processWickHTML_AST(
 
             break;
         }
-        if (html_node.type & HTMLNodeClass.HTML_ELEMENT || html_node.type == HTMLNodeType.WickBinding)
+        if (!REWORK && (html_node.type & HTMLNodeClass.HTML_ELEMENT || html_node.type == HTMLNodeType.WickBinding))
             html_node.id = ++component.element_counter;
 
         if (!html_node.comp)

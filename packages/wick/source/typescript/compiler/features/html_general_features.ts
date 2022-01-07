@@ -68,7 +68,6 @@ registerFeature(
 
                     if ("IS_CONTAINER" in host_node) {
 
-
                         if (node.name == "component") {
 
                             const component_name = <string>(<HTMLNode>node).value;
@@ -81,7 +80,7 @@ registerFeature(
 
                         if (node.name == "element" || node.name == "ele") {
 
-                            host_node.tag = <string>node.value;
+                            host_node.tag = <string>node.value.toUpperCase();
 
                             return;
                         }

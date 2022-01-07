@@ -5,6 +5,7 @@ import { WickRTComponent } from '../../client/runtime/component/component.js';
 import { ComponentClassStrings, ComponentStyle } from '../../types/component.js';
 import { WickCompileConfig } from "../../types/config.js";
 import { ComponentData } from './component.js';
+import { MODULE_FLAG } from './ModuleFlag.js';
 
 let CachedPresets: Context | null = null;
 
@@ -136,18 +137,26 @@ export class Context {
      * component is instantiated.
      */
     repo: Map<string, {
+
         /**
          * The specifier path of the import statement
          */
         url: string,
+
         /**
          * The hash name of the specifier
          */
         hash: string,
+
         /**
          * the imported module object
          */
         module: any;
+
+        /**
+         * Module flags for specific initialization behavior
+         */
+        flag: MODULE_FLAG;
     }>;
 
     plugins: PluginStore;
@@ -351,7 +360,8 @@ export class Context {
             this.repo.set(url, {
                 hash,
                 url,
-                module: null
+                module: null,
+                flag: 0
             });
     }
 

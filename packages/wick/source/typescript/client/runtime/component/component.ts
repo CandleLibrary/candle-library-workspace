@@ -1,9 +1,8 @@
 import { Transition } from '@candlelib/glow';
 import spark, { Sparky } from "@candlelib/spark";
 import { Environment, envIs } from '../../../common/env.js';
-import { Context } from '../../../compiler/common/context.js';
 import { BINDING_FLAG, FLAG_ID_OFFSET, ObservableModel, ObservableWatcher } from "../../../types/all";
-import { rt } from "../runtime.js";
+import { rt, WickRuntime } from "../runtime.js";
 import { Status } from './component_status.js';
 import { WickContainer } from "./container.js";
 import {
@@ -71,7 +70,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
     status: Status;
 
-    context: Context;
+    rt: WickRuntime;
 
     //@ts-ignore
     //nlu: { [key: string]: number; };
@@ -177,7 +176,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         claim_id: number = 0,
         claim_tip: number = 0,
         default_model_name = "",
-        context: Context = rt.context
+        rt_: WickRuntime = rt
     ) {
         this.name = this.constructor.name;
         this.ch = [];
@@ -210,7 +209,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
         this._SCHD_ = 0;
         this.polling_id = -1;
-        this.context = context;
+        this.rt = rt_;
 
         this.setCSS();
 
@@ -220,10 +219,10 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         //Create or assign global model whose name matches the default_model_name;
         if (default_model_name) {
 
-            if (!context.models[default_model_name])
-                context.models[default_model_name] = {};
+            if (!rt_.context.models[default_model_name])
+                rt_.context.models[default_model_name] = {};
 
-            this.model = context.models[default_model_name];
+            this.model = rt_.context.models[default_model_name];
         }
 
         if (originator) {
@@ -235,7 +234,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             this.ele = existing_element;
             this.integrateElement(existing_element, true, claim_id, claim_tip);
         } else
-            this.ele = this.createElement(context, claim_id, claim_tip, [this]);
+            this.ele = this.createElement(claim_id, claim_tip, [this]);
 
 
         this.ele.dataset.wrtc = this.name;
@@ -577,6 +576,9 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         for (const ch of this.ch)
             ch.transitionInEnd();
 
+        if (this.originator)
+            this.originator.transitionInEnd();
+
         this.oTIC();
     }
 
@@ -734,7 +736,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
 
             const index = (store.meta & FLAG_ID_OFFSET.MASK);
 
-            if (attribute_value !== prev_val) {
+            if (attribute_value !== prev_val || typeof attribute_value == "object") {
 
                 store.val = attribute_value;
 
@@ -1187,7 +1189,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         return <HTMLElement>temp_ele.firstElementChild;
     }
 
-    createElement(context: Context, claim_id: number, claim_tip: number) {
+    createElement(claim_id: number, claim_tip: number) {
 
         const ele = this.ce();
 

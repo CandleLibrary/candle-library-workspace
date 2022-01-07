@@ -14,7 +14,7 @@ async function integrate(){
 
     const logger = Logger.get("wick").activate().get("plugin").get(`[${name}]`);
 
-    wick.appendPresets({
+    wick.rt.appendPresets({
         api: { sys: {
             logger,
             get_active_selections: ()=>sys.editor_model.selections.filter(s=>s.ACTIVE),

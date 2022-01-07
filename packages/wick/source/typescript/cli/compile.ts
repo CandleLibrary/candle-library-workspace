@@ -323,7 +323,7 @@ async function renderEndpointPage(
         hooks.init_script_render = function () {
             return `
 			import {wick} from "${pack_path}";
-			wick.hydrate();`;
+			wick.queue_hydrate();`;
         };
 
     hooks.resolve_import_path = (str: string) => {

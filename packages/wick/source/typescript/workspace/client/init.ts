@@ -57,7 +57,7 @@ export function init() {
 
                 const system = await initSystem(uri, page_wick, editor_wick, editor_window, editor_frame);
                 if (system) {
-                    editor_wick.appendPresets(<UserPresets>{
+                    editor_wick.rt.appendPresets(<UserPresets>{
                         models: {
                             "active-selection": system.active_selection,
                             "flame-editor": system.editor_model,

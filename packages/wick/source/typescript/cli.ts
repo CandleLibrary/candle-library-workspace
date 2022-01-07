@@ -32,7 +32,7 @@ import "./cli/workspace.js";
 import "./cli/run.js";
 
 
-const
+/* const
     { package: pkg, package_dir }
         //@ts-ignore
         = await getPackageJsonObject(new URI(import.meta.url).path),
@@ -46,5 +46,5 @@ addCLIConfig("root", {
     key: "root",
     help_brief: HELP_MESSAGE
 });
-
+ */
 processCLIConfig("candle.wick");

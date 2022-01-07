@@ -1,12 +1,15 @@
 
 import GlowAnimation from '@candlelib/glow';
+import URI from '@candlelib/uri';
 import { Environment, envIs } from '../../common/env.js';
 import { logger } from '../../common/logger.js';
 import { registerWatcherComponent, unregisterWatcherComponent } from '../../common/session_watchers.js';
 import { Context, UserPresets } from "../../compiler/common/context.js";
+import { MODULE_FLAG } from '../../compiler/common/ModuleFlag.js';
 import { BINDING_FLAG } from '../../types/all';
 import { Router } from '../radiate/router.js';
 import { WickRTComponent } from "./component/component.js";
+import { DataBaseOMR, DatabaseType, store } from './db.js';
 
 let GLOW_CHECKED = false;
 let local_glow: any = null;
@@ -14,129 +17,12 @@ let glow: typeof GlowAnimation | null = null;
 
 logger.activate();
 
-const enum DatabaseType {
-    Indexed
-}
+interface Store {
+    set(query: string, data: any): any;
 
-const store: Map<string, { val: any, comps: Set<WickRTComponent>; }> = new Map();
-class DataBaseOMR {
+    get(query: string, ...args: any[]): any;
 
-    db: null | IDBDatabase;
-
-    errors: any;
-
-    active_promise: Promise<any> | null;
-
-    constructor() {
-        this.db = null;
-        this.active_promise = null;
-    }
-
-    async connect(): Promise<boolean> {
-
-        if (!this.db && !this.errors) {
-
-            this.active_promise = new Promise(res => {
-
-
-                const request = indexedDB.open("wick-session", 1);
-
-                request.onsuccess = db => {
-                    logger.log("Database connected");
-                    this.db = request.result;
-                    this.db.onerror = this.handle_error;
-                    res(true);
-                };
-
-                request.onerror = (e) => {
-                    this.handle_error(e);
-                    res(false);
-                };
-
-                request.onblocked = e => {
-                    logger.log("Connection blocked");
-                    res(false);
-                };
-
-                request.onupgradeneeded = e => {
-                    logger.log("Upgrade needed");
-                    this.db = request.result;
-                    this.db.onerror = (e) => this.handle_error(e);
-                    this.db.createObjectStore("session-data", { keyPath: null });
-                };
-            });
-
-            this.active_promise.finally(() => {
-                this.active_promise = null;
-            });
-
-            return this.active_promise;
-        }
-
-        if (this.active_promise)
-            return await this.active_promise;
-
-        if (this.errors)
-            return false;
-
-        return true;
-    }
-
-    handle_error(event: Event) {
-        this.errors = true;
-        //@ts-ignore
-        logger.warn(event.target.error);
-    }
-
-    async put(key: string, data: any): Promise<boolean> {
-        if (await this.connect()) {
-            return new Promise(res => {
-
-                if (!this.db)
-                    return false;
-
-                var transaction = this.db.transaction(["session-data"], "readwrite");
-
-                transaction.oncomplete = () => res(true);
-
-                transaction.onerror = () => res(false);
-
-                const store = transaction.objectStore("session-data");
-
-                store.put(data, key);
-            });
-        }
-
-        return false;
-    }
-
-    async get(key: string): Promise<any> {
-        if (await this.connect() && this.db) {
-            if (await this.connect()) {
-                return new Promise(res => {
-
-                    if (!this.db)
-                        return false;
-
-                    var transaction = this.db.transaction(["session-data"], "readonly");
-                    //transaction.oncomplete = () => res(true);
-                    transaction.onerror = () => res(undefined);
-
-                    const store = transaction.objectStore("session-data");
-
-                    const request = store.get(key);
-
-                    request.onerror = () => res(undefined);
-
-                    request.onsuccess = e => { res(request.result); };
-
-                });
-            }
-
-            return false;
-        }
-        return undefined;
-    }
+    key_map: Map<string, Set<WickRTComponent>>;
 }
 
 export class WickRuntime {
@@ -176,7 +62,11 @@ export class WickRuntime {
 
     css_cache: Map<string, { css_ele: HTMLStyleElement, count: number; }>;
 
+    stores: Map<string, Store>;
+
     private db: DataBaseOMR;
+
+    init_module_promise: Promise<any> | null;
 
     constructor() {
         this.registerSession = registerWatcherComponent;
@@ -187,17 +77,16 @@ export class WickRuntime {
         this.workspace_init_promise = null;
         this.templates = new Map;
         this.css_cache = new Map;
+        this.stores = new Map;
         this.init = <any>null;
         this.router = <any>null;
         this.context = <any>null;
         this.root_components = [];
-        this.loadIndexedData();
         this.db = new DataBaseOMR;
-    }
-    loadIndexedData() {
+        this.init_module_promise = null;
 
-    }
-    retrieveDatabaseData(key: string, DB: DatabaseType = DatabaseType.Indexed) {
+        if (envIs(Environment.APP))
+            (import("../app/session.js")).then(m => m.init(this));
 
     }
 
@@ -232,19 +121,38 @@ export class WickRuntime {
         return local_glow;
     }
 
+    async get_store<T = any>(ns: string, key: string, ...args: any[]) {
+        if (this.stores.has(ns)) {
+
+            const store = this.stores.get(ns);
+
+            if (store) {
+
+                return await store.get(key, ...args);
+
+            }
+
+
+        }
+
+        return undefined;
+    }
+
     async set_store<T = any>(ns: string, key: string, val: T, comp: WickRTComponent): T {
 
-        if (!(comp instanceof WickRTComponent)) return val;
+        //if (!(comp instanceof WickRTComponent)) return val;
 
-        if (!ns || ns == "persist") {
+        if (!ns || ns == "persist" || ns == "persist-init") {
 
-            if (!store.has(key)) {
+            if (!store.has(key) || ns == "persist-init") {
                 this.register_store(ns, key, comp);
-                if (ns == "persist") {
+                if (ns == "persist" || ns == "persist-init") {
                     //Grab the value store within the database. 
                     const store_value = await this.getDatabaseData(key, DatabaseType.Indexed);
                     if (store_value !== undefined)
                         val = store_value;
+                    else if (ns == "persist-init")
+                        this.setDatabaseData(key, val, DatabaseType.Indexed);
                 }
             }
 
@@ -258,7 +166,6 @@ export class WickRuntime {
                     this.setDatabaseData(key, val, DatabaseType.Indexed);
 
                 const update_obj = { [key]: column.val };
-
                 for (const comp of column.comps)
                     comp.update(update_obj, BINDING_FLAG.FROM_STORE);
             }
@@ -289,7 +196,21 @@ export class WickRuntime {
                 par.update(update_obj, BINDING_FLAG.FROM_STORE);
                 par = par.par;
             }
+        } else if (this.stores.has(ns)) {
+
+            const store = this.stores.get(ns);
+
+            if (store) {
+
+                const new_val = await store.set(key, val);
+
+                const data = { [key]: new_val };
+
+                for (const comp of store.key_map.get(key) ?? [])
+                    comp.update(data, BINDING_FLAG.FROM_STORE);
+            }
         }
+
         return val;
     }
     register_store(ns: string, key: string, comp: WickRTComponent) {
@@ -298,14 +219,29 @@ export class WickRuntime {
                 store.set(key, { val: undefined, comps: new Set() });
             const column = store.get(key);
             if (column) {
+
                 column.comps.add(comp);
                 if (column.val !== undefined)
                     comp.update({ [key]: column.val });
             }
         } else if (ns == "session") {
             registerWatcherComponent(comp, key);
-        }
+        } else if (this.stores.has(ns)) {
 
+            const store = this.stores.get(ns);
+
+            if (store) {
+
+                if (!store.key_map.has(key))
+                    store.key_map.set(key, new Set());
+
+                store.key_map.get(key)?.add(comp);
+
+                new Promise(async () => {
+                    comp.update({ [key]: await store.get(key) }, BINDING_FLAG.FROM_STORE);
+                });
+            }
+        }
     }
 
     unregister_store(ns: string, key: string, val: any, comp: WickRTComponent) {
@@ -320,6 +256,25 @@ export class WickRuntime {
             }
         } else if (ns == "session") {
             registerWatcherComponent(comp, key);
+        } else if (this.stores.has(ns)) {
+
+            const store = this.stores.get(ns);
+
+            if (store) {
+
+                if (!store.key_map.has(key))
+                    return;
+
+                const set = store.key_map.get(key);
+
+                if (set) {
+
+                    set.delete(comp);
+
+                    if (set.size == 0)
+                        store.key_map.delete(key);
+                }
+            }
         }
     }
 
@@ -443,7 +398,74 @@ export class WickRuntime {
                 this.css_cache.delete(name);
             }
         }
+    }
+    /**
+     * Integrate the givin set of UserPresets with
+     * the runtime context.
+     * @param presets_options 
+     * @returns 
+     */
+    appendPresets(presets_options: UserPresets): Promise<any> {
 
+        this.setPresets(presets_options);
+
+        return (this.init_module_promise = this.loadModules(presets_options, this.context));
+    };
+
+
+    /**
+     * Loads ES6 modules from a source path. 
+     * @param incoming_options 
+     * @param extant_presets 
+     */
+    async loadModules(incoming_options: UserPresets, extant_presets: Context) {
+
+        for (const [id, url, flags] of incoming_options?.repo ?? []) {
+
+            if (extant_presets.api) {
+                if (!extant_presets.api[id]) {
+                    try {
+
+                        const uri = <URI>URI.resolveRelative(url);
+
+                        const mod = await import(uri + "");
+
+                        if (uri.file == "pack.js") {
+                            extant_presets.api[id] = {
+                                default: mod[id]?.default,
+                                module: mod[id]
+                            };
+                        } else {
+
+                            extant_presets.api[id] = {
+                                default: mod.default ?? null,
+                                module: mod
+                            };
+                        };
+
+                        if (flags & MODULE_FLAG.IS_STORE) {
+
+                            const get = mod.get;
+                            const set = mod.set;
+
+                            if (!get)
+                                throw new Error("Unable to register store: `get` method not defined.");
+
+                            if (!set)
+                                throw new Error("Unable to register store: `set` method not defined.");
+
+                            this.stores.set(id, {
+                                get, set, key_map: new Map
+                            });
+                        }
+
+                    } catch (e) {
+                        console.warn(new Error(`Could not load module ${url}`));
+                        console.error(e);
+                    }
+                }
+            }
+        }
     }
 }
 

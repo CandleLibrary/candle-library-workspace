@@ -1,4 +1,4 @@
-import { state, selections } from "@model:flame-editor";
+import { state, selections } from "@model|flame-editor";
 import { sys } from "@api";
 
 import draw_canvas from "./interface/draw_canvas.wick";

@@ -12,39 +12,9 @@ export default function radiate() {
 
     ROUTER_LOAD_INITIATED = true;
 
-    window.addEventListener("load",
-        async () => {
+    //window.addEventListener("DOMContentLoaded", load);
 
-            if (
-                envIs(Environment.WORKSPACE)
-                &&
-                wick.rt.workspace_init_promise
-            )
-                await wick.rt.workspace_init_promise;
-
-
-            try {
-
-                if (wick.init_module_promise)
-
-                    await wick.init_module_promise;
-
-                wick.rt.router = new Router(wick);
-
-                const page = await wick.rt.router.loadNewPage(document.location + "", document);
-                if (page)
-                    wick.rt.router.loadPage(page, location.href + "", false);
-                else
-                    throw new Error("Unable to initialize page");
-
-                document.body.hidden = false;
-            } catch (e) {
-                console.warn(e);
-            }
-
-            document.body.classList.toggle("radiate-init");
-        }
-    );
+    load();
 
     return wick;
 }
@@ -52,3 +22,46 @@ export default function radiate() {
 //Register wick as a global variable
 //@ts-ignore
 globalThis["wick"] = wick;
+
+async function load() {
+
+    if (
+        envIs(Environment.WORKSPACE)
+        &&
+        wick.rt.workspace_init_promise
+    )
+        await wick.rt.workspace_init_promise;
+
+
+    try {
+
+        if (wick.rt.init_module_promise)
+
+            await wick.rt.init_module_promise;
+
+        const router = new Router(wick);
+
+        wick.rt.router = router;
+
+        const page = await router.loadNewPage(document.location + "", document);
+
+        if (page) {
+            if (document.readyState === "complete") {
+
+                router.loadPage(page, location.href + "", false);
+            } else {
+                window.addEventListener("load", () => {
+                    router.loadPage(page, location.href + "", false);
+
+                });
+            }
+        } else
+            throw new Error("Unable to initialize page");
+
+        document.body.hidden = false;
+    } catch (e) {
+        console.warn(e);
+    }
+
+    document.body.classList.toggle("radiate-init");
+}

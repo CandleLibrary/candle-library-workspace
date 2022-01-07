@@ -26,7 +26,7 @@ export async function renderPage(
         hooks.init_script_render = function () {
             return `
     import w from "/@cl/wick-rt/";
-    w.hydrate();
+    w.queue_hydrate();
                 `;
         };
 

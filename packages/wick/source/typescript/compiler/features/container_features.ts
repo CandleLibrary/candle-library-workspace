@@ -9,6 +9,7 @@ import {
     stmt
 } from '@candlelib/js';
 import URI from '@candlelib/uri';
+import * as exp from 'constants';
 import {
     BINDING_VARIABLE_TYPE, HTMLAttribute,
     HTMLContainerNode,
@@ -26,6 +27,7 @@ import { getOriginalTypeOfExtendedType, registerHookType } from "../common/exten
 import { getElementAtIndex } from "../common/html.js";
 import { BindingIdentifierBinding, BindingIdentifierReference } from "../common/js_hook_types.js";
 import { ExpressionIsConstantStatic, getExpressionStaticResolutionType, getStaticValue, StaticDataPack } from "../data/static_resolution.js";
+import { renderNew } from '../source-code-render/render.js';
 
 export const ContainerDataHook = registerHookType("container-data-hook", HTMLNodeType.HTMLAttribute);
 export const ContainerFilterHook = registerHookType("container-filter-hook", HTMLNodeType.HTMLAttribute);
@@ -53,9 +55,6 @@ registerFeature(
 
                     if (node.tag?.toLowerCase() == "container") {
 
-                        //Turn children into components if they are not already so.   
-                        let ch = null;
-
                         const container_id = component.container_count;
 
                         const ctr: HTMLContainerNode = Object.assign(<HTMLContainerNode>{
@@ -82,7 +81,7 @@ registerFeature(
 
                             let comp, comp_index = ctr.components.length;
 
-                            const inherited_attributes: [string, string][] = [];
+                            const inherited_attributes: [string, any][] = [];
 
                             const IS_GENERATED_COMPONENT = !(component.local_component_names.has(ch.tag ?? ""));
 
@@ -91,29 +90,26 @@ registerFeature(
                             for (const attrib of (ch.attributes || [])) {
                                 const { name, value } = attrib;
 
-                                if (typeof value != "string") {
-                                    if (name == "use-if") {
+                                if (name == "use-if" && typeof value != "string") {
 
-                                        build_system.addIndirectHook(component, ContainerUseIfHook, {
-                                            expression: await build_system.processBindingAsync(value, component, context),
-                                            comp_index: comp_index,
-                                            container_id
-                                        }, index);
+                                    build_system.addIndirectHook(component, ContainerUseIfHook, {
+                                        expression: await build_system.processBindingAsync(value, component, context),
+                                        comp_index: comp_index,
+                                        container_id
+                                    }, index + 1);
 
-                                    } else if (name == "use-if-empty") {
+                                } else if (name == "use-if-empty") {
 
-                                        build_system.addIndirectHook(component, ContainerUseIfEmptyHook, {
-                                            hook_value: value.primary_ast,
-                                            component: comp.name,
-                                            container_id
-                                        }, index);
-                                    } else
-                                        IS_GENERATED_COMPONENT
-                                            ? new_attribs.push(attrib)
-                                            : inherited_attributes.push([name, value]);
-                                } else {
+                                    build_system.addIndirectHook(component, ContainerUseIfEmptyHook, {
+                                        comp_index,
+                                        container_id
+                                    }, index + 1);
+
+                                } else if (IS_GENERATED_COMPONENT) {
                                     new_attribs.push(attrib);
-                                }
+                                } else
+                                    inherited_attributes.push([name, value]);
+
                             }
 
                             ch.attributes = new_attribs;
@@ -147,9 +143,16 @@ registerFeature(
 
                         // Remove all child nodes from container after they have 
                         // been processed
+                        //@ts-ignore
                         ctr.nodes.length = 0;
 
-                        skip();
+                        ctr.tag = "DIV";
+
+                        //await build_system.processHTMLNode(ctr, component, context, false, false, true);
+
+                        //skip();
+
+                        console.log(ctr.container_id);
 
                         return ctr;
                     }
@@ -190,10 +193,45 @@ registerFeature(
 
                     const arrow_expression_stmt = stmt(`$$ctr${container_id}.addEvaluator(${arrow_argument_match[0].value} => 1, ${comp_index})`);
 
+                    //@ts-ignore
                     arrow_expression_stmt.nodes[0].nodes[1].nodes[0].nodes[1] = expression;
 
                     init(arrow_expression_stmt);
                 }
+
+                return null;
+
+            }
+        });
+
+        /**
+         * Container use-if-empty attribute
+         */
+
+        build_system.registerHookHandler<IndirectHook<{
+            expression: JSNode,
+            comp_index: number,
+            container_id: number,
+        }>, void | JSNode>({
+
+            name: "Container Use-If-Empty",
+
+            types: [ContainerUseIfEmptyHook],
+
+            verify: () => true,
+
+            buildHTML: _ => null,
+
+            buildJS: (node, sdp, index, write, init, _2) => {
+
+                const {
+                    comp_index,
+                    container_id,
+                } = node.value[0];
+
+                const arrow_expression_stmt = stmt(`$$ctr${container_id}.addEmpty(${comp_index})`);
+
+                init(arrow_expression_stmt);
 
                 return null;
 
@@ -249,6 +287,7 @@ registerFeature(
                     // any way within the runtime code
                     return null;
                 } else {
+                    console.log({ n: node.value });
                     st.nodes[0].nodes[1].nodes = <any>node.value;
                     on_write(st);
                 }
@@ -267,7 +306,14 @@ registerFeature(
                     &&
                     container_ele.component_names.length > 0
                 ) {
-                    return await getStaticValue(hook.value[0], sdp);
+                    const pkg = await getStaticValue(hook.value[0], sdp);
+
+                    if (Array.isArray(pkg.value)) {
+                        pkg.value = pkg.value.map(v => typeof v == "object" ? v : { value: v });
+                    }
+                    else pkg.value = [];
+
+                    return pkg;
                 }
 
                 return null;
@@ -569,6 +615,8 @@ registerFeature(
 
                     arrow_expression_stmt.nodes[0].nodes[1].nodes[0].nodes[1] = ast_copy;
 
+                    write(stmt(`$$ctr${container_id}.update()`), copy(arrow_expression_stmt));
+
                     _1(arrow_expression_stmt);
                 }
             };
@@ -656,10 +704,12 @@ export function getListOfUnboundArgs(
 
             const binding = build_sys.getComponentBinding(name, comp);
 
+            console.log(name, n, binding);
+
             if (
                 binding.type == BINDING_VARIABLE_TYPE.UNDECLARED
                 ||
-                binding.type == BINDING_VARIABLE_TYPE.ATTRIBUTE_VARIABLE
+                binding.type == BINDING_VARIABLE_TYPE.MODEL_VARIABLE
                 &&
                 !Can_AttributeBinding_Be_Resolved(name, {
                     self: comp, context: null, model: null, prev: null, root_element: comp.HTML

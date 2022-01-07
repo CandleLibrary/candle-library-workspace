@@ -17,14 +17,14 @@ import { ServerSession } from './session.js';
 import { addBareComponent, getComponent, getComponentLocation, store, __sessions__ } from './store.js';
 
 
-export function initializeDefualtSessionDispatchHandlers(session: ServerSession, config: WickCompileConfig) {
+export function initializeDefualtSessionDispatchHandlers(session: ServerSession | null, config: WickCompileConfig) {
+    if (!session) return;
     session.setHandler(EditorCommand.REGISTER_CLIENT_COMPONENT, REGISTER_CLIENT_COMPONENT);
     session.setHandler(EditorCommand.GET_COMPONENT_SOURCE, GET_COMPONENT_SOURCE);
     session.setHandler(EditorCommand.GET_COMPONENT_STYLE, GET_COMPONENT_STYLE);
     session.setHandler(EditorCommand.GET_COMPONENT_PATCH, GET_COMPONENT_PATCH);
     session.setHandler(EditorCommand.APPLY_COMPONENT_CHANGES, APPLY_COMPONENT_CHANGES);
     session.setHandler(EditorCommand.GET_PLUGIN_PATHS, GET_PLUGIN_PATHS(config));
-    return session;
 }
 
 export async function writeComponent(component: ComponentData) {
