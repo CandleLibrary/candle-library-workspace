@@ -19,9 +19,9 @@
 
 <> STYLE_SHEET >  ( STYLE_RULE | AT_RULE )(*)     
 
-                                                    f:r { { t_Stylesheet | c_RuleParent, rules:$1, tok } }
+                                                    f:r { { t_Stylesheet, c_RuleParent, rules:$1, tok } }
 
-<> STYLE_RULE > COMPLEX_SELECTOR(+\, ) \{ declaration_list? \}   
+<> STYLE_RULE > ( COMPLEX_SELECTOR f:r { { t_Selector, val:$1 } } )(+\, ) \{ declaration_list? \}   
 
                                                     f:r { { t_Rule, selectors:$1, properties: $3, tok, parent: c_RuleParent } }
 
@@ -33,7 +33,7 @@
                                                     f:r { $1 }
     | keyframes          
                                                     f:r { $1 }
-    | support           
+    | supports           
                                                     f:r { $1 }
     | charset ;?           
                                                     f:r { $1 }
@@ -62,16 +62,16 @@
 
 <> supports > \@supports supports_condition { RULE_BODY? }     
 
-                                                    f:r { { t_Supports | c_RuleParent, condition:$2, rules:$4, tok, parent:c_RuleParent } }
+                                                    f:r { { t_Supports, c_RuleParent, condition:$2, rules:$4, tok, parent:c_RuleParent } }
 
-<> import >    \@import ( string | url ) ( t:supports \( ( supports_condition | import_declaration ) \) f:r{$3} )? media_query(*\, )  
+<> import >    \@import ( string | url ) ( t:supports \( ( supports_condition | import_declaration f:r{ [$1] } ) \) f:r{$3} )? media_query(*\, )  
 
                                                     f:r { { t_Import, uri:$2, condition:$3, media:$4, tok } }
 
 <> charset > \@charset string                       f:r { { t_CharSet, value:$2, tok } }
 
 <> media >  \@media media_queries { RULE_BODY? }       
-                                                    f:r { { t_Media | c_RuleParent, queries:$2; rules:$4, tok } }
+                                                    f:r { { t_Media, c_RuleParent, queries:$2, rules:$4, tok } }
 
 # Reference: https://developer.mozilla.org/en-US/docs/Web/CSS/@page
 
@@ -79,7 +79,9 @@
                                                     f:r { { t_Page, selector:$2, rules:$4, tok } }
 # adapted from https://www.w3.org/TR/css-cascade-4/#at-import
 
-<> unknown_at_rule > \@ ident unknown_block?
+<> unknown_at_rule > \@ tk:ident unknown_block?
+
+                                                    f:r { { t_UnknownAtRule, name:str($2), value:str($4), tok } }
 
 # Top Level Declarations - END
 ##############################################################################################
@@ -94,8 +96,8 @@
 
                                                     f:r { { t_KeyframeBlock, selectors:$1, properties:$3, tok } }
 
-<> keyframe_selector > t:from                       f:r { { t_KeyframeSelector, val:$1, tok } }
-    | t:to                                          f:r { { t_KeyframeSelector, val:$1, tok } }
+<> keyframe_selector > t:from                       f:r { { t_KeyframeSelector, val:{ t_KeyFrameTo }, tok } }
+    | t:to                                          f:r { { t_KeyframeSelector, val:{ t_KeyFrameFrom }, tok } }
     | percentage                                    f:r { { t_KeyframeSelector, val:$1, tok } }    
 
 # @SUPPORTS --------------------------------------------------------------------------------
@@ -129,7 +131,7 @@
 
 <> supports_selector >  t:selector \( COMPLEX_SELECTOR \)
 
-                                                    f:r { { t_SupportsSelector, selector:$3, tok } }
+                                                    f:r { { t_SupportsSelector, selectors:$3, tok } }
 
 # @MEDIA ---------------------------------------------------------------------------------
 # reference: https://developer.mozilla.org/en-US/docs/Web/CSS/@media#Formal_syntax
@@ -139,26 +141,27 @@
 <> media_query > media_condition                                                
                                                     f:r { { t_Condition, condition:$1, tok } }  
 
-    | (t:not | t:only )? media_type ( t:and media_condition_without_or )?      
+    | (t:not | t:only )? media_type ( t:and media_not )?      
 
-                                                    f:r { { t_Type, modifier:str($1), type:$2, and:$3, tok } }
+                                                    f:r { { t_Type, modifier:str($1), val: $2, and:$3, tok } }
 
-<> media_condition > media_condition_without_or
-    | media_or
+<> media_condition > media_or
 
-<> media_condition_without_or > media_not
-    | media_and 
+<> media_or > media_or t:or media_and
+                                                    f:r { { t_MediaOr, left:$1, right:$2, tok } }
+    | media_and
+
+<> media_not > t:not media_in_parenths              f:r { { t_MediaNot, media:$2, tok } }
+
+    | media_and
+
+<> media_and > media_and t:and media_in_parenths
+                                                    f:r { { t_MediaAnd, left:$1, right:$2, tok } }
     | media_in_parenths
 
-<> media_not > t:not media_in_parenths               f:r { { t_MediaNot, media:$2, tok } }
+<> media_not > t:not media_in_parenths              f:r { { t_MediaNot, media:$2, tok } }
 
-<> media_and > media_in_parenths ( t:and media_in_parenths  f:r { { t_MediaAnd, media:$2, tok } } )(+)
-
-                                                     f:r { [$1] + $2 }
-
-<> media_or > media_in_parenths ( t:or media_in_parenths f:r { { t_MediaOr, media:$2, tok } } )(+)
-
-                                                    f:r { [$1] + $2 }
+    | media_or
 
 <> media_in_parenths > \( media_condition \)        f:r { { t_MediaParenthesis, media:$2, tok } }        
     | media_feature
@@ -195,19 +198,17 @@
     | mf_name 
     | ratio
 
-<> mf_name > tk:ident_token
+<> mf_name > tk:ident_token                         f:r { { t_MediaName, val:$1, tok } }  
 
 <> media_type > tk:ident_token                      f:r { { t_MediaType, val:$1, tok } }  
 
 
 # @PAGE ----------------------------------------------------------------------------------
 
-<> page_selector > ( tk:pseudo_page )(+)
-    | ident ( tk:pseudo_page )(*)
+<> page_selector > ( pseudo_page )(+)
+    | tk:ident_token ( pseudo_page )(*)   
 
 <> pseudo_page > \: ( t:left | t:right | t:first | t:blank )
-
-                                                    f:r { { t_UnknownAtRule, name:str($2), value:str($4), tok } }
 
 # UNKNOWN -------------------------------------------------------------------------------
 
@@ -220,29 +221,39 @@
 
 
 <> boolean > t:true                                                           
-                                                    f:r { { t_Boolean, val:true, tok } }
+                                                    f:r { { t_Boolean, val:true, tok, tok } }
     | t:false                                                                    
-                                                    f:r { { t_Boolean, val:false, tok } }                                                                
+                                                    f:r { { t_Boolean, val:false, tok, tok } }                                                                
 
 <> ratio > number \/ number                                                         
-                                                    f:r { { t_Ratio, numerator:$1, denominator:$3 } }
+                                                    f:r { { t_Ratio, numerator:$1, denominator:$3, tok } }
 
-<> percentage > number \%                                                          
-                                                    f:r { { t_Percentage, value:$1 } }
+<> percentage > tk:scientific_token \%                                                          
+                                                    f:r { { t_Percentage, value:str($1), tok } }
 
 <> dimension > number ( g:id | g:ids )  
-                                                    f:r { { t_Length, value:$1, unit:str($2) } }
+                                                    f:r { { t_Length, value:$1, unit:str($2), tok } }
 
 <> url >  t:url \( string \)                                                     
-                                                    f:r { { t_URL, value:string($3), } }     
+                                                    f:r { { t_URL, value:str($3), tok } }     
 
-<> number > tk:scientific_token                     f:r { f64($1) }
+
+
+<> string > " ( g:id | g:sym | g:num | g:sp | \\" )(*\" ) "
+
+                                                        f:r { { t_String, value:str($2), tok } } 
+
+    | ' ( g:id | g:sym | g:num | g:sp | \\' )(*\" ) '  
+
+                                                    f:r { { t_String, value:str($2), tok } } 
+
+<> number > tk:scientific_token                     f:r { { t_Number, val:f64($1), tok } }
 
 <> float_token > g:num ( \. g:num )?
 
 <> scientific_token > float_token ( ( t:e | t:E ) \- ? g:num )?
 
-<> ident > tk:ident_token 
+<> ident > tk:ident_token                           f:r { { t_Identifier, val:str($1), tok } }
 
 <> custom_ident > tk:ident_token 
 
@@ -257,32 +268,35 @@
 #### Modified from https://drafts.csswg.org/selectors-4/#grammar
 ##############################################################################################
 
-<> COMPLEX_SELECTOR >  COMPOUND_SELECTOR  
-                                                    f:r { { t_ComplexSelector, selectors:[$1], tok } } 
 
-    COMPLEX_SELECTOR [ ( ( \> | \+ | \~ | \|| ) f:r { t_Combinator, val:$1 } )? g:sp? ] COMPOUND_SELECTOR 
+<> COMPLEX_SELECTOR >   COMPLEX_SELECTOR ( ( ( \> | \+ | \~ | \|| )  f:r { { t_Combinator, val:$1 } } )? COMPOUND_SELECTOR f:r{ $1 + [{ t_CompoundSelector, selectors:$2 }] } )(+)
     
-                                                    f:r { s1.selectors + [$2] + [$4], $1 } 
+                                                    f:r { $1 + $2 } 
 
-<> COMPOUND_SELECTOR >  [
+    | COMPOUND_SELECTOR                             f:r { [{ t_CompoundSelector, selectors:$1 }] } 
+
+<> COMPOUND_SELECTOR >  
+    [
         TYPE_SELECTOR? 
-        SUBCLASS_SELECTOR(*) 
+        (SUBCLASS_SELECTOR)(*) 
         ( 
-            PSEUDO_ELEMENT_SELECTOR ( (RST g:sp) PSEUDO_CLASS_SELECTOR )(*)       
-                                                    
-                                                    f:r { { t_PseudoSelector, selectors: [$1] + $2, tok } } 
+            PSEUDO_ELEMENT_SELECTOR ( (RST g:sp) PSEUDO_CLASS_SELECTOR )(*)    
+
+            f:r { [$1] + $2 }   
         )(*) 
-    ] g:sp?
-                                                    f:r { { t_CompoundSelector, selectors: [$1] + $2 + $3], tok } }                                     
+    ] ( ?=g:sp | ?=\{ | ?=\) )
+                                                    f:r { [$1] + $2 + $3 }                                     
+
+
 
 <> SUBCLASS_SELECTOR > ID_SELECTOR 
     | CLASS_SELECTOR 
     | ATTRIBUTE_SELECTOR 
     | PSEUDO_CLASS_SELECTOR
 
-<> ID_SELECTOR >\#  (RST g:sp)  tk:ident_token          f:r { { t_IdSelector, c_B_SPECIFIER, val:$2, tok, precedence: 0 } } 
+<> ID_SELECTOR >\#  (RST g:sp)  tk:ident_token          f:r { { t_IdSelector, c_B_SPECIFIER, id:str($2), tok, precedence: 0 } } 
 
-<> CLASS_SELECTOR > \. (RST g:sp)  tk:ident_token       f:r { { t_ClassSelector, val:$2, tok, precedence:0, c_C_SPECIFIER } } 
+<> CLASS_SELECTOR > \. (RST g:sp)  tk:ident_token       f:r { { t_ClassSelector, class:str($2), tok, precedence:0, c_C_SPECIFIER } } 
 
 <> PSEUDO_CLASS_SELECTOR >  \:  (RST g:sp) tk:ident_token ( \( psuedo_class_value \) f:r {$2} )?       
 
@@ -290,18 +304,18 @@
 
 <> PSEUDO_ELEMENT_SELECTOR > \:: (RST g:sp)  tk:ident_token ( \( psuedo_class_value \) f:r {$2} )?                 
 
-                                                        f:r { $2.type = env.typ.PseudoElementSelector,  $2.precedence = env.typ.D_SPECIFIER , $2} 
+                                                        f:r { { t_PseudoElementSelector, id:$2, val:$3, tok, precedence:0, c_D_SPECIFIER } }
 
     
 <>  ATTRIBUTE_SELECTOR >  \[ WQ_NAME \]                 f:r { { t_AttributeSelector, name:$2, tok, precedence:0, c_C_SPECIFIER } } 
 
-    | \[ WQ_NAME ( \~= | \^= | \$= | \*= | \= ) ( tk:ident_token | string ) ( t:i | t:s )? \] 
+    | \[ WQ_NAME ( \~= | \^= | \$= | \*= | \= ) ( ident | string ) ( t:i | t:s )? \] 
 
                                                         f:r { { t_AttributeSelector, name:$2, match_type:$3, match_val:$4, mod:$5, tok, precedence:0, c_C_SPECIFIER } }   
 
 <> TYPE_SELECTOR >  WQ_NAME                             f:r { { t_TypeSelector, c_D_SPECIFIER, name:$1, tok  } }
 
-    | NS_PREFIX? \*                                     f:r { { t_TypeSelector, name:{ t_QualifiedName, namespace:$1, val:"*", tok, precedence: 0 }, tok } } 
+    | NS_PREFIX? \*                                     f:r { { t_TypeSelector, name:{ t_QualifiedName, namespace:$1, name:"*", tok, precedence: 0 }, tok } } 
 
 <> WQ_NAME >  NS_PREFIX? tk:ident_token                 f:r { { t_QualifiedName, namespace:$1, name:str($2), tok } }
 
@@ -312,7 +326,7 @@
 #### Declarations
 ##############################################################################################
 
-<> declaration_list >  ( \; (*) declaration? )(+\; )
+<> declaration_list >  ( declaration )(+\; )
     
 <> declaration > tk:declaration_id \: declaration_values_sentineled \!important ?    
                                                                                 
@@ -324,7 +338,7 @@
     then set prod to declaration
 >
 
-<> declaration_values_sentineled > declaration_values ( ?=\} | ?=\; | ?=\!important | ?=g:nl )
+<> declaration_values_sentineled > declaration_values ( ?=\} | ?=\; | ?=\!important | ?=g:nl ) f:r { str(tok) }
 
 <> declaration_values > declaration_value
 
@@ -348,9 +362,6 @@
     | css_id_symbols (RST g:sp g:nl)  g:num       
     | g:id
     | \-
-
-<>string > " ( g:id | g:sym | g:num | g:sp )(*\" ) " f:r { $2 }
-    | ' ( g:id | g:sym | g:num | g:sp )(*\" ) ' f:r { $2 }    
 
 <> psuedo_class_value >  ( g:id | g:sym | g:num | g:sp )(+\" ) 
 
