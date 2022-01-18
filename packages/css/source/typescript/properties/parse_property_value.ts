@@ -48,13 +48,15 @@ export default function parsePropertyDefinitionFromHydrocarbon(env, sym: { 0: st
         lex.tl = 0;
         lex.next();
         prop = parser.parse(lex);
+
         return new CSSProperty(rule_name, body_string, prop, important, pos);
     } else {
 
         //Need to know what properties have not been defined
         console.warn(`Unable to get parser for CSS property ${rule_name}`);
-        const prop = new CSSProperty(rule_name, body_string, null, important, pos);
-        prop.VALID = false;
+        const prop = new CSSProperty(rule_name, body_string, [new CSS_String(body_string)], important, pos);
+        //console.log(prop);
+        //prop.VALID = true;
         return prop;
 
     }

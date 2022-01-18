@@ -56,8 +56,6 @@ export const workspace_plugins = new Map([
 
 export function workspace_plugin_dispatch(config: WickCompileConfig) {
 
-    console.log(config);
-
     return <Dispatcher>{
         name: "Workspace Plugin Dispatch",
         MIME: "text/html",

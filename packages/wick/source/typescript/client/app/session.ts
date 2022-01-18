@@ -1,5 +1,5 @@
 import { Environment, setEnv } from '../../common/env.js';
-import { BINDING_FLAG } from '../../index.js';
+import { BINDING_FLAG } from "../../types/binding.js";
 import { EditorCommand } from '../../types/editor_types.js';
 import { Session } from '../../workspace/common/session.js';
 import { DatabaseType, store } from '../runtime/db.js';

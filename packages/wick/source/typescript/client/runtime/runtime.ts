@@ -71,8 +71,6 @@ export class WickRuntime {
     constructor() {
         this.registerSession = registerWatcherComponent;
         this.unregisterSession = unregisterWatcherComponent;
-        this.router = <any>null;
-        this.context = <any>null;
         this.root_components = [];
         this.workspace_init_promise = null;
         this.templates = new Map;
@@ -88,6 +86,12 @@ export class WickRuntime {
         if (envIs(Environment.APP))
             (import("../app/session.js")).then(m => m.init(this));
 
+    }
+
+    addTemplate(name: string, innerHTML: string) {
+        let template = document.createElement("template");
+        template.innerHTML = innerHTML;
+        this.templates.set(name, template);
     }
 
     setDatabaseData(key: string, val: any, DB: DatabaseType = DatabaseType.Indexed) {

@@ -1,0 +1,65 @@
+{
+    "configurations": [
+        {
+            "name": "Launch Program",
+            "program": "${file}",
+            "cwd": "${fileDirname}",
+            "request": "launch",
+            "smartStep": true,
+            "showAsyncStacks": false,
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "sourceMaps": true,
+            "runtimeExecutable": "/home/anthony/.nvm/versions/node/v16.8.0/bin/node",
+            "stopOnEntry": false,
+            "type": "node",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "openOnSessionStart",
+            "runtimeArgs": [
+                "--preserve-symlinks",
+                "--preserve-symlinks-main",
+                "--enable-source-maps",
+                "--experimental-specifier-resolution=node"
+            ]
+        },
+        {
+            "name": "Launch Test Program",
+            "program": "${workspaceFolder}/test8/test.js",
+            "cwd": "${workspaceFolder}",
+            "request": "launch",
+            "smartStep": true,
+            "showAsyncStacks": false,
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "sourceMaps": true,
+            "stopOnEntry": false,
+            "type": "node",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "openOnSessionStart",
+            "runtimeArgs": [
+                "--preserve-symlinks",
+                "--preserve-symlinks-main",
+                "--enable-source-maps"
+            ]
+        },
+        {
+            "name": "Test CPP Debug",
+            "type": "lldb-mi",
+            "request": "launch",
+            "target": "${workspaceRoot}/bin/${fileBasenameNoExtension}",
+            "cwd": "${workspaceRoot}",
+            "valuesFormatting": "parseText",
+            "preLaunchTask": "G++ Build Test File"
+        },
+        {
+            "name": "Test CPP Debug (lldb)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/bin/${fileBasenameNoExtension}",
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "G++ Build Test File"
+        }
+    ]
+}

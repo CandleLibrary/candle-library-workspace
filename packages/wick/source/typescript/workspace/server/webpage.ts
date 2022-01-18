@@ -10,6 +10,7 @@ import { renderCompressed } from "../../compiler/source-code-render/render.js";
 import { componentDataToCSS } from "../../compiler/ast-render/css.js";
 import { componentDataToHTML, htmlTemplateToString } from "../../compiler/ast-render/html.js";
 import { createClassStringObject } from "../../compiler/ast-render/js.js";
+import { TemplateHTMLNode } from '../../index.js';
 
 
 await URL.server();
@@ -37,7 +38,6 @@ type PageRenderHooks = {
 function renderBasicWickPageInit(component_class_declarations: string, context: Context) {
     return `
     import D_w_ from "/@cl/wick-rt/";
-
     D_w_.queue_hydrate();
 `;
 }
@@ -45,7 +45,7 @@ function renderBasicWickPageInit(component_class_declarations: string, context: 
 function renderRadiatePageInit(component_class_declarations: string, context: Context) {
     return `
     import init_router from "/@cl/wick-radiate/";
-
+    /*$$$$*/
     init_router();
 `;
 }
@@ -208,7 +208,7 @@ export async function RenderPage(
      * Transforming a component's html structure can lead to 
      * incompatible component code. Handle this with care
      */
-    let html = "", templates = "";
+    let html = "", templates: Map<string, TemplateHTMLNode> = new Map;
 
     if (STATIC_RENDERED_HTML) {
 
@@ -216,7 +216,7 @@ export async function RenderPage(
 
         ({ html, template_map } = await componentDataToHTML(comp, context, 1));
 
-        templates = [...template_map.values()].map(t => htmlTemplateToString(t, 1)).join("\n");
+        templates = template_map;
     }
 
     let script_data = [], style_data = [], head = "";
@@ -325,7 +325,7 @@ const boiler_plate = `
     </style>`;
 function renderWickPageString(
     context: Context,
-    templates: string,
+    templates: Map<string, TemplateHTMLNode>,
     html: string,
     head: string,
     script: string,
@@ -349,12 +349,12 @@ function renderWickPageString(
   </head>
   <body>
 ${html}
-${templates}
     <script type=module id="wick-init-script">
         ${hooks.init_script_render(script.split("\n").join("\n      "), context)}
     </script>
     <script type=module id="wick-component-script">
         ${hooks.init_components_render(script.split("\n").join("\n      "), context, hooks.resolve_import_path)}
+        ${[...templates].map(([name, t]) => `wick.rt.addTemplate("${name}", \`${htmlTemplateToString(t.children[0], 1).replace(/\`/g, "\\`")}\`)`)}
     </script>
   </body>
 </html>`;
@@ -362,7 +362,7 @@ ${templates}
 
 function renderRadiatePageString(
     context: Context,
-    templates: string,
+    templates: Map<string, TemplateHTMLNode>,
     html: string,
     head: string,
     script: string,
@@ -416,12 +416,14 @@ function renderRadiatePageString(
   <body>
     <script> document.body.classList.toggle("radiate-init"); </script>
 ${html}
-${templates}
     <script type=module id="wick-init-script">
-      ${hooks.init_script_render(script.split("\n").join("\n      "), context)}
-    
-    
-      ${hooks.init_components_render(script.split("\n").join("\n      "), context, hooks.resolve_import_path)}
+      ${hooks.init_script_render(script.split("\n").join("\n      "), context)
+            .replace("/*$$$$*/",
+                hooks.init_components_render(script.split("\n").join("\n      "), context, hooks.resolve_import_path)
+                +
+                [...templates].map(([name, t]) => `wick.rt.addTemplate("${name}", \`${htmlTemplateToString(t.children[0], 1).replace(/\`/g, "\\`")}\`)`).join("\n    ")
+            )}
+      
     </script>
   </body>
 </html>`;
@@ -430,7 +432,7 @@ ${templates}
 
 function renderPresets(context: Context, resolve_import_path: (string: string) => string = _ => _) {
     const out_value = {
-        repo: [...context.repo.values()].map(repo => (console.log(repo), [repo.hash, resolve_import_path(repo.url), repo.flag || 0]))
+        repo: [...context.repo.values()].map(repo => ([repo.hash, resolve_import_path(repo.url), repo.flag || 0]))
     };
     return JSON.stringify(out_value);
 }

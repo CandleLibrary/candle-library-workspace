@@ -133,6 +133,7 @@ async function renderPage(
     import "/@cl/wick/client/app/session.js";
     import init_router from "/@cl/wick-radiate/";
     import "/@cl/wick-rt/";
+    /*$$$$*/
     init_router();
                 `;
             };

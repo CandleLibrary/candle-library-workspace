@@ -31,6 +31,7 @@ export async function renderPage(
     import "/@cl/wick/workspace/client/index.js";
     import init_router from "/@cl/wick-radiate/";
     import "/@cl/wick-rt/";
+    /*$$$$*/
     init_router();
                 `;
             };
@@ -40,6 +41,7 @@ export async function renderPage(
                 return `
     import "/@cl/wick/workspace/client/index.js";
     import "/@cl/wick-rt/";
+    /*$$$$*/
     wick.queue_hydrate();
                 `;
             };

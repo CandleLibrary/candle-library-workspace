@@ -206,7 +206,7 @@
 # @PAGE ----------------------------------------------------------------------------------
 
 <> page_selector > ( pseudo_page )(+)
-    | tk:ident_token ( pseudo_page )(*)   
+    | tk:ident_token ( pseudo_page )(*)  f:r { [$1] + $2 }
 
 <> pseudo_page > \: ( t:left | t:right | t:first | t:blank )
 
@@ -326,7 +326,8 @@
 #### Declarations
 ##############################################################################################
 
-<> declaration_list >  ( declaration )(+\; )
+<> declaration_list >  declaration          f:r{ [$1] }
+    | declaration_list ;(+) declaration?    f:r{ $1 + $3 }
     
 <> declaration > tk:declaration_id \: declaration_values_sentineled \!important ?    
                                                                                 
@@ -334,7 +335,7 @@
 
 <[recover declaration]
     scan until [ \} \; ] 
-    then reduce f:r { { t_InvalidProperty, tok, val:sym } } 
+    then reduce f:r { { t_InvalidProperty, val: str(tok) } } 
     then set prod to declaration
 >
 

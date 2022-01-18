@@ -2,10 +2,9 @@ import { FunctionMaps } from "./build/parser_next/ast.js";
 import { Bytecode, Entrypoint, TokenLookup, ExpectedTokenLookup, ReduceNames } from "./build/parser_next/parser_data.js";
 import { ByteWriter, complete, Token, assign_peek, scanner_state_mask, state_index_mask } from "@hctoolkit/runtime";
 
-const input = `
-#test  .class[test] > #dougloas , .id, .id { color:red !important; --grapes:trials }
-#test  .class[test] > #dougloas , .id, .id { color:red !important; --grapes:trials;; }
-`;
+const input = `#test.test[gracy=tacos] { 
+    background-color: red;
+ }`;
 assign_peek((f, iter) => {
     const index = f & state_index_mask;
     if (f & scanner_state_mask)
@@ -38,15 +37,20 @@ if (err) {
     let expected = "";
     let token = new Token(input, err.tk_length || 1, err.tk_offset, 0);
     if (ExpectedTokenLookup.has(index)) {
-        expected = ExpectedTokenLookup.get(index)?.map(v => TokenLookup.get(v)).join(" ");
+        expected = ExpectedTokenLookup.get(index)?.map(v => TokenLookup.get(v)).join(" | ");
     }
     console.log({
         err,
         expected,
         index: (index * 4).toString(16),
     });
-    token.throw(`Expected [${expected}] but got [${err.tk_offset >= input.length ? "<eof>" :
-        token}]`);
+
+    if (token == " ")
+        token.throw(`Expected [ ${expected} ] but found a space.`);
+    if (err.tk_offset >= input.length)
+        token.throw(`Expected [ ${expected} ] but encountered the end of the input.`);
+
+    token.throw(`Expected [ ${expected} ] but found [ ${token} ]`);
 }
 console.dir({ result: result }, { depth: null });
 class FileWriter extends ByteWriter {

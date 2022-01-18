@@ -152,7 +152,6 @@ registerFeature(
 
                         //skip();
 
-                        console.log(ctr.container_id);
 
                         return ctr;
                     }
@@ -287,7 +286,7 @@ registerFeature(
                     // any way within the runtime code
                     return null;
                 } else {
-                    console.log({ n: node.value });
+
                     st.nodes[0].nodes[1].nodes = <any>node.value;
                     on_write(st);
                 }
@@ -703,8 +702,6 @@ export function getListOfUnboundArgs(
         if (n.type == BindingIdentifierBinding || n.type == BindingIdentifierReference) {
 
             const binding = build_sys.getComponentBinding(name, comp);
-
-            console.log(name, n, binding);
 
             if (
                 binding.type == BINDING_VARIABLE_TYPE.UNDECLARED

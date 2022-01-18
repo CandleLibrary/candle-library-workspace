@@ -216,6 +216,8 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
         this.attr = new Map;
         this.ch_map = new Map;
 
+        this.context = rt_.context;
+
         //Create or assign global model whose name matches the default_model_name;
         if (default_model_name) {
 
@@ -265,7 +267,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             try {
                 child.initialize();
             } catch (e) {
-                console.log(e);
+                console.error(e);
             }
         }
 
@@ -273,7 +275,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             try {
                 this.originator.initialize();
             } catch (e) {
-                console.log(e);
+                console.error(e);
             }
         }
 
@@ -507,7 +509,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
                 try {
                     transition_time = transition.out_duration;
                 } catch (e) {
-                    console.log(e);
+                    console.error(e);
                 }
             } else this.onTransitionOutEnd();
 
@@ -568,7 +570,7 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             this.oTI(row, col, DESCENDING, trs.in);
             this.setStatus(Status.TRANSITIONED_IN);
         } catch (e) {
-            console.log(e);
+            console.error(e);
         }
     }
 
@@ -739,12 +741,6 @@ export class WickRTComponent implements Sparky, ObservableWatcher {
             if (attribute_value !== prev_val || typeof attribute_value == "object") {
 
                 store.val = attribute_value;
-
-                //if (typeof attribute_value != "object") {
-                ////    this.ele.dataset[name] = attribute_value;
-                //} else {
-                ////  console.log("Cannot store an object");
-                //}
 
                 if (
                     !this.call_set.has(index)

@@ -91,6 +91,22 @@ static site that can be optionally hydrated with associated support scripts.`
                     root_directory, context, config.endpoint_mapper
                 );
 
+            /**
+             * Do not allow compilation to proceed if there are compilation 
+             * errors.
+             */
+            if (context.hasErrors()) {
+                let count = 0;
+                for (const [name, comp] of context.components) {
+                    for (const error of context.getErrors(comp)) {
+                        count++;
+                        compile_logger.error("Error in ", comp.location + "", "\n", error.message);
+                    }
+                }
+                compile_logger.error(`Unable to continue due to ${count} error${count == 1 ? "" : "s"}.`);
+                process.exit();
+            }
+
             if (!page_components) {
                 compile_logger.warn("Unable to locate suitable page components");
                 return;
@@ -266,7 +282,6 @@ async function writeEndpoint(
         await fsp.mkdir(new URI(output_path).dir, { recursive: true });
     }
     catch (e) {
-        console.log(e);
         compile_logger
             .error(`Unable create output path [ ${new URI(output_path).dir} ]`)
             .error(e);
@@ -317,6 +332,7 @@ async function renderEndpointPage(
         hooks.init_script_render = function () {
             return `
 				import {radiate} from "${pack_path}";
+                /*$$$$*/
 				radiate.default();`;
         };
     else

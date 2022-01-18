@@ -12,7 +12,7 @@ export async function compile_module(
 	const result = await build({
 		platform: "browser",
 		format: "esm",
-		minify: true,
+		minify: false,
 		entryPoints: [entry_file_path + ""],
 		bundle: true,
 		outfile: output_file_path
@@ -53,7 +53,6 @@ export async function compile_pack(
 							const module_path = url.path.split("/").slice(0, 2).join("/");
 							const file_path = args.path.split("/").slice(2).join("/");
 
-							console.log({ module_path, url });
 
 							const { package: pkg, FOUND } = await getPackageJsonObject(url + "/");
 
@@ -64,7 +63,6 @@ export async function compile_pack(
 
 								url = <URI>URI.resolveRelative(package_url, url + "/");
 
-								console.log({ file_path });
 
 								if (file_path) {
 									url = <URI>URI.resolveRelative("./" + file_path, url);
@@ -72,7 +70,6 @@ export async function compile_pack(
 
 							}
 
-							console.log({ args, url });
 							return <OnResolveResult>{
 								path: url + "",
 								namespace: args.namespace,

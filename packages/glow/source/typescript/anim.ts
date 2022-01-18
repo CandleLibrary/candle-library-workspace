@@ -29,35 +29,47 @@ export const Animation = ((function anim() {
 
                 let props: AnimationArgs = {};
 
-                for (const [name, val] of Object.entries(data)) {
+                for (const [name, _val] of Object.entries(data)) {
 
                     if ((new Set(["obj", "match", "delay"])).has(name)) continue;
 
-                    if (!Array.isArray(val))
+                    if (!Array.isArray(_val))
                         throw new Error(
                             `Expected the type of attribute ${name} to be an Array.`);
 
                     let i = 0;
 
-                    for (const key of val) {
-                        if (typeof obj !== "object")
-                            throw new Error(`Expected object type for key ${name}[${i}]`);
+                    for (let j = 0; j < _val.length; j++) {
+                        const key = _val[j];
+                        let val: any = undefined;
+                        let tic: any = undefined;
+                        let obj: any = key;
+                        if (Array.isArray(key)) {
+                            tic = key[0];
+                            val = key[1];
+                            const eas = key[2];
+                            _val[j] = { tic, val, eas };
+                        } else if (typeof obj == "object") {
+                            val = key.val;
+                            tic = key.tic;
+                        } else
+                            throw new Error(`Expected object or array type for key ${name}[${i}]`);
 
-                        if (key.tic === undefined || isNaN(key.tic) || typeof key.tic != "number")
+
+                        if (tic === undefined || isNaN(tic) || typeof tic != "number")
                             throw new Error(
                                 `
-Key ${name}[${i}] does not have correct value for "tic" attribute. 
-Expected a number type but got instead ${isNaN(key.tic ?? 0) ? "NaN" : typeof key.tic}.`);
+                                Key ${name}[${i}] does not have correct value for "tic" attribute. 
+                                Expected a number type but got instead ${isNaN(key.tic ?? 0) ? "NaN" : typeof key.tic}.`);
 
-                        if (key.val === undefined)
+                        if (val === undefined)
                             throw new Error(
                                 `
-Key ${name}[${i}] does not have a valid "val" attribute. `);
+                                    Key ${name}[${i}] does not have a valid "val" attribute. `);
 
-                        i++;
                     }
 
-                    props[name] = val;
+                    props[name] = _val;
                 }
 
 

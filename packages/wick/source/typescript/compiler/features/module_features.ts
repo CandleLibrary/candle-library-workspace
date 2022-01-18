@@ -192,6 +192,8 @@ registerFeature(
 
                         const clause: JSExportClause = <any>node.value;
 
+
+                        console.log(component.location + "", node);
                         for (const specifier of clause.nodes) {
                             const external_id = specifier.nodes[0];
                             const internal_id = specifier.nodes[1] || external_id;

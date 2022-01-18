@@ -13,8 +13,6 @@ const tooltip =
 
 async function $styleHandle(css){
     if(!css) return;
-
-    console.log("1")
     
     await css.load;
 

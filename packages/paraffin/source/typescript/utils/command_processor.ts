@@ -673,5 +673,5 @@ function createHelpColumn(cb: CommandBlock<any> | Argument<any>, column_size: nu
 
     if (!cb.help_brief) return "";
 
-    return limitColumnLength(cb.help_brief.split("\n").map(s => s.trim()).join("\n").replace(/(?<=[^\n])\n(?=[^\n])/g, " ").trim(), column_size);
+    return limitColumnLength(cb.help_brief.split("\n").map(s => s.trim()).join("\n")/* .replace(/(?<=[^\n])\n(?=[^\n])/g, " ") */.trim(), column_size);
 }

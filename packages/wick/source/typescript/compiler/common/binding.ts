@@ -2,7 +2,7 @@ import { traverse } from "@candlelib/conflagrate";
 import { JSIdentifier, JSNode, JSNodeType } from "@candlelib/js";
 import URI from "@candlelib/uri";
 import { Lexer } from "@candlelib/wind";
-import { PluginStore } from "../../plugin/plugin.js";
+//import { PluginStore } from "../../plugin/plugin.js";
 import {
     BindingVariable,
     BINDING_FLAG,
@@ -488,7 +488,7 @@ export function getBindingStaticResolutionType(
 /**
  * Static Data Fetch Plugin
  */
-PluginStore.addSpec({
+/* PluginStore.addSpec({
     type: PLUGIN_TYPE.STATIC_DATA_FETCH,
     requires: ["serverHandler"],
     async defaultRecover(data) {
@@ -496,7 +496,7 @@ PluginStore.addSpec({
     },
     validateSpecifier: (str: string) => (str.match(/^[a-zA-Z\_][\w\_\d]*$/) || []).length > 0
 });
-
+ */
 
 
 //###################################################################3

@@ -239,7 +239,7 @@ async function integrateComponentElement(
 
     const
         model = prev_comp ? null : static_data_pack.model,
-        claims = c_comp.root_ele_claims,
+        claims = c_comp.root_ele_claims.slice(),
         claim_top = claims.length + static_data_pack.claim_top;
 
     let
@@ -311,8 +311,9 @@ async function integrateComponentElement(
         last_node = root_node;
     }
 
-    if (!last_node)
+    if (!last_node) {
         throw new Error("Last node not defined");
+    }
 
 
 

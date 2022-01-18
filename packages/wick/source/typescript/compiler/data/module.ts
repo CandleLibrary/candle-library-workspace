@@ -99,8 +99,8 @@ export async function importComponentData(
     } catch (e) {
 
 
-        console.log(e);
-        console.log("TODO: Replace with a temporary warning component.", e);
+        console.error(e);
+        console.error("TODO: Replace with a temporary warning component.", e);
     }
 
     return false;

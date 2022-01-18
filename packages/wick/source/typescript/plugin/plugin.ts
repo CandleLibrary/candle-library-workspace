@@ -157,7 +157,7 @@ export class PluginStore {
         if (plugin) try {
             return await plugin.clientHandler(context, ...args);
         } catch (e) {
-            console.log(e);
+            console.error(e);
         }
         return await PluginStore.specs.get(type).defaultRecover("clientHandler", selector, ...args);
     }
@@ -167,7 +167,7 @@ export class PluginStore {
         if (plugin) try {
             return await plugin.clientHandler(context, ...args);
         } catch (e) {
-            console.log(e);
+            console.error(e);
         }
         return await PluginStore.specs.get(type).defaultRecover("serverHandler", selector, ...args);
     }

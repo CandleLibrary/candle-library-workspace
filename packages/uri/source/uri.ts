@@ -369,7 +369,8 @@ class URI {
     private _getQuery_() {
         if (this.query) {
             const data = this.query
-                .split(/(?<!\\)\&/g)
+                //.split(/(?<!\\)\&/g) //!! Negative lookbehind not supported by Safari and GTK
+                .split(/\&/g)
                 .map(s => s.split("="));
 
             //@ts-ignore

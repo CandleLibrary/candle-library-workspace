@@ -480,7 +480,7 @@ export class CSSCache implements ObservableModel {
             this.uploadChanges();
 
         } catch (e) {
-            console.log(e);
+            console.error(e);
             return e;
         }
         return null;

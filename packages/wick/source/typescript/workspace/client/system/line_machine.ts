@@ -63,7 +63,6 @@ export class LineMachine {
             cv = (t + b) / 2,
             tolx = mx,
             toly = my;
-        // console.log(box)
 
         for (let i = 0; i < this.boxes.length; i++) {
             let box = this.boxes[i].MarginBox;

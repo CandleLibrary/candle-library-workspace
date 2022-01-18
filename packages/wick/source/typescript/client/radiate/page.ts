@@ -58,7 +58,7 @@ export class Page {
                     try {
                         comp.initialize();
                     } catch (e) {
-                        console.log(e);
+                        console.error(e);
                     }
 
                     if (envIs(Environment.WORKSPACE))

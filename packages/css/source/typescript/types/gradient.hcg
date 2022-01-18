@@ -1,0 +1,5 @@
+@IMPORT base from "./css_base_productions.css"
+
+<> radial_gradient > \radial-gradient \(  gradient_entries  \)
+
+<>  

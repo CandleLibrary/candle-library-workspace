@@ -1,6 +1,6 @@
 import { JSNode } from '@candlelib/js';
 import { default as URI, default as URL } from "@candlelib/uri";
-import { PluginStore } from "../../plugin/plugin.js";
+//import { PluginStore } from "../../plugin/plugin.js";
 import { WickRTComponent } from '../../client/runtime/component/component.js';
 import { ComponentClassStrings, ComponentStyle } from '../../types/component.js';
 import { WickCompileConfig } from "../../types/config.js";
@@ -159,7 +159,7 @@ export class Context {
         flag: MODULE_FLAG;
     }>;
 
-    plugins: PluginStore;
+    //plugins: PluginStore;
 
     /**
      * Store for WickRTComponents.
